@@ -1,0 +1,635 @@
+<!-- Cards de resumen de clasificaciones -->
+{% if resumen_clasificaciones %}
+<div class="row g-3 mb-4" id="clasificacion-cards">
+    {% for resumen in resumen_clasificaciones %}
+    <div class="col-lg col-md-4 col-sm-6" data-aos="fade-up" data-aos-delay="{{ loop.index0 * 100 + 100 }}">
+        <div class="p-3 shadow-sm border rounded-3 bg-white position-relative" 
+             style="height: 120px; display: flex; flex-direction: column; justify-content: center; align-items: center; 
+                    transition: all 0.3s ease; border: 2px solid {{ resumen.color }};"
+             onmouseenter="animateClassificationCard(this)"
+             onmouseleave="resetClassificationCard(this)">
+            
+            <!-- Efecto de fondo muy sutil con color de clasificación -->
+            <div class="position-absolute top-0 start-0 w-100 h-100" 
+                 style="background: {{ resumen.color }}; opacity: 0.03;"></div>
+            
+            <div class="fw-semibold text-uppercase mb-1 position-relative" 
+                 style="font-size: 0.7rem; letter-spacing: 0.5px; transition: all 0.2s ease; color: #2C2C2C;">
+                {{ resumen.clasificacion }}
+                {% if resumen.clasificacion == "Estrella" %}
+                <span class="simple-tooltip">
+                    <span class="tooltip-icon">?</span>
+                    <span class="tooltip-text">≥500 ventas/mes. SKUs de alto rendimiento, productos clave del negocio.</span>
+                </span>
+                {% endif %}
+                {% if resumen.clasificacion == "Prometedores" %}
+                <span class="simple-tooltip">
+                    <span class="tooltip-icon">?</span>
+                    <span class="tooltip-text">100-499 ventas/mes. Buen potencial, pueden ser productos estrella.</span>
+                </span>
+                {% endif %}
+                {% if resumen.clasificacion == "Potenciales" %}
+                <span class="simple-tooltip">
+                    <span class="tooltip-icon">?</span>
+                    <span class="tooltip-text">30-99 ventas/mes. Requieren análisis de precio y promoción.</span>
+                </span>
+                {% endif %}
+                {% if resumen.clasificacion == "Revisión" %}
+                <span class="simple-tooltip">
+                    <span class="tooltip-icon">?</span>
+                    <span class="tooltip-text">10-29 ventas/mes. Necesitan evaluación urgente o descontinuación.</span>
+                </span>
+                {% endif %}
+                {% if resumen.clasificacion == "Remover" %}
+                <span class="simple-tooltip">
+                    <span class="tooltip-icon">?</span>
+                    <span class="tooltip-text">Menos de 10 ventas/mes. Candidatos para descontinuar.</span>
+                </span>
+                {% endif %}
+            </div>
+            
+            <div class="fw-bold position-relative" 
+                 style="font-size: 1.3rem; color: #2C2C2C; transition: all 0.2s ease;">
+                <span class="animated-number" id="clasif-{{ loop.index0 }}" 
+                      data-value="{{ resumen.cantidad_actual }}"
+                      data-type="number">
+                    {{ resumen.cantidad_actual }}
+                </span>
+                <small style="font-size: 0.7rem; color: #2C2C2C;"> Ítems</small>
+            </div>
+            
+            <div class="fw-medium position-relative text-center" 
+                 style="font-size: 0.8rem; transition: all 0.2s ease;">
+                <span class="participation-indicator" style="color: #2C2C2C; font-weight: 700;">
+                    {{ resumen.diferencia }}
+                </span>
+                <small class="d-block" style="font-size: 0.65rem; margin-top: 2px; color: #2C2C2C;">
+                    del total de ventas
+                </small>
+            </div>
+            
+            <!-- Barra de progreso con color de clasificación -->
+            <div class="position-absolute bottom-0 start-0 w-100" style="height: 3px; background: rgba(212, 175, 55, 0.1);">
+                <div class="h-100 transition-all" 
+                     style="background: {{ resumen.color }}; 
+                            width: 0%; 
+                            transition: width 1.5s ease {{ loop.index0 * 0.2 + 0.5 }}s;"></div>
+            </div>
+        </div>
+    </div>
+    {% endfor %}
+</div>
+
+{% endif %}
+
+<!-- TARJETAS DE INDICADORES - COMPACTAS Y ARRIBA DEL RESUMEN -->
+{% if resumen_clasificaciones %}
+<div class="row g-2 mt-3 mb-3">
+    
+    <!-- PRIMERA TARJETA: 3 Indicadores de Productos -->
+    <div class="col-md-6">
+        <div class="card" style="border: 1px solid rgba(212, 175, 55, 0.2); border-radius: 8px;">
+            <div class="card-body p-2">
+                <div class="row g-2">
+                    <!-- 1. Productos Catálogo x Mes -->
+                    <div class="col-12">
+                        <div class="p-2 rounded text-center" style="background: rgba(108, 117, 125, 0.1); border-left: 3px solid #6c757d;">
+                            <div style="font-size: 0.9rem; color: #6c757d; font-weight: 600;">
+                                # Productos del catálogo 150
+                                <span class="simple-tooltip">
+                                    <span class="tooltip-icon">?</span>
+                                    <span class="tooltip-text">Total SKUs registrados.</span>
+                                </span>
+                            </div>
+                        </div>
+                    </div>
+                    <!-- 2. Productos Comerciales Activos -->
+                    <div class="col-12">
+                        <div class="p-2 rounded text-center" style="background: rgba(40, 167, 69, 0.1); border-left: 3px solid #28a745;">
+                            <div style="font-size: 0.9rem; color: #28a745; font-weight: 600;">
+                                # Productos Comerciales Activos 125
+                                <span class="simple-tooltip">
+                                    <span class="tooltip-icon">?</span>
+                                    <span class="tooltip-text">SKUs activos en la actualidad.</span>
+                                </span>
+                            </div>
+                        </div>
+                    </div>
+                    <!-- 3. Productos Comerciales > 30 unidades -->
+                    <div class="col-12">
+                        <div class="p-2 rounded text-center" style="background: rgba(212, 175, 55, 0.1); border-left: 3px solid #D4AF37;">
+                            <div style="font-size: 0.9rem; color: #D4AF37; font-weight: 600;">
+                                # Comerciales > 30 x Mes 45
+                                <span class="simple-tooltip">
+                                    <span class="tooltip-icon">?</span>
+                                    <span class="tooltip-text">SKUs con más de 30 ventas en el mes.</span>
+                                </span>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- SEGUNDA TARJETA: Productos Comerciales Participativos -->
+    <div class="col-md-3">
+        <div class="card" style="border: 1px solid rgba(40, 167, 69, 0.2); border-radius: 8px;">
+            <div class="card-body p-2 text-center">
+                <h6 class="mb-1" style="font-size: 0.8rem; color: #D4AF37; font-weight: 700;">
+                    <i class="bi bi-graph-up-arrow me-1"></i>Productos Participativos
+                </h6>
+                <div style="font-size: 0.65rem; color: #2C2C2C; margin-bottom: 8px;">
+                    % Productos Comerciales Participativos
+                    <span class="simple-tooltip">
+                        <span class="tooltip-icon">?</span>
+                        <span class="tooltip-text">Porcentaje de productos que participan activamente en las ventas (>30 unidades/mes).</span>
+                    </span>
+                </div>
+                <div class="fw-bold" style="font-size: 1.5rem; color: #2C2C2C;">36<span style="font-size: 1rem;">%</span></div>
+                <small style="font-size: 0.65rem; color: #2C2C2C;">Productos participativos</small>
+            </div>
+        </div>
+    </div>
+
+    <!-- TERCERA TARJETA: % Representa de la Venta -->
+    <div class="col-md-3">
+        <div class="card" style="border: 1px solid rgba(220, 53, 69, 0.2); border-radius: 8px;">
+            <div class="card-body p-2 text-center">
+                <h6 class="mb-1" style="font-size: 0.8rem; color: #D4AF37; font-weight: 700;">
+                    <i class="bi bi-percent me-1"></i>Representación de Ventas
+                </h6>
+                <div style="font-size: 0.65rem; color: #2C2C2C; margin-bottom: 8px;">
+                    % Representa de la Venta
+                    <span class="simple-tooltip">
+                        <span class="tooltip-icon">?</span>
+                        <span class="tooltip-text">Porcentaje que representan estos productos del total de ventas.</span>
+                    </span>
+                </div>
+                <div class="fw-bold" style="font-size: 1.5rem; color: #2C2C2C;">
+                    78.5<span style="font-size: 1rem;">%</span>
+                </div>
+                <small style="font-size: 0.65rem; color: #2C2C2C;">Del total de ventas</small>
+            </div>
+        </div>
+    </div>
+
+</div>
+{% endif %}
+
+<!-- Tabla resumen por clasificación -->
+{% if clasificaciones_agrupadas %}
+<div class="card mb-4" style="border: 1px solid rgba(212, 175, 55, 0.2); border-radius: 12px; overflow: hidden;">
+    <div class="card-header" style="background: linear-gradient(135deg, rgba(212, 175, 55, 0.1), rgba(212, 175, 55, 0.05)); border-bottom: 1px solid rgba(212, 175, 55, 0.2);">
+        <h6 class="mb-0" style="color: #2C2C2C; font-weight: 700;">
+            <i class="bi bi-bar-chart-fill me-2" style="color: #D4AF37;"></i>
+            Resumen por Clasificación
+        </h6>
+        <small class="text-muted">Agrupación de SKUs por desempeño mensual</small>
+    </div>
+    <div class="card-body p-0">
+        <div class="table-responsive">
+            <table class="table table-hover mb-0">
+                <thead style="background-color: #f8f9fa;">
+                    <tr>
+                        <th class="border-0 py-3 px-4" style="color: #2C2C2C; font-weight: 600;">Clasificación</th>
+                        <th class="border-0 py-3 px-4 text-center" style="color: #2C2C2C; font-weight: 600;">
+                            <i class="bi bi-hash me-1" style="color: #D4AF37;"></i>Ítems
+                        </th>
+                        <th class="border-0 py-3 px-4 text-center" style="color: #2C2C2C; font-weight: 600;">
+                            <i class="bi bi-box me-1" style="color: #D4AF37;"></i>Total Unidades
+                        </th>
+                        <th class="border-0 py-3 px-4 text-center" style="color: #2C2C2C; font-weight: 600;">Prom x Mes</th>
+                        <th class="border-0 py-3 px-4 text-end" style="color: #2C2C2C; font-weight: 600;">
+                            <i class="bi bi-currency-dollar me-1" style="color: #D4AF37;"></i>Monto Total
+                        </th>
+                        <th class="border-0 py-3 px-4 text-center" style="color: #2C2C2C; font-weight: 600;">Ticket Promedio</th>
+                    </tr>
+                </thead>
+                <tbody>
+                    {% for grupo in clasificaciones_agrupadas %}
+                    <tr class="clasificacion-row" style="transition: all 0.2s ease;"
+                        onmouseenter="highlightClasificacionRow(this, '{{ grupo.color }}')" 
+                        onmouseleave="resetClasificacionRow(this)">
+                        <td class="py-3 px-4">
+                            <div class="d-flex align-items-center">
+                                <div class="rounded-circle me-3" 
+                                     style="width: 12px; height: 12px; background-color: {{ grupo.color }};"></div>
+                                <span class="fw-semibold" style="color: #2C2C2C;">{{ grupo.clasificacion }}</span>
+                            </div>
+                        </td>
+                        <td class="py-3 px-4 text-center">
+                            <span class="badge bg-light text-dark px-3 py-2" style="font-size: 0.9rem; font-weight: 600;">
+                                {{ grupo.cantidad_skus }}
+                            </span>
+                        </td>
+                        <td class="py-3 px-4 text-center">
+                            <span class="fw-medium" style="color: #2C2C2C;">
+                                {{ "{:,}".format(grupo.total_unidades) }}
+                            </span>
+                        </td>
+                        <td class="py-3 px-4 text-center">
+                            <span class="text-muted" style="font-size: 0.9rem;">
+                                {{ "{:,.0f}".format(grupo.total_unidades / grupo.cantidad_skus) }}
+                            </span>
+                        </td>
+                        <td class="py-3 px-4 text-end">
+                            <span class="fw-bold" style="color: #D4AF37; font-size: 1rem;">
+                                ${{ "{:,.0f}".format(grupo.total_monto) }}
+                            </span>
+                        </td>
+                        <td class="py-3 px-4 text-center">
+                            <span class="fw-medium" style="color: #2C2C2C; font-size: 0.9rem;">
+                                ${{ "{:,.0f}".format(grupo.total_monto / grupo.total_unidades) }}
+                            </span>
+                        </td>
+                    </tr>
+                    {% endfor %}
+                    <!-- Fila de totales -->
+                    <tr style="background-color: rgba(212, 175, 55, 0.05); border-top: 2px solid rgba(212, 175, 55, 0.3);">
+                        <td class="py-3 px-4" style="border-top: 2px solid rgba(212, 175, 55, 0.3);">
+                            <div class="d-flex align-items-center">
+                                <div class="rounded-circle me-3" 
+                                     style="width: 12px; height: 12px; background-color: #D4AF37;"></div>
+                                <span class="fw-bold" style="color: #2C2C2C; font-size: 1rem;">TOTAL</span>
+                            </div>
+                        </td>
+                        <td class="py-3 px-4 text-center" style="border-top: 2px solid rgba(212, 175, 55, 0.3);">
+                            <span class="badge px-3 py-2 fw-bold" style="background-color: #D4AF37; color: white; font-size: 0.9rem;">
+                                {{ clasificaciones_agrupadas | sum(attribute='cantidad_skus') }}
+                            </span>
+                        </td>
+                        <td class="py-3 px-4 text-center" style="border-top: 2px solid rgba(212, 175, 55, 0.3);">
+                            <span class="fw-bold" style="color: #2C2C2C; font-size: 1rem;">
+                                {{ "{:,}".format(clasificaciones_agrupadas | sum(attribute='total_unidades')) }}
+                            </span>
+                        </td>
+                        <td class="py-3 px-4 text-center" style="border-top: 2px solid rgba(212, 175, 55, 0.3);">
+                            <span class="text-muted fw-medium" style="font-size: 0.85rem;">-</span>
+                        </td>
+                        <td class="py-3 px-4 text-end" style="border-top: 2px solid rgba(212, 175, 55, 0.3);">
+                            <span class="fw-bold" style="color: #D4AF37; font-size: 1.1rem;">
+                                ${{ "{:,.0f}".format(clasificaciones_agrupadas | sum(attribute='total_monto')) }}
+                            </span>
+                        </td>
+                        <td class="py-3 px-4 text-center" style="border-top: 2px solid rgba(212, 175, 55, 0.3);">
+                            <span class="fw-bold" style="color: #D4AF37; font-size: 1rem;">
+                                ${{ "{:,.0f}".format((clasificaciones_agrupadas | sum(attribute='total_monto')) / (clasificaciones_agrupadas | sum(attribute='total_unidades'))) }}
+                            </span>
+                        </td>
+                    </tr>
+                </tbody>
+            </table>
+        </div>
+    </div>
+</div>
+{% endif %}
+
+<!-- Tabla detallada de todos los SKUs clasificados -->
+{% if clasificaciones %}
+<div class="card" id="tabla-detallada-skus" style="border: 1px solid rgba(212, 175, 55, 0.2); border-radius: 12px; overflow: hidden;">
+    <div class="card-header" style="background: linear-gradient(135deg, rgba(212, 175, 55, 0.1), rgba(212, 175, 55, 0.05)); border-bottom: 1px solid rgba(212, 175, 55, 0.2);">
+        <div class="d-flex justify-content-between align-items-center">
+            <div>
+                <h6 class="mb-0" style="color: #2C2C2C; font-weight: 700;">
+                    <i class="bi bi-list-stars me-2" style="color: #D4AF37;"></i>
+                    Clasificación Detallada de SKUs
+                </h6>
+                <small class="text-muted">Todos los SKUs ordenados por unidades vendidas con su clasificación</small>
+            </div>
+            
+            <!-- FILTRO DE CANAL ESPECÍFICO PARA ESTA TABLA -->
+            <div class="d-flex align-items-center gap-2" style="min-width: 200px;">
+                <label for="clasificacion_canal_tabla" class="form-label mb-0 fw-semibold" style="color: #2C2C2C; white-space: nowrap; font-size: 0.85rem;">
+                    <i class="bi bi-broadcast me-1" style="color: #D4AF37;"></i>
+                    Canal:
+                </label>
+                <select name="clasificacion_canal_tabla" id="clasificacion_canal_tabla" class="form-select form-select-sm" 
+                        style="border: 2px solid rgba(212, 175, 55, 0.3); min-width: 120px; font-size: 0.85rem;"
+                        onchange="submitClasificacionFormTabla()">
+                    <option value="todos" {% if selected_clasificacion_canal == "todos" %}selected{% endif %}>
+                        Todos
+                    </option>
+                    {% for canal in channels %}
+                    <option value="{{ canal }}" 
+                            {% if canal == selected_clasificacion_canal %}selected{% endif %}>
+                        {{ canal }}
+                    </option>
+                    {% endfor %}
+                </select>
+            </div>
+        </div>
+    </div>
+    <div class="card-body p-0">
+        <div class="table-responsive" style="max-height: 500px;">
+            <table class="table table-hover mb-0">
+                <thead style="background-color: #f8f9fa; position: sticky; top: 0; z-index: 10;">
+                    <tr>
+                        <th class="border-0 py-3 px-4" style="color: #2C2C2C; font-weight: 600; width: 3%;">#</th>
+                        <th class="border-0 py-3 px-4" style="color: #2C2C2C; font-weight: 600; width: 25%;">Producto Comercial</th>
+                        <th class="border-0 py-3 px-4 text-center" style="color: #2C2C2C; font-weight: 600; width: 8%;">
+                            <i class="bi bi-box me-1" style="color: #D4AF37;"></i>Unidades
+                        </th>
+                        <th class="border-0 py-3 px-4 text-end" style="color: #2C2C2C; font-weight: 600; width: 8%;">
+                            <i class="bi bi-currency-dollar me-1" style="color: #D4AF37;"></i>Monto
+                        </th>
+                        <th class="border-0 py-3 px-4 text-center" style="color: #2C2C2C; font-weight: 600; width: 8%;">Clasificación</th>
+                        <th class="border-0 py-3 px-4 text-center" style="color: #2C2C2C; font-weight: 600; width: 8%;">
+                            <i class="bi bi-receipt me-1" style="color: #D4AF37;"></i>Ticket Promedio
+                        </th>
+                        <!-- Columnas de Cuartiles -->
+                        <th class="border-0 py-2 px-1 text-center" style="color: #2C2C2C; font-weight: 600; width: 8%;">
+                            <div style="font-size: 0.75rem;">
+                                <i class="bi bi-chevron-down me-1" style="color: #dc3545;"></i>MIN
+                                <span class="simple-tooltip">
+                                    <span class="tooltip-icon">?</span>
+                                    <span class="tooltip-text">Precio mínimo registrado del producto. Representa el precio más bajo al que se ha vendido, posiblemente en promociones o liquidaciones.</span>
+                                </span>
+                            </div>
+                        </th>
+                        <th class="border-0 py-2 px-1 text-center" style="color: #2C2C2C; font-weight: 600; width: 8%;">
+                            <div style="font-size: 0.75rem;">
+                                <i class="bi bi-1-circle me-1" style="color: #6c757d;"></i>Q1 (25%)
+                                <span class="simple-tooltip">
+                                    <span class="tooltip-icon">?</span>
+                                    <span class="tooltip-text">Primer cuartil: precio al que se vendió el 25% de las unidades más económicas. Representa ventas a precios bajos o promocionales con menor margen de ganancia.</span>
+                                </span>
+                            </div>
+                        </th>
+                        <th class="border-0 py-2 px-1 text-center" style="color: #2C2C2C; font-weight: 600; width: 8%;">
+                            <div style="font-size: 0.75rem;">
+                                <i class="bi bi-2-circle me-1" style="color: #17a2b8;"></i>Q2 (50%)
+                                <span class="simple-tooltip">
+                                    <span class="tooltip-icon">?</span>
+                                    <span class="tooltip-text">Segundo cuartil (mediana): precio al que se vendió el 50% de las unidades. Representa el precio de venta más común con margen estándar.</span>
+                                </span>
+                            </div>
+                        </th>
+                        <th class="border-0 py-2 px-1 text-center" style="color: #2C2C2C; font-weight: 600; width: 8%;">
+                            <div style="font-size: 0.75rem;">
+                                <i class="bi bi-3-circle me-1" style="color: #28a745;"></i>Q3 (75%)
+                                <span class="simple-tooltip">
+                                    <span class="tooltip-icon">?</span>
+                                    <span class="tooltip-text">Tercer cuartil: precio al que se vendió el 75% de las unidades. Representa ventas a precios elevados con buen margen de rentabilidad.</span>
+                                </span>
+                            </div>
+                        </th>
+                        <th class="border-0 py-2 px-1 text-center" style="color: #2C2C2C; font-weight: 600; width: 8%;">
+                            <div style="font-size: 0.75rem;">
+                                <i class="bi bi-chevron-up me-1" style="color: #28a745;"></i>MAX
+                                <span class="simple-tooltip">
+                                    <span class="tooltip-icon">?</span>
+                                    <span class="tooltip-text">Precio máximo registrado del producto. Representa el precio más alto al que se ha vendido, indicando ventas premium con el mayor margen de ganancia.</span>
+                                </span>
+                            </div>
+                        </th>
+                    </tr>
+                </thead>
+                <tbody>
+                    {% for sku in clasificaciones %}
+                    <tr class="sku-detail-row" style="transition: all 0.2s ease;"
+                        onmouseenter="highlightSkuDetailRow(this, '{{ sku.color }}')" 
+                        onmouseleave="resetSkuDetailRow(this)">
+                        <td class="py-2 px-4">
+                            <span class="text-muted fw-medium" style="font-size: 0.85rem;">{{ loop.index }}</span>
+                        </td>
+                        <td class="py-2 px-4">
+                            <div class="d-flex flex-column">
+                                <div class="d-flex align-items-center mb-1">
+                                    <code class="text-dark bg-light px-2 py-1 rounded me-2" style="font-size: 0.75rem;">
+                                        {{ sku.sku }}
+                                    </code>
+                                </div>
+                                <div class="fw-medium" style="color: #2C2C2C; line-height: 1.3; font-size: 0.85rem;">
+                                    {{ sku.descripcion | truncate(40, True) }}
+                                </div>
+                            </div>
+                        </td>
+                        <td class="py-2 px-4 text-center">
+                            <span class="badge bg-light text-dark px-2 py-1" style="font-size: 0.8rem; font-weight: 600;">
+                                {{ "{:,}".format(sku.cantidad_mensual) }}
+                            </span>
+                        </td>
+                        <td class="py-2 px-4 text-end">
+                            <span class="fw-bold" style="color: #D4AF37; font-size: 0.9rem;">
+                                ${{ "{:,.0f}".format(sku.monto_mensual) }}
+                            </span>
+                        </td>
+                        <td class="py-2 px-4 text-center">
+                            <span class="badge px-2 py-1" 
+                                  style="background-color: {{ sku.color }}; color: white; font-weight: 600; font-size: 0.75rem;">
+                                {{ sku.clasificacion }}
+                            </span>
+                        </td>
+                        <td class="py-2 px-4 text-center">
+                            <div style="font-size: 0.7rem; line-height: 1.3;">
+                                <div class="fw-bold" style="color: #2C2C2C;">${{ "%.2f"|format(sku.monto_mensual / sku.cantidad_mensual) }}</div>
+                                <div class="fw-bold" style="color: #D4AF37; font-size: 0.65rem;">{{ "%.1f"|format(sku.porcentaje_ingreso_promedio) }}%</div>
+                            </div>
+                        </td>
+                        <!-- Columnas de Cuartiles -->
+                        <!-- MIN (precio mínimo real) -->
+                        <td class="py-2 px-1 text-center" style="border-left: 1px solid #e9ecef;">
+                            <div style="font-size: 0.7rem; line-height: 1.3;">
+                                <div class="fw-bold" style="color: #dc3545;">${{ "%.2f"|format(sku.min_precio) }}</div>
+                                <div class="fw-bold" style="color: #D4AF37; font-size: 0.65rem;">{{ "%.1f"|format(sku.min_porcentaje) }}%</div>
+                            </div>
+                        </td>
+                        <!-- Q1 (25%) -->
+                        <td class="py-2 px-1 text-center" style="border-left: 1px solid #e9ecef;">
+                            <div style="font-size: 0.7rem; line-height: 1.3;">
+                                <div class="fw-bold" style="color: #2C2C2C;">${{ "%.2f"|format(sku.q1_precio) }}</div>
+                                <div class="fw-bold" style="color: #D4AF37; font-size: 0.65rem;">{{ "%.1f"|format(sku.q1_porcentaje) }}%</div>
+                            </div>
+                        </td>
+                        <!-- Q2 (50%) -->
+                        <td class="py-2 px-1 text-center" style="border-left: 1px solid #e9ecef;">
+                            <div style="font-size: 0.7rem; line-height: 1.3;">
+                                <div class="fw-bold" style="color: #2C2C2C;">${{ "%.2f"|format(sku.q2_precio) }}</div>
+                                <div class="fw-bold" style="color: #D4AF37; font-size: 0.65rem;">{{ "%.1f"|format(sku.q2_porcentaje) }}%</div>
+                            </div>
+                        </td>
+                        <!-- Q3 (75%) -->
+                        <td class="py-2 px-1 text-center" style="border-left: 1px solid #e9ecef;">
+                            <div style="font-size: 0.7rem; line-height: 1.3;">
+                                <div class="fw-bold" style="color: #2C2C2C;">${{ "%.2f"|format(sku.q3_precio) }}</div>
+                                <div class="fw-bold" style="color: #D4AF37; font-size: 0.65rem;">{{ "%.1f"|format(sku.q3_porcentaje) }}%</div>
+                            </div>
+                        </td>
+                        <!-- MAX (precio máximo real) -->
+                        <td class="py-2 px-1 text-center" style="border-left: 1px solid #e9ecef;">
+                            <div style="font-size: 0.7rem; line-height: 1.3;">
+                                <div class="fw-bold" style="color: #28a745;">${{ "%.2f"|format(sku.max_precio) }}</div>
+                                <div class="fw-bold" style="color: #6c757d; font-size: 0.65rem;">{{ "%.1f"|format(sku.max_porcentaje) }}%</div>
+                            </div>
+                        </td>
+                    </tr>
+                    {% endfor %}
+                </tbody>
+            </table>
+        </div>
+    </div>
+</div>
+{% else %}
+<!-- Mensaje cuando no hay clasificaciones después del filtro -->
+<div class="alert alert-warning text-center" style="background: linear-gradient(135deg, rgba(255, 193, 7, 0.1), rgba(255, 193, 7, 0.05)); border: 1px solid rgba(255, 193, 7, 0.3);">
+    <i class="bi bi-exclamation-triangle me-2" style="color: #ffc107;"></i>
+    <strong>No hay datos de clasificación disponibles para este mes</strong>
+    <br>
+    <small class="text-muted">Intenta seleccionar un mes diferente o verifica los filtros aplicados.</small>
+</div>
+{% endif %}
+
+<style>
+/* Arreglar específicamente los tooltips de cuartiles */
+/* Resetear y configurar correctamente los tooltips en encabezados de tabla */
+.table thead th .simple-tooltip {
+    position: relative !important;
+    display: inline-block !important;
+    z-index: 1 !important;
+}
+
+.table thead th .simple-tooltip .tooltip-text {
+    visibility: hidden;
+    position: absolute !important;
+    z-index: 99999 !important;
+    background-color: white;
+    color: #2C2C2C;
+    text-align: left;
+    border-radius: 6px;
+    border: 2px solid #D4AF37;
+    padding: 10px 14px;
+    font-size: 13px;
+    opacity: 0;
+    transition: opacity 0.3s;
+    white-space: normal;
+    width: 280px;
+    max-width: 280px;
+    line-height: 1.5;
+    box-shadow: 0 6px 20px rgba(212, 175, 55, 0.25);
+    pointer-events: none;
+    
+    /* Posicionamiento original que funcionaba */
+    top: -15px;
+    left: 50%;
+    transform: translateX(-50%) translateY(-100%);
+}
+
+.table thead th .simple-tooltip .tooltip-text::after {
+    content: "";
+    position: absolute;
+    top: 100%;
+    left: 50%;
+    margin-left: -5px;
+    border-width: 5px;
+    border-style: solid;
+    border-color: #D4AF37 transparent transparent transparent;
+}
+
+.table thead th .simple-tooltip:hover .tooltip-text {
+    visibility: visible !important;
+    opacity: 1 !important;
+}
+
+/* Asegurar que la tabla permita overflow para tooltips */
+.table-responsive {
+    overflow-x: auto;
+    overflow-y: visible !important;
+}
+
+/* Asegurar que el thead no corte los tooltips */
+.table thead {
+    position: relative;
+    z-index: 10;
+}
+</style>
+
+<script>
+
+// Función para posicionar correctamente los tooltips de cuartiles
+function setupQuartileTooltips() {
+    const quartileTooltips = document.querySelectorAll('.table thead th .simple-tooltip');
+    
+    quartileTooltips.forEach(tooltip => {
+        const icon = tooltip.querySelector('.tooltip-icon');
+        const text = tooltip.querySelector('.tooltip-text');
+        
+        if (icon && text) {
+            // Limpiar eventos previos
+            icon.removeEventListener('mouseenter', icon._quartileHandler);
+            icon.removeEventListener('mouseleave', icon._quartileLeaveHandler);
+            
+            icon._quartileHandler = function() {
+                const rect = icon.getBoundingClientRect();
+                const tooltipWidth = 280;
+                const tooltipHeight = 120; // Estimado
+                
+                // Calcular posición centrada horizontalmente respecto al ícono
+                let left = rect.left + (rect.width / 2) - (tooltipWidth / 2);
+                let top = rect.top - tooltipHeight - 10; // Arriba del ícono
+                
+                // Ajustar si se sale por la izquierda
+                if (left < 10) {
+                    left = 10;
+                }
+                
+                // Ajustar si se sale por la derecha
+                if (left + tooltipWidth > window.innerWidth - 10) {
+                    left = window.innerWidth - tooltipWidth - 10;
+                }
+                
+                // Si se corta arriba, mostrar abajo
+                if (top < 10) {
+                    top = rect.bottom + 10;
+                }
+                
+                // Aplicar posición
+                text.style.left = left + 'px';
+                text.style.top = top + 'px';
+            };
+            
+            icon._quartileLeaveHandler = function() {
+                // No limpiar posición para mantener consistencia
+            };
+            
+            icon.addEventListener('mouseenter', icon._quartileHandler);
+            icon.addEventListener('mouseleave', icon._quartileLeaveHandler);
+        }
+    });
+}
+
+// Script específico para la página de clasificación
+document.addEventListener('DOMContentLoaded', function() {
+    // Activar animaciones específicas de esta página inmediatamente
+    if (window.activateProgressBarAnimations) {
+        window.activateProgressBarAnimations();
+    }
+    
+    // Configurar tooltips de cuartiles desde el inicio
+    setTimeout(() => {
+        setupQuartileTooltips();
+    }, 100);
+});
+
+// También ejecutar cuando se hace focus en la ventana (útil cuando regresas de otra pestaña)
+window.addEventListener('focus', function() {
+    if (document.getElementById('clasificacion-cards')) {
+        if (window.activateProgressBarAnimations) {
+            window.activateProgressBarAnimations();
+        }
+        // Reconfigurar tooltips al hacer focus
+        setTimeout(() => {
+            setupQuartileTooltips();
+        }, 200);
+    }
+});
+
+// También ejecutar cuando la página se carga completamente
+window.addEventListener('load', function() {
+    setTimeout(() => {
+        setupQuartileTooltips();
+    }, 300);
+});
+</script>
+
+

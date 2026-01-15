@@ -1,0 +1,235 @@
+<!-- Componente: Filtros de Matriz de Categorías -->
+<style>
+.multiselect-dropdown {
+    position: relative;
+    width: 100%;
+}
+
+.multiselect-dropdown-button {
+    width: 100%;
+    text-align: left;
+    background: white;
+    border: 2px solid #e9ecef;
+    border-radius: 10px;
+    padding: 8px 12px;
+    cursor: pointer;
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    min-height: 42px;
+}
+
+.multiselect-dropdown-button:hover {
+    border-color: #17a2b8;
+}
+
+.multiselect-dropdown-menu {
+    position: absolute;
+    top: 100%;
+    left: 0;
+    right: 0;
+    background: white;
+    border: 2px solid #e9ecef;
+    border-radius: 10px;
+    margin-top: 4px;
+    max-height: 300px;
+    overflow-y: auto;
+    z-index: 1000;
+    box-shadow: 0 4px 12px rgba(0,0,0,0.15);
+    display: none;
+}
+
+.multiselect-dropdown-menu.show {
+    display: block;
+}
+
+.multiselect-option {
+    padding: 8px 12px;
+    cursor: pointer;
+    display: flex;
+    align-items: center;
+    gap: 8px;
+}
+
+.multiselect-option:hover {
+    background-color: #f8f9fa;
+}
+
+.multiselect-option input[type="checkbox"] {
+    cursor: pointer;
+}
+
+.multiselect-count {
+    font-size: 0.85rem;
+    color: #6c757d;
+}
+</style>
+
+<div class="filtros-categorias-container mb-2" data-aos="fade-down">
+    <div class="d-flex align-items-start gap-3">
+        <!-- Filtro por Canal (Multiselect con Checkboxes) -->
+        <div style="width: 280px;">
+            <label class="form-label fw-bold mb-2" style="color: #2C2C2C; font-size: 0.85rem;">
+                <i class="bi bi-shop me-1" style="color: #17a2b8;"></i>Filtrar por Canales
+            </label>
+            <div class="multiselect-dropdown" id="multiselectCanales">
+                <button type="button" class="multiselect-dropdown-button" onclick="toggleDropdown('multiselectCanales')">
+                    <span id="canalesSelectedText">Todos los canales</span>
+                    <i class="bi bi-chevron-down"></i>
+                </button>
+                <div class="multiselect-dropdown-menu">
+                    <div class="multiselect-option" style="border-bottom: 1px solid #e9ecef; background-color: #f8f9fa;">
+                        <input type="checkbox" id="checkAllCanales" checked onchange="toggleAllCanales(this)">
+                        <label for="checkAllCanales" style="cursor: pointer; margin: 0; font-weight: 600;">Seleccionar todos</label>
+                    </div>
+                    {% for canal in canales_disponibles %}
+                    <div class="multiselect-option">
+                        <input type="checkbox" class="canal-checkbox-cat" id="canal_{{ loop.index }}" value="{{ canal }}" checked onchange="updateCanalesSelection();">
+                        <label for="canal_{{ loop.index }}" style="cursor: pointer; margin: 0; flex: 1;">{{ canal }}</label>
+                    </div>
+                    {% endfor %}
+                </div>
+            </div>
+        </div>
+
+        <!-- Filtro por Categoría (Multiselect con Checkboxes) -->
+        <div style="width: 280px;">
+            <label class="form-label fw-bold mb-2" style="color: #2C2C2C; font-size: 0.85rem;">
+                <i class="bi bi-tag me-1" style="color: #17a2b8;"></i>Filtrar por Categorías
+            </label>
+            <div class="multiselect-dropdown" id="multiselectCategorias">
+                <button type="button" class="multiselect-dropdown-button" onclick="toggleDropdown('multiselectCategorias')">
+                    <span id="categoriasSelectedText">Todas las categorías</span>
+                    <i class="bi bi-chevron-down"></i>
+                </button>
+                <div class="multiselect-dropdown-menu">
+                    <div class="multiselect-option" style="border-bottom: 1px solid #e9ecef; background-color: #f8f9fa;">
+                        <input type="checkbox" id="checkAllCategorias" checked onchange="toggleAllCategorias(this)">
+                        <label for="checkAllCategorias" style="cursor: pointer; margin: 0; font-weight: 600;">Seleccionar todas</label>
+                    </div>
+                    {% for categoria in categorias_disponibles %}
+                    <div class="multiselect-option">
+                        <input type="checkbox" class="categoria-checkbox" id="categoria_{{ loop.index }}" value="{{ categoria }}" checked onchange="updateCategoriasSelection();">
+                        <label for="categoria_{{ loop.index }}" style="cursor: pointer; margin: 0; flex: 1;">{{ categoria }}</label>
+                    </div>
+                    {% endfor %}
+                </div>
+            </div>
+        </div>
+
+        <!-- Botón de Filtrar y Limpiar -->
+        <div style="display: flex; flex-direction: column; gap: 10px; padding-top: 28px;">
+            <button id="btnActualizarCat" class="btn btn-primary" style="border-radius: 10px; background: linear-gradient(135deg, #17a2b8, #138496); border: none; font-weight: 600; height: 42px; padding: 0 20px; white-space: nowrap;">
+                <i class="bi bi-funnel me-2"></i>Filtrar
+            </button>
+            <button id="btnLimpiarFiltrosCat" class="btn btn-outline-secondary btn-sm" style="border-radius: 8px; white-space: nowrap;">
+                <i class="bi bi-x-circle me-1"></i>Limpiar Filtros
+            </button>
+        </div>
+
+        <!-- Indicador de carga -->
+        <div id="loadingIndicatorCat" style="display: none; padding-top: 28px;">
+            <div class="spinner-border text-primary" role="status" style="width: 28px; height: 28px;">
+                <span class="visually-hidden">Cargando...</span>
+            </div>
+        </div>
+    </div>
+</div>
+
+<script>
+// Funciones para manejar el multiselect con checkboxes
+
+function toggleDropdown(dropdownId) {
+    const dropdown = document.getElementById(dropdownId);
+    const menu = dropdown.querySelector('.multiselect-dropdown-menu');
+
+    // Cerrar otros dropdowns
+    document.querySelectorAll('.multiselect-dropdown-menu').forEach(m => {
+        if (m !== menu) m.classList.remove('show');
+    });
+
+    menu.classList.toggle('show');
+}
+
+// Cerrar dropdowns al hacer click fuera
+document.addEventListener('click', function(event) {
+    if (!event.target.closest('.multiselect-dropdown')) {
+        document.querySelectorAll('.multiselect-dropdown-menu').forEach(menu => {
+            menu.classList.remove('show');
+        });
+    }
+});
+
+function toggleAllCanales(checkbox) {
+    const checkboxes = document.querySelectorAll('.canal-checkbox-cat');
+    checkboxes.forEach(cb => cb.checked = checkbox.checked);
+    updateCanalesSelection();
+}
+
+function toggleAllCategorias(checkbox) {
+    const checkboxes = document.querySelectorAll('.categoria-checkbox');
+    checkboxes.forEach(cb => cb.checked = checkbox.checked);
+    updateCategoriasSelection();
+}
+
+function updateCanalesSelection() {
+    const checkboxes = document.querySelectorAll('.canal-checkbox-cat');
+    const checked = Array.from(checkboxes).filter(cb => cb.checked);
+    const total = checkboxes.length;
+    const text = document.getElementById('canalesSelectedText');
+
+    if (checked.length === 0) {
+        text.textContent = 'Ningún canal';
+    } else if (checked.length === total) {
+        text.textContent = 'Todos los canales';
+    } else {
+        text.textContent = `${checked.length} de ${total} canales`;
+    }
+
+    // Actualizar checkbox "Seleccionar todos"
+    document.getElementById('checkAllCanales').checked = checked.length === total;
+}
+
+function updateCategoriasSelection() {
+    const checkboxes = document.querySelectorAll('.categoria-checkbox');
+    const checked = Array.from(checkboxes).filter(cb => cb.checked);
+    const total = checkboxes.length;
+    const text = document.getElementById('categoriasSelectedText');
+
+    if (checked.length === 0) {
+        text.textContent = 'Ninguna categoría';
+    } else if (checked.length === total) {
+        text.textContent = 'Todas las categorías';
+    } else {
+        text.textContent = `${checked.length} de ${total} categorías`;
+    }
+
+    // Actualizar checkbox "Seleccionar todas"
+    document.getElementById('checkAllCategorias').checked = checked.length === total;
+}
+
+function getSelectedCanalesCat() {
+    const checkboxes = document.querySelectorAll('.canal-checkbox-cat:checked');
+    const valores = Array.from(checkboxes).map(cb => {
+        console.log(`🔍 [getSelectedCanalesCat] Checkbox: id=${cb.id}, value="${cb.value}", checked=${cb.checked}`);
+        return cb.value;
+    });
+    console.log(`🔍 [getSelectedCanalesCat] Total seleccionados: ${valores.length}, valores:`, valores);
+    return valores;
+}
+
+function getSelectedCategoriasCat() {
+    const checkboxes = document.querySelectorAll('.categoria-checkbox:checked');
+    return Array.from(checkboxes).map(cb => cb.value);
+}
+
+function limpiarFiltrosCategorias() {
+    // Seleccionar todos
+    document.querySelectorAll('.canal-checkbox-cat').forEach(cb => cb.checked = true);
+    document.querySelectorAll('.categoria-checkbox').forEach(cb => cb.checked = true);
+    document.getElementById('checkAllCanales').checked = true;
+    document.getElementById('checkAllCategorias').checked = true;
+    updateCanalesSelection();
+    updateCategoriasSelection();
+}
+</script>

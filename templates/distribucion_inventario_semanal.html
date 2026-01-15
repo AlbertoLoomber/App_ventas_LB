@@ -1,0 +1,603 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Distribución Semanal de Inventario - Loomber Dashboard</title>
+
+    <!-- Bootstrap CSS -->
+    <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/css/bootstrap.min.css" rel="stylesheet">
+    <!-- Bootstrap Icons -->
+    <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/bootstrap-icons@1.10.5/font/bootstrap-icons.css">
+    <!-- DataTables CSS -->
+    <link rel="stylesheet" href="https://cdn.datatables.net/1.13.6/css/dataTables.bootstrap5.min.css">
+
+    <style>
+        body {
+            background: linear-gradient(135deg, #f5f7fa 0%, #e9ecef 100%);
+            font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+            padding-top: 65px;
+        }
+
+        .main-container {
+            max-width: 1900px;
+            margin: 0 auto;
+            padding: 0.9rem 2.5rem;
+        }
+
+        .page-header {
+            background: white;
+            border-radius: 10px;
+            padding: 0.9rem 1.2rem;
+            margin-bottom: 0.9rem;
+            box-shadow: 0 2px 6px rgba(0, 0, 0, 0.05);
+            border-left: 4px solid #9b59b6;
+        }
+
+        .page-header h1 {
+            color: #2C2C2C;
+            font-weight: 700;
+            margin: 0;
+            display: flex;
+            align-items: center;
+            gap: 0.6rem;
+            font-size: 1.4rem;
+        }
+
+        .page-header h1 i {
+            color: #9b59b6;
+            font-size: 1.4rem;
+        }
+
+        .page-header p {
+            font-size: 0.82rem;
+            margin-bottom: 0;
+            color: #6c757d;
+        }
+
+        .filter-container {
+            background: white;
+            border-radius: 10px;
+            padding: 1rem;
+            margin-bottom: 0.9rem;
+            box-shadow: 0 2px 6px rgba(0, 0, 0, 0.05);
+        }
+
+        .stats-grid {
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(200px, 1fr));
+            gap: 1rem;
+            margin-bottom: 0.9rem;
+        }
+
+        .stat-card {
+            background: white;
+            border-radius: 10px;
+            padding: 1rem;
+            box-shadow: 0 2px 6px rgba(0, 0, 0, 0.05);
+            border-left: 4px solid #9b59b6;
+            transition: transform 0.2s ease;
+        }
+
+        .stat-card:hover {
+            transform: translateY(-2px);
+            box-shadow: 0 4px 12px rgba(0, 0, 0, 0.1);
+        }
+
+        .stat-card h6 {
+            font-size: 0.75rem;
+            color: #6c757d;
+            margin-bottom: 0.4rem;
+            text-transform: uppercase;
+            font-weight: 600;
+        }
+
+        .stat-card .stat-value {
+            font-size: 1.5rem;
+            font-weight: 700;
+            color: #2C2C2C;
+        }
+
+        .stat-card .stat-label {
+            font-size: 0.7rem;
+            color: #95a5a6;
+            margin-top: 0.2rem;
+        }
+
+        .table-container {
+            background: white;
+            border-radius: 10px;
+            padding: 1.5rem;
+            box-shadow: 0 2px 6px rgba(0, 0, 0, 0.05);
+            margin-bottom: 1.5rem;
+        }
+
+        .table thead th {
+            background: linear-gradient(135deg, #9b59b6 0%, #8e44ad 100%);
+            color: white;
+            border: none;
+            font-weight: 600;
+            font-size: 0.8rem;
+            padding: 0.7rem;
+            white-space: nowrap;
+        }
+
+        .table tbody td {
+            padding: 0.55rem;
+            font-size: 0.8rem;
+            vertical-align: middle;
+        }
+
+        .badge-semana {
+            padding: 0.35rem 0.6rem;
+            border-radius: 4px;
+            font-size: 0.75rem;
+            font-weight: 600;
+            background: #9b59b6;
+            color: white;
+        }
+
+        .badge-canal {
+            padding: 0.35rem 0.6rem;
+            border-radius: 4px;
+            font-size: 0.7rem;
+            font-weight: 600;
+        }
+
+        .btn-mes {
+            background: #9b59b6;
+            color: white;
+            border: none;
+            padding: 0.5rem 1.5rem;
+            font-weight: 600;
+            border-radius: 6px;
+            transition: all 0.3s ease;
+        }
+
+        .btn-mes:hover {
+            background: #8e44ad;
+            transform: translateY(-2px);
+            box-shadow: 0 4px 8px rgba(155, 89, 182, 0.3);
+            color: white;
+        }
+
+        .btn-back {
+            background: #95a5a6;
+            color: white;
+            border: none;
+            padding: 0.5rem 1.5rem;
+            font-weight: 600;
+            border-radius: 6px;
+            transition: all 0.3s ease;
+            text-decoration: none;
+            display: inline-block;
+        }
+
+        .btn-back:hover {
+            background: #7f8c8d;
+            transform: translateY(-2px);
+            box-shadow: 0 4px 8px rgba(149, 165, 166, 0.3);
+            color: white;
+        }
+
+        .loading-overlay {
+            display: none;
+            position: fixed;
+            top: 0;
+            left: 0;
+            width: 100%;
+            height: 100%;
+            background: rgba(0, 0, 0, 0.5);
+            z-index: 9999;
+            justify-content: center;
+            align-items: center;
+        }
+
+        .loading-overlay.active {
+            display: flex;
+        }
+
+        .cumplimiento-badge {
+            padding: 0.3rem 0.6rem;
+            border-radius: 4px;
+            font-weight: 600;
+            font-size: 0.75rem;
+        }
+
+        .cumplimiento-alto {
+            background: #d4edda;
+            color: #155724;
+        }
+
+        .cumplimiento-medio {
+            background: #fff3cd;
+            color: #856404;
+        }
+
+        .cumplimiento-bajo {
+            background: #f8d7da;
+            color: #721c24;
+        }
+
+        .alert-error {
+            background: #fee;
+            border-left: 4px solid #e74c3c;
+            color: #c0392b;
+        }
+    </style>
+</head>
+<body>
+
+    <!-- Overlay de carga -->
+    <div class="loading-overlay" id="loadingOverlay">
+        <div class="spinner-border text-primary" role="status">
+            <span class="visually-hidden">Cargando...</span>
+        </div>
+    </div>
+
+    <!-- Navbar -->
+    {% include 'navbar.html' %}
+
+    <div class="main-container">
+        <!-- Header -->
+        <div class="page-header">
+            <h1>
+                <i class="bi bi-calendar3-week"></i>
+                Distribución Semanal de Inventario
+            </h1>
+            <p class="mt-2 mb-0">Asignación semanal de inventario respetando disponibilidad física y cupo mensual</p>
+        </div>
+
+        <!-- Mensaje de error -->
+        {% if error %}
+        <div class="alert alert-error alert-dismissible fade show" role="alert">
+            <i class="bi bi-exclamation-triangle-fill me-2"></i>
+            <strong>Error:</strong> {{ error }}
+            <button type="button" class="btn-close" data-bs-dismiss="alert"></button>
+        </div>
+        {% endif %}
+
+        <!-- Filtros y botón de regreso -->
+        <div class="filter-container">
+            <div class="row align-items-end">
+                <div class="col-md-3">
+                    <label for="selectMes" class="form-label fw-bold">
+                        <i class="bi bi-calendar3"></i> Seleccionar Mes
+                    </label>
+                    <select class="form-select" id="selectMes" name="mes">
+                        {% for mes in meses_disponibles %}
+                        <option value="{{ mes.value }}" {% if mes.value == mes_seleccionado %}selected{% endif %}>
+                            {{ mes.label }}
+                        </option>
+                        {% endfor %}
+                    </select>
+                </div>
+                <div class="col-md-2">
+                    <button type="button" class="btn btn-mes w-100" id="btnActualizar">
+                        <i class="bi bi-arrow-clockwise me-1"></i> Actualizar
+                    </button>
+                </div>
+                <div class="col-md-2 ms-auto text-end">
+                    <a href="/distribucion-inventario" class="btn btn-back w-100">
+                        <i class="bi bi-arrow-left me-1"></i> Vista Mensual
+                    </a>
+                </div>
+            </div>
+        </div>
+
+        <!-- Resumen por Semana -->
+        <div class="table-container">
+            <h5 class="mb-3">
+                <i class="bi bi-calendar-check"></i> Resumen por Semana
+            </h5>
+            <div class="table-responsive">
+                <table class="table table-hover table-sm">
+                    <thead>
+                        <tr>
+                            <th>Semana</th>
+                            <th>SKUs Únicos</th>
+                            <th>Inventario Físico Total</th>
+                            <th>Asignación Total</th>
+                            <th>Ventas Reales</th>
+                            <th>Cumplimiento %</th>
+                        </tr>
+                    </thead>
+                    <tbody id="tbodyResumenSemanal">
+                        {% for semana in resumen_semanal %}
+                        <tr>
+                            <td><span class="badge-semana">S{{ semana.semana }}</span></td>
+                            <td><strong>{{ semana.total_skus }}</strong></td>
+                            <td>{{ "{:,.0f}".format(semana.inventario_fisico_total) }}</td>
+                            <td><strong>{{ "{:,.0f}".format(semana.asignacion_total) }}</strong></td>
+                            <td>{{ "{:,.0f}".format(semana.ventas_totales) }}</td>
+                            <td>
+                                {% if semana.cumplimiento_pct >= 80 %}
+                                <span class="cumplimiento-badge cumplimiento-alto">{{ "{:.1f}".format(semana.cumplimiento_pct) }}%</span>
+                                {% elif semana.cumplimiento_pct >= 50 %}
+                                <span class="cumplimiento-badge cumplimiento-medio">{{ "{:.1f}".format(semana.cumplimiento_pct) }}%</span>
+                                {% else %}
+                                <span class="cumplimiento-badge cumplimiento-bajo">{{ "{:.1f}".format(semana.cumplimiento_pct) }}%</span>
+                                {% endif %}
+                            </td>
+                        </tr>
+                        {% endfor %}
+                    </tbody>
+                </table>
+            </div>
+        </div>
+
+        <!-- Tabla de Distribución Semanal Detallada -->
+        <div class="table-container">
+            <h5 class="mb-3">
+                <i class="bi bi-table"></i> Distribución Detallada por Semana y Canal
+            </h5>
+
+            <div class="table-responsive">
+                <table id="tablaDistribucionSemanal" class="table table-hover table-sm table-striped">
+                    <thead>
+                        <tr>
+                            <th style="width: 80px;">Semana</th>
+                            <th style="width: 280px;">Producto</th>
+                            <th style="width: 120px;">Canal</th>
+                            <th style="width: 90px;">Inv. Inicial</th>
+                            <th style="width: 90px;">Arribos</th>
+                            <th style="width: 90px;">Forecast B2B</th>
+                            <th style="width: 100px;">Inv. Físico</th>
+                            <th style="width: 120px;" title="Asignación mensual total del SKU">
+                                <i class="bi bi-calendar-month"></i> Asig. Mensual
+                            </th>
+                            <th style="width: 110px;" title="Asignación por SKU para esta semana (según estacionalidad)">
+                                <i class="bi bi-calendar-week"></i> Asig. Semana
+                            </th>
+                            <th style="width: 110px;" title="Suma de ventas de todos los canales para este SKU en esta semana">
+                                <i class="bi bi-cart-check-fill"></i> Venta Total Semana
+                            </th>
+                            <th style="width: 100px;">Cupo Restante</th>
+                            <th style="width: 110px;" title="Asignación original del canal (por estacionalidad)">
+                                <i class="bi bi-calculator"></i> Asig. Original
+                            </th>
+                            <th style="width: 110px;" title="Redistribución recibida de semanas anteriores">
+                                <i class="bi bi-arrow-repeat"></i> Redistribución
+                            </th>
+                            <th style="width: 120px;">
+                                <i class="bi bi-check-circle-fill"></i> Asig. Final
+                            </th>
+                            <th style="width: 100px;">Ventas Reales</th>
+                            <th style="width: 90px;">Cumpl. %</th>
+                        </tr>
+                    </thead>
+                    <tbody id="tbodyDistribucionSemanal">
+                        {% for row in datos_tabla %}
+                        <tr>
+                            <td><span class="badge-semana">S{{ row.semana }}</span></td>
+                            <td>
+                                <div style="display: flex; flex-direction: column; gap: 4px;">
+                                    <span style="background: #e3f2fd; padding: 3px 8px; border-radius: 4px; font-weight: 600; font-size: 0.85rem; display: inline-block; width: fit-content;">
+                                        {{ row.sku }}
+                                    </span>
+                                    <span style="color: #666; font-size: 0.85rem; line-height: 1.3;">
+                                        {{ row.descripcion }}
+                                    </span>
+                                </div>
+                            </td>
+                            <td>
+                                <span class="badge-canal" style="color: #3498db; font-weight: 600;">{{ row.canal }}</span>
+                            </td>
+                            <td>{{ "{:,.0f}".format(row.inventario_inicial) }}</td>
+                            <td>{{ "{:,.0f}".format(row.arribos_esperados) }}</td>
+                            <td>{{ "{:,.0f}".format(row.forecast_b2b) }}</td>
+                            <td><strong>{{ "{:,.0f}".format(row.inventario_fisico) }}</strong></td>
+                            <td class="text-center" style="background: #f3e5f5;">
+                                <strong style="color: #7b1fa2; font-size: 0.95rem;">
+                                    {{ "{:,.0f}".format(row.cupo_mensual_total) }}
+                                </strong>
+                            </td>
+                            <td class="text-center">
+                                <strong style="color: #f39c12; font-size: 1rem;">
+                                    {{ "{:,.0f}".format(row.asignacion_semana) }}
+                                </strong>
+                            </td>
+                            <td class="text-center" style="background: #fff8e1;">
+                                <div style="display: flex; flex-direction: column; align-items: center; gap: 2px;">
+                                    <strong style="color: #e65100; font-size: 1rem;">
+                                        {{ "{:,.0f}".format(row.ventas_totales_informativas) }}
+                                    </strong>
+                                    {% set cumpl_semana = (row.ventas_totales_informativas / row.asignacion_semana * 100) if row.asignacion_semana > 0 else 0 %}
+                                    <span style="font-size: 0.75rem; color: {% if cumpl_semana >= 100 %}#27ae60{% elif cumpl_semana >= 80 %}#f39c12{% else %}#e74c3c{% endif %}; font-weight: 600;">
+                                        {{ "{:.1f}".format(cumpl_semana) }}%
+                                    </span>
+                                </div>
+                            </td>
+                            <td>{{ "{:,.0f}".format(row.cupo_canal_restante) }}</td>
+                            <td class="text-center">
+                                {{ "{:,.0f}".format(row.asignacion_original) }}
+                            </td>
+                            <td class="text-center">
+                                {% if row.redistribucion_recibida > 0 %}
+                                <span style="color: #ff9800; font-weight: 600;"
+                                      title="Recibió {{ '{:,.0f}'.format(row.redistribucion_recibida) }} unidades de faltante de {{ row.fuente_redistribucion }}"
+                                      data-bs-toggle="tooltip" data-bs-placement="top">
+                                    🔄 {{ "{:,.0f}".format(row.redistribucion_recibida) }}
+                                </span>
+                                {% else %}
+                                <span style="color: #999;">-</span>
+                                {% endif %}
+                            </td>
+                            <td class="text-center">
+                                <strong style="color: #27ae60; font-size: 1rem;">
+                                    {{ "{:,.0f}".format(row.asignacion_canal) }}
+                                </strong>
+                            </td>
+                            <td>{{ "{:,.0f}".format(row.ventas_reales_informativas) }}</td>
+                            <td>
+                                {% set cumpl = (row.ventas_reales_informativas / row.asignacion_canal * 100) if row.asignacion_canal > 0 else 0 %}
+                                {% if cumpl >= 80 %}
+                                <span class="cumplimiento-badge cumplimiento-alto">{{ "{:.0f}".format(cumpl) }}%</span>
+                                {% elif cumpl >= 50 %}
+                                <span class="cumplimiento-badge cumplimiento-medio">{{ "{:.0f}".format(cumpl) }}%</span>
+                                {% else %}
+                                <span class="cumplimiento-badge cumplimiento-bajo">{{ "{:.0f}".format(cumpl) }}%</span>
+                                {% endif %}
+                            </td>
+                        </tr>
+                        {% endfor %}
+                    </tbody>
+                </table>
+            </div>
+        </div>
+    </div>
+
+    <!-- jQuery -->
+    <script src="https://code.jquery.com/jquery-3.7.0.min.js"></script>
+    <!-- Bootstrap JS -->
+    <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/js/bootstrap.bundle.min.js"></script>
+    <!-- DataTables JS -->
+    <script src="https://cdn.datatables.net/1.13.6/js/jquery.dataTables.min.js"></script>
+    <script src="https://cdn.datatables.net/1.13.6/js/dataTables.bootstrap5.min.js"></script>
+
+    <script>
+        $(document).ready(function() {
+            // Inicializar tooltips de Bootstrap
+            var tooltipTriggerList = [].slice.call(document.querySelectorAll('[data-bs-toggle="tooltip"]'));
+            var tooltipList = tooltipTriggerList.map(function (tooltipTriggerEl) {
+                return new bootstrap.Tooltip(tooltipTriggerEl);
+            });
+
+            // Inicializar DataTable
+            const tabla = $('#tablaDistribucionSemanal').DataTable({
+                pageLength: 50,
+                lengthMenu: [[25, 50, 100, -1], [25, 50, 100, "Todos"]],
+                order: [[0, 'asc'], [1, 'asc']], // Ordenar por semana y Producto
+                language: {
+                    url: '//cdn.datatables.net/plug-ins/1.13.6/i18n/es-ES.json'
+                },
+                columnDefs: [
+                    { targets: [1], orderable: true, className: '' } // Columna Producto
+                ]
+            });
+
+            // Botón actualizar
+            $('#btnActualizar').on('click', function() {
+                const mesSeleccionado = $('#selectMes').val();
+
+                console.log('Actualizando datos semanales para mes:', mesSeleccionado);
+
+                // Mostrar overlay de carga
+                $('#loadingOverlay').addClass('active');
+
+                // Petición AJAX
+                $.ajax({
+                    url: '/distribucion-inventario-semanal-datos',
+                    type: 'POST',
+                    data: {
+                        mes: mesSeleccionado
+                    },
+                    success: function(response) {
+                        if (response.success) {
+                            console.log('Datos semanales recibidos:', response);
+
+                            // Actualizar tabla resumen semanal
+                            $('#tbodyResumenSemanal').empty();
+                            response.resumen_semanal.forEach(function(semana) {
+                                let cumplBadgeClass = semana.cumplimiento_pct >= 80 ? 'cumplimiento-alto' :
+                                                     semana.cumplimiento_pct >= 50 ? 'cumplimiento-medio' :
+                                                     'cumplimiento-bajo';
+
+                                $('#tbodyResumenSemanal').append(`
+                                    <tr>
+                                        <td><span class="badge-semana">S${semana.semana}</span></td>
+                                        <td><strong>${semana.total_skus}</strong></td>
+                                        <td>${semana.inventario_fisico_total.toLocaleString('es-MX', {maximumFractionDigits: 0})}</td>
+                                        <td><strong>${semana.asignacion_total.toLocaleString('es-MX', {maximumFractionDigits: 0})}</strong></td>
+                                        <td>${semana.ventas_totales.toLocaleString('es-MX', {maximumFractionDigits: 0})}</td>
+                                        <td><span class="cumplimiento-badge ${cumplBadgeClass}">${semana.cumplimiento_pct.toFixed(1)}%</span></td>
+                                    </tr>
+                                `);
+                            });
+
+                            // Actualizar tabla detallada
+                            tabla.clear();
+
+                            response.datos_tabla.forEach(function(row) {
+                                let cumpl = row.asignacion_canal > 0 ? (row.ventas_reales_informativas / row.asignacion_canal * 100) : 0;
+                                let cumplBadgeClass = cumpl >= 80 ? 'cumplimiento-alto' :
+                                                     cumpl >= 50 ? 'cumplimiento-medio' :
+                                                     'cumplimiento-bajo';
+
+                                // Celda de redistribución
+                                let redistribucionCell = '-';
+                                if (row.redistribucion_recibida > 0) {
+                                    redistribucionCell = `<span style="color: #ff9800; font-weight: 600;"
+                                        title="Recibió ${row.redistribucion_recibida.toLocaleString('es-MX', {maximumFractionDigits: 0})} unidades de faltante de ${row.fuente_redistribucion}"
+                                        data-bs-toggle="tooltip" data-bs-placement="top">
+                                        🔄 ${row.redistribucion_recibida.toLocaleString('es-MX', {maximumFractionDigits: 0})}
+                                    </span>`;
+                                }
+
+                                // Columna Producto (SKU + Descripción)
+                                let productoCell = `
+                                    <div style="display: flex; flex-direction: column; gap: 4px;">
+                                        <span style="background: #e3f2fd; padding: 3px 8px; border-radius: 4px; font-weight: 600; font-size: 0.85rem; display: inline-block; width: fit-content;">
+                                            ${row.sku}
+                                        </span>
+                                        <span style="color: #666; font-size: 0.85rem; line-height: 1.3;">
+                                            ${row.descripcion}
+                                        </span>
+                                    </div>
+                                `;
+
+                                tabla.row.add([
+                                    `<span class="badge-semana">S${row.semana}</span>`,
+                                    productoCell,
+                                    `<span class="badge-canal" style="color: #3498db; font-weight: 600;">${row.canal}</span>`,
+                                    row.inventario_inicial.toLocaleString('es-MX', {maximumFractionDigits: 0}),
+                                    row.arribos_esperados.toLocaleString('es-MX', {maximumFractionDigits: 0}),
+                                    row.forecast_b2b.toLocaleString('es-MX', {maximumFractionDigits: 0}),
+                                    `<strong>${row.inventario_fisico.toLocaleString('es-MX', {maximumFractionDigits: 0})}</strong>`,
+                                    `<strong style="color: #7b1fa2; font-size: 0.95rem;">${row.cupo_mensual_total.toLocaleString('es-MX', {maximumFractionDigits: 0})}</strong>`,
+                                    `<strong style="color: #f39c12; font-size: 1rem;">${row.asignacion_semana.toLocaleString('es-MX', {maximumFractionDigits: 0})}</strong>`,
+                                    (() => {
+                                        let cumplSemana = row.asignacion_semana > 0 ? (row.ventas_totales_informativas / row.asignacion_semana * 100) : 0;
+                                        let colorCumpl = cumplSemana >= 100 ? '#27ae60' : (cumplSemana >= 80 ? '#f39c12' : '#e74c3c');
+                                        return `<div style="display: flex; flex-direction: column; align-items: center; gap: 2px;">
+                                            <strong style="color: #e65100; font-size: 1rem;">${row.ventas_totales_informativas.toLocaleString('es-MX', {maximumFractionDigits: 0})}</strong>
+                                            <span style="font-size: 0.75rem; color: ${colorCumpl}; font-weight: 600;">${cumplSemana.toFixed(1)}%</span>
+                                        </div>`;
+                                    })(),
+                                    row.cupo_canal_restante.toLocaleString('es-MX', {maximumFractionDigits: 0}),
+                                    row.asignacion_original.toLocaleString('es-MX', {maximumFractionDigits: 0}),
+                                    redistribucionCell,
+                                    `<strong style="color: #27ae60; font-size: 1rem;">${row.asignacion_canal.toLocaleString('es-MX', {maximumFractionDigits: 0})}</strong>`,
+                                    row.ventas_reales_informativas.toLocaleString('es-MX', {maximumFractionDigits: 0}),
+                                    `<span class="cumplimiento-badge ${cumplBadgeClass}">${cumpl.toFixed(0)}%</span>`
+                                ]);
+                            });
+
+                            tabla.draw();
+
+                            // Reinicializar tooltips después de actualizar la tabla
+                            var tooltipTriggerList = [].slice.call(document.querySelectorAll('[data-bs-toggle="tooltip"]'));
+                            var tooltipList = tooltipTriggerList.map(function (tooltipTriggerEl) {
+                                return new bootstrap.Tooltip(tooltipTriggerEl);
+                            });
+
+                            // Ocultar overlay
+                            $('#loadingOverlay').removeClass('active');
+
+                        } else {
+                            console.error('Error en respuesta:', response.error);
+                            $('#loadingOverlay').removeClass('active');
+                            alert('Error al cargar datos: ' + response.error);
+                        }
+                    },
+                    error: function(xhr, status, error) {
+                        console.error('Error AJAX:', error);
+                        $('#loadingOverlay').removeClass('active');
+                        alert('Error de conexión al servidor');
+                    }
+                });
+            });
+        });
+    </script>
+</body>
+</html>

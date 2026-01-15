@@ -1,0 +1,1091 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Reparto de Inventario | Loomber</title>
+
+    <!-- Bootstrap 5.3 CSS -->
+    <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/css/bootstrap.min.css" rel="stylesheet">
+
+    <!-- Bootstrap Icons -->
+    <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/bootstrap-icons@1.11.1/font/bootstrap-icons.css">
+
+    <!-- Google Fonts -->
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700&display=swap" rel="stylesheet">
+
+    <!-- Chart.js -->
+    <script src="https://cdn.jsdelivr.net/npm/chart.js@4.4.0/dist/chart.umd.min.js"></script>
+
+    <style>
+        body {
+            font-family: 'Inter', sans-serif;
+            background-color: #f8f9fa;
+            padding-top: 80px;
+        }
+
+        .badge-estado {
+            padding: 0.4rem 0.8rem;
+            border-radius: 8px;
+            font-size: 0.75rem;
+            font-weight: 600;
+        }
+
+        .badge-cumplido {
+            background-color: #d4edda;
+            color: #155724;
+        }
+
+        .badge-sobre-venta {
+            background-color: #fff3cd;
+            color: #856404;
+        }
+
+        .badge-parcial {
+            background-color: #cfe2ff;
+            color: #084298;
+        }
+
+        .badge-bajo {
+            background-color: #f8d7da;
+            color: #721c24;
+        }
+
+        .tabla-reparto {
+            font-size: 0.9rem;
+        }
+
+        .tabla-reparto th {
+            background-color: #f8f9fa;
+            font-weight: 600;
+            color: #495057;
+            padding: 1rem 0.75rem;
+            border-bottom: 2px solid #dee2e6;
+        }
+
+        .tabla-reparto td {
+            padding: 0.75rem;
+            vertical-align: middle;
+        }
+
+        .tabla-reparto tbody tr:hover {
+            background-color: #f8f9fa;
+        }
+
+        .semana-col {
+            text-align: center;
+            min-width: 140px;
+        }
+
+        .filtros-container {
+            background: white;
+            border-radius: 16px;
+            padding: 1.5rem;
+            box-shadow: 0 2px 8px rgba(0,0,0,0.08);
+            margin-bottom: 1.5rem;
+        }
+
+        .chart-container {
+            background: white;
+            border-radius: 16px;
+            padding: 1.5rem;
+            box-shadow: 0 2px 8px rgba(0,0,0,0.08);
+            margin-top: 1.5rem;
+        }
+
+        .spark-line {
+            width: 100%;
+            height: 40px;
+        }
+
+        /* Estilos para columna de Producto */
+        .producto-cell {
+            padding: 1rem 0.75rem !important;
+        }
+
+        .sku-badge {
+            display: inline-block;
+            padding: 0.35rem 0.75rem;
+            background: linear-gradient(135deg, #D4AF37, #B8941F);
+            color: white;
+            font-weight: 600;
+            font-size: 0.85rem;
+            border-radius: 6px;
+            margin-bottom: 0.4rem;
+            letter-spacing: 0.5px;
+        }
+
+        .producto-descripcion {
+            font-size: 0.8rem;
+            color: #6c757d;
+            line-height: 1.3;
+            margin: 0;
+        }
+
+        /* Estilos para dropdown personalizado de SKUs */
+        .sku-search-container {
+            position: relative;
+        }
+
+        #inputBuscarSku {
+            border-radius: 8px;
+            border: 2px solid #e0e0e0;
+            padding: 0.6rem 1rem;
+            transition: all 0.3s ease;
+        }
+
+        #inputBuscarSku:focus {
+            border-color: #D4AF37;
+            box-shadow: 0 0 0 0.2rem rgba(212, 175, 55, 0.15);
+        }
+
+        .sku-dropdown {
+            position: absolute;
+            top: 100%;
+            left: 0;
+            right: 0;
+            background: white;
+            border: 1px solid #e0e0e0;
+            border-radius: 8px;
+            box-shadow: 0 4px 12px rgba(0,0,0,0.15);
+            margin-top: 4px;
+            max-height: 0;
+            overflow: hidden;
+            z-index: 1000;
+            transition: max-height 0.3s ease, opacity 0.3s ease;
+            opacity: 0;
+        }
+
+        .sku-dropdown.show {
+            max-height: 280px;
+            opacity: 1;
+            overflow-y: auto;
+        }
+
+        .sku-dropdown::-webkit-scrollbar {
+            width: 6px;
+        }
+
+        .sku-dropdown::-webkit-scrollbar-track {
+            background: #f1f1f1;
+            border-radius: 0 8px 8px 0;
+        }
+
+        .sku-dropdown::-webkit-scrollbar-thumb {
+            background: #D4AF37;
+            border-radius: 3px;
+        }
+
+        .sku-dropdown::-webkit-scrollbar-thumb:hover {
+            background: #B8941F;
+        }
+
+        .sku-dropdown-item {
+            padding: 0.75rem 1rem;
+            cursor: pointer;
+            border-bottom: 1px solid #f0f0f0;
+            transition: background-color 0.2s ease;
+        }
+
+        .sku-dropdown-item:last-child {
+            border-bottom: none;
+        }
+
+        .sku-dropdown-item:hover {
+            background-color: #f8f9fa;
+        }
+
+        .sku-dropdown-item.active {
+            background-color: #fff8e7;
+        }
+
+        .sku-dropdown-code {
+            display: inline-block;
+            padding: 0.25rem 0.6rem;
+            background: linear-gradient(135deg, #D4AF37, #B8941F);
+            color: white;
+            font-weight: 600;
+            font-size: 0.85rem;
+            border-radius: 4px;
+            margin-bottom: 0.3rem;
+            letter-spacing: 0.3px;
+        }
+
+        .sku-dropdown-desc {
+            font-size: 0.8rem;
+            color: #6c757d;
+            line-height: 1.3;
+            margin: 0;
+            display: block;
+        }
+
+        .sku-dropdown-empty {
+            padding: 1rem;
+            text-align: center;
+            color: #999;
+            font-size: 0.85rem;
+        }
+    </style>
+</head>
+<body>
+    <!-- Navbar -->
+    {% include 'navbar.html' %}
+
+    <!-- Contenido Principal -->
+    <div class="container mt-4">
+
+        <!-- Título -->
+        <div class="d-flex align-items-center mb-4">
+            <i class="bi bi-truck" style="font-size: 2rem; color: #D4AF37; margin-right: 1rem;"></i>
+            <h1 class="mb-0" style="font-weight: 700; color: #2C2C2C;">Reparto de Inventario</h1>
+        </div>
+
+        <!-- Filtros -->
+        <div class="filtros-container">
+            <div class="row g-3 align-items-end">
+                <div class="col-md-3">
+                    <label for="selectMes" class="form-label fw-semibold">Filtrar por Mes:</label>
+                    <select class="form-select" id="selectMes">
+                        <option value="Enero 2026">Enero 2026</option>
+                        <option value="Diciembre 2025">Diciembre 2025</option>
+                    </select>
+                </div>
+                <div class="col-md-3">
+                    <label for="selectCanal" class="form-label fw-semibold">Canal:</label>
+                    <select class="form-select" id="selectCanal">
+                        <option value="Todos">Todos los canales</option>
+                    </select>
+                </div>
+                <div class="col-md-3">
+                    <label for="inputBuscarSku" class="form-label fw-semibold">
+                        <i class="bi bi-search me-1"></i> Buscar SKU:
+                    </label>
+                    <div class="sku-search-container">
+                        <input type="text" class="form-control" id="inputBuscarSku"
+                               placeholder="Escribe SKU o descripción..."
+                               autocomplete="off">
+                        <div class="sku-dropdown" id="skuDropdown">
+                            <!-- Se llena dinámicamente -->
+                        </div>
+                    </div>
+                </div>
+                <div class="col-md-3">
+                    <button type="button" class="btn w-100" id="btnConsultar"
+                            style="background: #D4AF37; color: white; font-weight: 600; padding: 0.6rem;">
+                        <i class="bi bi-search me-2"></i>Consultar
+                    </button>
+                </div>
+            </div>
+        </div>
+
+        <!-- Botones de filtro por categoría -->
+        <div class="d-flex justify-content-end align-items-center mb-3 gap-2" id="botones-filtro" style="display: none !important;">
+            <button type="button" id="filter-todos" class="btn btn-warning btn-sm filter-btn active"
+                    style="border-radius: 8px; padding: 8px 16px; font-weight: 600; transition: all 0.3s ease;"
+                    onclick="filtrarProductos('todos')">
+                <i class="bi bi-grid-3x3-gap-fill me-2"></i>Todos
+            </button>
+
+            <button type="button" id="filter-plegables" class="btn btn-outline-info btn-sm filter-btn"
+                    style="border-radius: 8px; padding: 8px 16px; font-weight: 600; transition: all 0.3s ease;"
+                    onclick="filtrarProductos('plegables')">
+                <i class="bi bi-box me-2"></i>Plegables
+            </button>
+
+            <button type="button" id="filter-sofas" class="btn btn-outline-success btn-sm filter-btn"
+                    style="border-radius: 8px; padding: 8px 16px; font-weight: 600; transition: all 0.3s ease;"
+                    onclick="filtrarProductos('sofas')">
+                <i class="bi bi-couch me-2"></i>Sofás
+            </button>
+
+            <button type="button" id="filter-toldos" class="btn btn-outline-primary btn-sm filter-btn"
+                    style="border-radius: 8px; padding: 8px 16px; font-weight: 600; transition: all 0.3s ease;"
+                    onclick="filtrarProductos('toldos')">
+                <i class="bi bi-shield-fill-check me-2"></i>Toldos
+            </button>
+        </div>
+
+        <!-- Tabla Resumen General (solo visible cuando canal = "Todos") -->
+        <div id="tabla-general-container" class="card border-0 shadow-sm mb-4" style="border-radius: 16px; display: none;">
+            <div class="card-header bg-white border-bottom" style="padding: 1.25rem 1.5rem; border-radius: 16px 16px 0 0;">
+                <h5 class="mb-0 fw-semibold"><i class="bi bi-bar-chart-fill me-2"></i>Resumen General (Todos los Canales)</h5>
+            </div>
+            <div class="card-body p-0">
+                <div class="table-responsive" style="max-height: 540px; overflow-y: auto;">
+                    <table class="table tabla-reparto mb-0">
+                        <thead style="position: sticky; top: 0; background-color: white; z-index: 10;">
+                            <tr>
+                                <th style="width: 12%;">SKU</th>
+                                <th style="width: 25%;">Descripción</th>
+                                <th style="width: 10%;">Inventario Total</th>
+                                <th style="width: 13%;">Semana 1</th>
+                                <th style="width: 13%;">Semana 2</th>
+                                <th style="width: 13%;">Semana 3</th>
+                                <th style="width: 13%;">Semana 4</th>
+                            </tr>
+                        </thead>
+                        <tbody id="tbodyRepartoGeneral">
+                            <tr>
+                                <td colspan="7" class="text-center text-muted py-5">
+                                    <i class="bi bi-inbox" style="font-size: 3rem; display: block; margin-bottom: 1rem; opacity: 0.3;"></i>
+                                    Selecciona "Todos los canales" y presiona Consultar
+                                </td>
+                            </tr>
+                        </tbody>
+                    </table>
+                </div>
+            </div>
+        </div>
+
+        <!-- Tabla Principal -->
+        <div class="card border-0 shadow-sm" style="border-radius: 16px;">
+            <div class="card-header bg-white border-bottom" style="padding: 1.25rem 1.5rem; border-radius: 16px 16px 0 0;">
+                <h5 class="mb-0 fw-semibold"><i class="bi bi-table me-2"></i>Resumen Detallado por Canal</h5>
+            </div>
+            <div class="card-body p-0">
+                <div class="table-responsive" style="max-height: 540px; overflow-y: auto;">
+                    <table class="table tabla-reparto mb-0">
+                        <thead style="position: sticky; top: 0; background-color: white; z-index: 10;">
+                            <tr>
+                                <th style="min-width: 280px;">Producto</th>
+                                <th style="min-width: 120px;">Canal</th>
+                                <th class="text-end" style="min-width: 140px;">Inventario Asignado</th>
+                                <th class="semana-col">Semana 1</th>
+                                <th class="semana-col">Semana 2</th>
+                                <th class="semana-col">Semana 3</th>
+                                <th class="semana-col">Semana 4</th>
+                            </tr>
+                        </thead>
+                        <tbody id="tbodyReparto">
+                            <tr>
+                                <td colspan="7" class="text-center text-muted py-5">
+                                    <i class="bi bi-inbox" style="font-size: 3rem; display: block; margin-bottom: 1rem; opacity: 0.3;"></i>
+                                    Selecciona filtros y haz clic en "Consultar" para ver los datos
+                                </td>
+                            </tr>
+                        </tbody>
+                    </table>
+                </div>
+            </div>
+        </div>
+
+        <!-- Gráficos de Líneas por SKU -->
+        <div id="graficos-container" style="display: none;">
+            <div class="chart-container">
+                <h5 class="mb-4 fw-semibold" id="tituloGrafico"><i class="bi bi-graph-up me-2"></i>Análisis de Cumplimiento por SKU</h5>
+                <canvas id="chartCumplimiento"></canvas>
+            </div>
+        </div>
+
+    </div>
+
+    <!-- Bootstrap 5.3 JS -->
+    <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/js/bootstrap.bundle.min.js"></script>
+
+    <!-- jQuery -->
+    <script src="https://code.jquery.com/jquery-3.7.1.min.js"></script>
+
+    <script>
+        $(document).ready(function() {
+            let datosActuales = [];
+            let chartInstance = null;
+
+            // Consultar datos
+            $('#btnConsultar').on('click', function() {
+                const $btn = $(this);
+
+                // Prevenir double-submit
+                if ($btn.prop('disabled')) {
+                    return;
+                }
+
+                const mes = $('#selectMes').val();
+                const canal = $('#selectCanal').val();
+                const sku = $('#inputBuscarSku').val().trim();
+
+                if (!mes) {
+                    alert('Debes seleccionar un mes');
+                    return;
+                }
+
+                // Deshabilitar botón
+                $btn.prop('disabled', true);
+                const textoOriginal = $btn.html();
+                $btn.html('<i class="bi bi-hourglass-split"></i> Cargando...');
+
+                // Limpiar tablas según el canal seleccionado
+                if (canal === 'Todos') {
+                    // Mostrar AMBAS tablas: general (arriba) y detallada (abajo)
+                    $('#tabla-general-container').show();
+                    $('#tbodyRepartoGeneral').html(`
+                        <tr>
+                            <td colspan="7" class="text-center text-muted py-5">
+                                <div class="spinner-border text-primary" role="status">
+                                    <span class="visually-hidden">Cargando...</span>
+                                </div>
+                                <p class="mt-3">Cargando datos consolidados...</p>
+                            </td>
+                        </tr>
+                    `);
+                    // Mostrar TAMBIÉN la tabla detallada con spinner
+                    $('#tbodyReparto').closest('.card').show();
+                    $('#tbodyReparto').html(`
+                        <tr>
+                            <td colspan="7" class="text-center text-muted py-5">
+                                <div class="spinner-border text-primary" role="status">
+                                    <span class="visually-hidden">Cargando...</span>
+                                </div>
+                                <p class="mt-3">Cargando desglose por canal...</p>
+                            </td>
+                        </tr>
+                    `);
+                } else {
+                    // Mostrar solo tabla detallada, ocultar tabla general
+                    $('#tabla-general-container').hide();
+                    $('#tbodyReparto').closest('.card').show();
+                    $('#tbodyReparto').html(`
+                        <tr>
+                            <td colspan="7" class="text-center text-muted py-5">
+                                <div class="spinner-border text-primary" role="status">
+                                    <span class="visually-hidden">Cargando...</span>
+                                </div>
+                                <p class="mt-3">Cargando datos...</p>
+                            </td>
+                        </tr>
+                    `);
+                }
+
+                // Decidir qué endpoint llamar según el canal
+                if (canal === 'Todos') {
+                    // Cargar los datos detallados (para tabla detallada + canales y SKUs)
+                    $.ajax({
+                        url: '/reparto-inventario-datos',
+                        type: 'GET',
+                        data: {
+                            mes: mes,
+                            canal: canal,
+                            sku: sku  // Usar el filtro de SKU también aquí
+                        },
+                        success: function(responseDetalle) {
+                            if (responseDetalle.success) {
+                                // Actualizar canales y SKUs disponibles
+                                actualizarCanales(responseDetalle.canales);
+                                actualizarDatalistSkus(responseDetalle.skus);
+
+                                // Renderizar tabla detallada (desglose por canal)
+                                renderizarTabla(responseDetalle.data);
+
+                                if (responseDetalle.data.length === 0) {
+                                    $('#tbodyReparto').html(`
+                                        <tr>
+                                            <td colspan="7" class="text-center text-muted py-5">
+                                                <i class="bi bi-inbox" style="font-size: 3rem; display: block; margin-bottom: 1rem; opacity: 0.3;"></i>
+                                                No se encontraron datos para los filtros seleccionados
+                                            </td>
+                                        </tr>
+                                    `);
+                                }
+                            }
+                        }
+                    });
+
+                    // Llamar al endpoint consolidado (para tabla general)
+                    $.ajax({
+                        url: '/reparto-inventario-consolidado',
+                        type: 'GET',
+                        data: {
+                            mes: mes,
+                            sku: sku
+                        },
+                        success: function(response) {
+                            if (response.success) {
+                                // Renderizar tabla general
+                                renderizarTablaGeneral(response.data);
+
+                                if (response.data.length === 0) {
+                                    $('#tbodyRepartoGeneral').html(`
+                                        <tr>
+                                            <td colspan="7" class="text-center text-muted py-5">
+                                                <i class="bi bi-inbox" style="font-size: 3rem; display: block; margin-bottom: 1rem; opacity: 0.3;"></i>
+                                                No se encontraron datos para los filtros seleccionados
+                                            </td>
+                                        </tr>
+                                    `);
+                                }
+
+                                // Restaurar botón
+                                $btn.prop('disabled', false);
+                                $btn.html(textoOriginal);
+                            } else {
+                                alert('Error: ' + response.message);
+                                $btn.prop('disabled', false);
+                                $btn.html(textoOriginal);
+                            }
+                        },
+                        error: function(xhr) {
+                            console.error('Error en AJAX (consolidado):', xhr);
+                            alert('Error al cargar los datos consolidados. Por favor intenta nuevamente.');
+                            $('#tbodyRepartoGeneral').html(`
+                                <tr>
+                                    <td colspan="7" class="text-center text-danger py-5">
+                                        <i class="bi bi-exclamation-triangle" style="font-size: 3rem; display: block; margin-bottom: 1rem;"></i>
+                                        Error al cargar los datos
+                                    </td>
+                                </tr>
+                            `);
+                            $btn.prop('disabled', false);
+                            $btn.html(textoOriginal);
+                        }
+                    });
+                } else {
+                    // Llamar al endpoint detallado (por canal)
+                    $.ajax({
+                        url: '/reparto-inventario-datos',
+                        type: 'GET',
+                        data: {
+                            mes: mes,
+                            canal: canal,
+                            sku: sku
+                        },
+                        success: function(response) {
+                            if (response.success) {
+                                datosActuales = response.data;
+
+                                // Actualizar canales disponibles
+                                actualizarCanales(response.canales);
+
+                                // Actualizar datalist de SKUs disponibles
+                                actualizarDatalistSkus(response.skus);
+
+                                // Renderizar tabla
+                                renderizarTabla(response.data);
+
+                                // Actualizar gráficos
+                                actualizarGraficos(response.data);
+
+                                if (response.data.length === 0) {
+                                    $('#tbodyReparto').html(`
+                                        <tr>
+                                            <td colspan="7" class="text-center text-muted py-5">
+                                                <i class="bi bi-inbox" style="font-size: 3rem; display: block; margin-bottom: 1rem; opacity: 0.3;"></i>
+                                                No se encontraron datos para los filtros seleccionados
+                                            </td>
+                                        </tr>
+                                    `);
+                                }
+
+                                // Restaurar botón
+                                $btn.prop('disabled', false);
+                                $btn.html(textoOriginal);
+                            } else {
+                                alert('Error: ' + response.message);
+                                $btn.prop('disabled', false);
+                                $btn.html(textoOriginal);
+                            }
+                        },
+                        error: function(xhr) {
+                            console.error('Error en AJAX:', xhr);
+                            alert('Error al cargar los datos. Por favor intenta nuevamente.');
+                            $('#tbodyReparto').html(`
+                                <tr>
+                                    <td colspan="7" class="text-center text-danger py-5">
+                                        <i class="bi bi-exclamation-triangle" style="font-size: 3rem; display: block; margin-bottom: 1rem;"></i>
+                                        Error al cargar los datos
+                                    </td>
+                                </tr>
+                            `);
+                            $btn.prop('disabled', false);
+                            $btn.html(textoOriginal);
+                        }
+                    });
+                }
+            });
+
+            // Actualizar canales disponibles
+            function actualizarCanales(canales) {
+                const canalActual = $('#selectCanal').val();
+                $('#selectCanal').empty();
+                $('#selectCanal').append('<option value="Todos">Todos los canales</option>');
+
+                canales.forEach(function(canal) {
+                    $('#selectCanal').append(`<option value="${canal}">${canal}</option>`);
+                });
+
+                // Restaurar selección si existe
+                if (canales.includes(canalActual)) {
+                    $('#selectCanal').val(canalActual);
+                }
+            }
+
+            // Actualizar datalist de SKUs disponibles para autocompletado
+            // Variable global para almacenar SKUs con descripciones
+            let skusDisponibles = [];
+
+            function actualizarDatalistSkus(skus) {
+                // Obtener descripciones de los datos actuales
+                const skusConDescripcion = {};
+                datosActuales.forEach(function(item) {
+                    if (!skusConDescripcion[item.sku]) {
+                        skusConDescripcion[item.sku] = item.descripcion;
+                    }
+                });
+
+                // Crear array con SKUs y descripciones
+                skusDisponibles = skus.map(sku => ({
+                    codigo: sku,
+                    descripcion: skusConDescripcion[sku] || 'Sin descripción'
+                }));
+
+                console.log(`SKUs cargados: ${skus.length}`);
+            }
+
+            // Manejar input del campo de búsqueda SKU
+            $('#inputBuscarSku').on('input', function() {
+                const searchTerm = $(this).val().trim().toLowerCase();
+                const dropdown = $('#skuDropdown');
+
+                if (searchTerm.length < 2) {
+                    dropdown.removeClass('show');
+                    return;
+                }
+
+                // Filtrar SKUs
+                const filtrados = skusDisponibles.filter(item =>
+                    item.codigo.toLowerCase().includes(searchTerm) ||
+                    item.descripcion.toLowerCase().includes(searchTerm)
+                ).slice(0, 4); // Máximo 4 resultados
+
+                if (filtrados.length === 0) {
+                    dropdown.html('<div class="sku-dropdown-empty">No se encontraron resultados</div>');
+                    dropdown.addClass('show');
+                    return;
+                }
+
+                // Renderizar resultados
+                const html = filtrados.map(item => `
+                    <div class="sku-dropdown-item" data-sku="${item.codigo}">
+                        <div class="sku-dropdown-code">${item.codigo}</div>
+                        <div class="sku-dropdown-desc">${item.descripcion}</div>
+                    </div>
+                `).join('');
+
+                dropdown.html(html);
+                dropdown.addClass('show');
+            });
+
+            // Click en un item del dropdown
+            $(document).on('click', '.sku-dropdown-item', function(e) {
+                e.preventDefault();
+                e.stopPropagation();
+
+                const sku = $(this).data('sku');
+                $('#inputBuscarSku').val(sku);
+                $('#skuDropdown').removeClass('show');
+
+                // Ejecutar la consulta automáticamente después de seleccionar
+                setTimeout(function() {
+                    $('#btnConsultar').click();
+                }, 100);
+            });
+
+            // Cerrar dropdown al hacer click fuera
+            $(document).on('click', function(e) {
+                if (!$(e.target).closest('.sku-search-container').length) {
+                    $('#skuDropdown').removeClass('show');
+                }
+            });
+
+            // Renderizar tabla detallada (por canal)
+            function renderizarTabla(datos) {
+                const tbody = $('#tbodyReparto');
+                tbody.empty();
+
+                if (datos.length === 0) {
+                    $('#botones-filtro').hide();
+                    return;
+                }
+
+                // Mostrar botones de filtro cuando hay datos
+                $('#botones-filtro').show();
+
+                datos.forEach(function(item) {
+                    const descripcionLower = item.descripcion ? item.descripcion.toLowerCase() : '';
+                    let filasHtml = `
+                        <tr class="producto-row" data-descripcion="${descripcionLower}">
+                            <td class="producto-cell">
+                                <div class="sku-badge">${item.sku}</div>
+                                <div class="producto-descripcion">${item.descripcion}</div>
+                            </td>
+                            <td><span class="badge bg-secondary">${item.canal}</span></td>
+                            <td class="text-end fw-semibold">${formatearNumero(item.inventario_asignado)}</td>
+                    `;
+
+                    // Agregar celdas de semanas
+                    item.semanas.forEach(function(semana) {
+                        const badgeEstado = obtenerBadgeEstado(semana.estado);
+                        filasHtml += `
+                            <td class="semana-col">
+                                <div class="mb-1"><small class="text-muted">Asig:</small> <strong>${formatearNumero(semana.asignacion)}</strong></div>
+                                <div class="mb-1"><small class="text-muted">Vtas:</small> ${formatearNumero(semana.ventas)}</div>
+                                <div>${badgeEstado} ${semana.cumplimiento.toFixed(1)}%</div>
+                            </td>
+                        `;
+                    });
+
+                    filasHtml += '</tr>';
+                    tbody.append(filasHtml);
+                });
+            }
+
+            // Renderizar tabla general (consolidada - todos los canales)
+            function renderizarTablaGeneral(datos) {
+                const tbody = $('#tbodyRepartoGeneral');
+                tbody.empty();
+
+                if (datos.length === 0) {
+                    $('#botones-filtro').hide();
+                    return;
+                }
+
+                // Mostrar botones de filtro cuando hay datos
+                $('#botones-filtro').show();
+
+                datos.forEach(function(item) {
+                    const descripcionLower = item.descripcion ? item.descripcion.toLowerCase() : '';
+                    let filasHtml = `
+                        <tr class="producto-row-general" data-descripcion="${descripcionLower}">
+                            <td class="producto-cell">
+                                <div class="sku-badge">${item.sku}</div>
+                            </td>
+                            <td class="producto-descripcion">${item.descripcion}</td>
+                            <td class="text-end fw-semibold">${formatearNumero(item.inventario_total)}</td>
+                    `;
+
+                    // Agregar celdas de semanas (consolidadas)
+                    item.semanas.forEach(function(semana) {
+                        const badgeEstado = obtenerBadgeEstado(semana.estado);
+                        filasHtml += `
+                            <td class="semana-col">
+                                <div class="mb-1"><small class="text-muted">Asig:</small> <strong>${formatearNumero(semana.asignacion)}</strong></div>
+                                <div class="mb-1"><small class="text-muted">Vtas:</small> ${formatearNumero(semana.ventas)}</div>
+                                <div>${badgeEstado} ${semana.cumplimiento.toFixed(1)}%</div>
+                            </td>
+                        `;
+                    });
+
+                    filasHtml += '</tr>';
+                    tbody.append(filasHtml);
+                });
+            }
+
+            // Obtener badge según estado
+            function obtenerBadgeEstado(estado) {
+                switch(estado) {
+                    case 'cumplido':
+                        return '<span class="badge badge-cumplido">✓</span>';
+                    case 'sobre-venta':
+                        return '<span class="badge badge-sobre-venta">↑</span>';
+                    case 'parcial':
+                        return '<span class="badge badge-parcial">~</span>';
+                    case 'bajo':
+                        return '<span class="badge badge-bajo">↓</span>';
+                    default:
+                        return '';
+                }
+            }
+
+            // Formatear número
+            function formatearNumero(numero) {
+                return new Intl.NumberFormat('es-MX', {
+                    maximumFractionDigits: 0
+                }).format(numero);
+            }
+
+            // Actualizar gráficos
+            function actualizarGraficos(datos) {
+                if (datos.length === 0) {
+                    $('#graficos-container').hide();
+                    return;
+                }
+
+                const labels = ['Semana 1', 'Semana 2', 'Semana 3', 'Semana 4'];
+                const datasets = [];
+
+                // Detectar si hay un SKU específico buscado (todos los registros son del mismo SKU)
+                const skusUnicos = [...new Set(datos.map(item => item.sku))];
+                const canal = $('#selectCanal').val();
+                const esBusquedaEspecifica = skusUnicos.length === 1;
+
+                if (esBusquedaEspecifica && canal === 'Todos') {
+                    // CASO: SKU específico con "Todos los canales"
+                    // Consolidar datos sumando todas las asignaciones y ventas por semana
+                    const skuBuscado = skusUnicos[0];
+                    const descripcionSku = datos[0].descripcion;
+
+                    // Actualizar título del gráfico
+                    $('#tituloGrafico').html(`<i class="bi bi-graph-up me-2"></i>Cumplimiento Global - ${skuBuscado} (Todos los Canales)`);
+
+                    // Inicializar acumuladores por semana
+                    const datosConsolidados = {
+                        asignaciones: [0, 0, 0, 0],
+                        ventas: [0, 0, 0, 0]
+                    };
+
+                    // Sumar todos los canales por semana
+                    datos.forEach(function(item) {
+                        item.semanas.forEach(function(semana, idx) {
+                            datosConsolidados.asignaciones[idx] += semana.asignacion;
+                            datosConsolidados.ventas[idx] += semana.ventas;
+                        });
+                    });
+
+                    // Dataset para asignación consolidada (línea punteada)
+                    datasets.push({
+                        label: `${skuBuscado} - Asignación Total`,
+                        data: datosConsolidados.asignaciones,
+                        borderColor: '#D4AF37',
+                        backgroundColor: 'transparent',
+                        borderDash: [5, 5],
+                        borderWidth: 3,
+                        tension: 0.4,
+                        pointRadius: 5,
+                        pointHoverRadius: 7
+                    });
+
+                    // Dataset para ventas consolidadas (línea sólida)
+                    datasets.push({
+                        label: `${skuBuscado} - Ventas Totales`,
+                        data: datosConsolidados.ventas,
+                        borderColor: '#28a745',
+                        backgroundColor: 'rgba(40, 167, 69, 0.2)',
+                        borderWidth: 3,
+                        fill: true,
+                        tension: 0.4,
+                        pointRadius: 5,
+                        pointHoverRadius: 7
+                    });
+
+                } else if (canal !== 'Todos') {
+                    // CASO: Canal específico seleccionado
+                    // Consolidar datos sumando todos los SKUs de ese canal
+
+                    // Actualizar título del gráfico
+                    $('#tituloGrafico').html(`<i class="bi bi-graph-up me-2"></i>Cumplimiento General - ${canal}`);
+
+                    // Inicializar acumuladores por semana
+                    const datosConsolidados = {
+                        asignaciones: [0, 0, 0, 0],
+                        ventas: [0, 0, 0, 0]
+                    };
+
+                    // Sumar todos los SKUs del canal por semana
+                    datos.forEach(function(item) {
+                        item.semanas.forEach(function(semana, idx) {
+                            datosConsolidados.asignaciones[idx] += semana.asignacion;
+                            datosConsolidados.ventas[idx] += semana.ventas;
+                        });
+                    });
+
+                    // Dataset para asignación consolidada (línea punteada)
+                    datasets.push({
+                        label: `${canal} - Asignación Total`,
+                        data: datosConsolidados.asignaciones,
+                        borderColor: '#17a2b8',
+                        backgroundColor: 'transparent',
+                        borderDash: [5, 5],
+                        borderWidth: 3,
+                        tension: 0.4,
+                        pointRadius: 5,
+                        pointHoverRadius: 7
+                    });
+
+                    // Dataset para ventas consolidadas (línea sólida)
+                    datasets.push({
+                        label: `${canal} - Ventas Totales`,
+                        data: datosConsolidados.ventas,
+                        borderColor: '#28a745',
+                        backgroundColor: 'rgba(40, 167, 69, 0.2)',
+                        borderWidth: 3,
+                        fill: true,
+                        tension: 0.4,
+                        pointRadius: 5,
+                        pointHoverRadius: 7
+                    });
+
+                } else {
+                    // CASO: "Todos los canales" y múltiples SKUs
+                    // Mostrar los primeros 5 SKUs con sus líneas individuales
+
+                    // Actualizar título del gráfico
+                    $('#tituloGrafico').html(`<i class="bi bi-graph-up me-2"></i>Análisis de Cumplimiento por SKU`);
+
+                    const skusParaGrafico = datos.slice(0, 5);
+                    const colores = ['#28a745', '#17a2b8', '#D4AF37', '#dc3545', '#6c757d'];
+
+                    skusParaGrafico.forEach(function(item, index) {
+                        const color = colores[index % colores.length];
+
+                        // Dataset para asignación (línea punteada)
+                        datasets.push({
+                            label: `${item.sku} - Asignación`,
+                            data: item.semanas.map(s => s.asignacion),
+                            borderColor: color,
+                            backgroundColor: 'transparent',
+                            borderDash: [5, 5],
+                            borderWidth: 2,
+                            tension: 0.4
+                        });
+
+                        // Dataset para ventas (línea sólida)
+                        datasets.push({
+                            label: `${item.sku} - Ventas`,
+                            data: item.semanas.map(s => s.ventas),
+                            borderColor: color,
+                            backgroundColor: color + '20',
+                            borderWidth: 3,
+                            fill: true,
+                            tension: 0.4
+                        });
+                    });
+                }
+
+                // Destruir gráfico anterior si existe
+                if (chartInstance) {
+                    chartInstance.destroy();
+                }
+
+                // Crear nuevo gráfico
+                const ctx = document.getElementById('chartCumplimiento').getContext('2d');
+                chartInstance = new Chart(ctx, {
+                    type: 'line',
+                    data: {
+                        labels: labels,
+                        datasets: datasets
+                    },
+                    options: {
+                        responsive: true,
+                        maintainAspectRatio: true,
+                        aspectRatio: 3,
+                        plugins: {
+                            legend: {
+                                display: true,
+                                position: 'bottom'
+                            },
+                            tooltip: {
+                                mode: 'index',
+                                intersect: false,
+                                callbacks: {
+                                    label: function(context) {
+                                        let label = context.dataset.label || '';
+                                        if (label) {
+                                            label += ': ';
+                                        }
+                                        // Redondear y formatear con separadores de miles
+                                        label += Math.round(context.parsed.y).toLocaleString('es-MX');
+                                        return label;
+                                    }
+                                }
+                            }
+                        },
+                        scales: {
+                            y: {
+                                beginAtZero: true
+                            }
+                        }
+                    }
+                });
+
+                $('#graficos-container').show();
+            }
+
+            // Cargar datos iniciales
+            $('#btnConsultar').click();
+        });
+
+        // Función de filtrado por categorías (fuera del document.ready para que onclick funcione)
+        function filtrarProductos(categoria) {
+            // Seleccionar todas las filas de ambas tablas
+            const filasDetalladas = document.querySelectorAll('.producto-row');
+            const filasGenerales = document.querySelectorAll('.producto-row-general');
+            const todasFilas = [...filasDetalladas, ...filasGenerales];
+
+            // Resetear estilos de botones
+            const todosButtons = document.querySelectorAll('.filter-btn');
+            todosButtons.forEach(btn => {
+                btn.classList.remove('active');
+                btn.classList.remove('btn-warning', 'btn-info', 'btn-success', 'btn-primary');
+
+                // Restaurar estilos outline originales
+                if (btn.id === 'filter-todos') {
+                    btn.classList.add('btn-outline-warning');
+                } else if (btn.id === 'filter-plegables') {
+                    btn.classList.add('btn-outline-info');
+                } else if (btn.id === 'filter-sofas') {
+                    btn.classList.add('btn-outline-success');
+                } else if (btn.id === 'filter-toldos') {
+                    btn.classList.add('btn-outline-primary');
+                }
+            });
+
+            // Activar el botón seleccionado
+            const botonActivo = document.getElementById(`filter-${categoria}`);
+            if (botonActivo) {
+                botonActivo.classList.add('active');
+                botonActivo.classList.remove('btn-outline-warning', 'btn-outline-info', 'btn-outline-success', 'btn-outline-primary');
+
+                // Aplicar color sólido según el botón
+                if (categoria === 'todos') {
+                    botonActivo.classList.add('btn-warning');
+                } else if (categoria === 'plegables') {
+                    botonActivo.classList.add('btn-info');
+                } else if (categoria === 'sofas') {
+                    botonActivo.classList.add('btn-success');
+                } else if (categoria === 'toldos') {
+                    botonActivo.classList.add('btn-primary');
+                }
+            }
+
+            // Filtrar filas según la categoría
+            if (categoria === 'todos') {
+                // Mostrar todas las filas
+                todasFilas.forEach((fila, index) => {
+                    fila.style.display = 'table-row';
+                });
+            } else {
+                // Filtrar con lógica de exclusión prioritaria
+                todasFilas.forEach(fila => {
+                    const descripcion = fila.getAttribute('data-descripcion');
+                    let mostrarFila = false;
+
+                    if (categoria === 'plegables') {
+                        // PLEGABLES: Debe contener "plegable" PERO NO "toldo" ni "sofá"
+                        if (descripcion &&
+                            descripcion.includes('plegable') &&
+                            !descripcion.includes('toldo') &&
+                            !descripcion.includes('sofá')) {
+                            mostrarFila = true;
+                        }
+                    } else if (categoria === 'sofas') {
+                        // SOFÁS: Debe contener "sofá" (puede o no tener otras palabras)
+                        if (descripcion && descripcion.includes('sofá')) {
+                            mostrarFila = true;
+                        }
+                    } else if (categoria === 'toldos') {
+                        // TOLDOS: Debe contener "toldo" (puede o no tener "plegable")
+                        if (descripcion && descripcion.includes('toldo')) {
+                            mostrarFila = true;
+                        }
+                    }
+
+                    // Aplicar visibilidad
+                    if (mostrarFila) {
+                        fila.style.display = 'table-row';
+                    } else {
+                        fila.style.display = 'none';
+                    }
+                });
+            }
+        }
+    </script>
+</body>
+</html>

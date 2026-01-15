@@ -1,0 +1,1632 @@
+{% extends "layout.html" %}
+
+{% block content %}
+<style>
+/* Estilos para Matriz de Posicionamiento */
+.matriz-container {
+    /* Sin padding extra ni background para igualar con otras pestañas */
+}
+
+.chart-wrapper {
+    position: relative;
+    background: white;
+    padding: 25px;
+    border-radius: 15px;
+    box-shadow: 0 8px 25px rgba(0,0,0,0.12);
+    margin-bottom: 30px;
+    display: flex;
+    flex-direction: column;
+    height: 650px;
+    overflow: hidden;
+}
+
+.chart-container {
+    position: relative;
+    width: 100%;
+    flex: 1;
+    margin: 0 auto;
+    padding: 0;
+    overflow: hidden;
+}
+
+.chart-container canvas {
+    max-width: 100% !important;
+    max-height: 100% !important;
+}
+
+/* Estilos para tabs de clasificación - hacer que ocupen todo el espacio */
+#tabsClasificacionContent {
+    display: flex;
+    flex-direction: column;
+    flex: 1;
+    min-height: 0;
+}
+
+#tabsClasificacionContent .tab-pane {
+    display: none;
+    flex-direction: column;
+    flex: 1;
+    min-height: 0;
+}
+
+#tabsClasificacionContent .tab-pane.active {
+    display: flex;
+}
+
+/* Estilos personalizados para botones de tabs */
+.tab-btn-custom {
+    flex: 1;
+    max-width: 200px;
+    padding: 12px 20px;
+    border: 2px solid #e9ecef;
+    border-radius: 12px;
+    background: white;
+    color: #6c757d;
+    font-weight: 600;
+    font-size: 0.9rem;
+    cursor: pointer;
+    transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1);
+    box-shadow: 0 2px 4px rgba(0,0,0,0.05);
+    position: relative;
+    overflow: hidden;
+}
+
+.tab-btn-custom::before {
+    content: '';
+    position: absolute;
+    top: 0;
+    left: 0;
+    right: 0;
+    bottom: 0;
+    background: linear-gradient(135deg, #17a2b8, #138496);
+    opacity: 0;
+    transition: opacity 0.3s ease;
+    z-index: 0;
+}
+
+.tab-btn-custom i,
+.tab-btn-custom span {
+    position: relative;
+    z-index: 1;
+}
+
+.tab-btn-custom:hover:not(.active) {
+    border-color: #17a2b8;
+    color: #17a2b8;
+    transform: translateY(-2px);
+    box-shadow: 0 4px 12px rgba(23, 162, 184, 0.2);
+}
+
+.tab-btn-custom.active {
+    background: linear-gradient(135deg, #17a2b8, #138496);
+    border-color: #17a2b8;
+    color: white;
+    transform: translateY(-2px);
+    box-shadow: 0 6px 16px rgba(23, 162, 184, 0.3);
+}
+
+.tab-btn-custom.active::before {
+    opacity: 1;
+}
+
+.tab-btn-custom:active {
+    transform: translateY(0);
+}
+
+.zona-legend {
+    display: grid;
+    grid-template-columns: 1fr 1fr;
+    gap: 8px;
+    margin-top: 15px;
+    padding: 12px;
+    background: #f8f9fa;
+    border-radius: 10px;
+    flex-shrink: 0;
+}
+
+.zona-item {
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    gap: 6px;
+    padding: 6px 10px;
+    border-radius: 8px;
+    font-weight: 500;
+    font-size: 0.8rem;
+}
+
+.zona-critico {
+    background: #ffcccc;
+    color: #dc3545;
+}
+
+.zona-eficiente {
+    background: #cce5ff;
+    color: #0056b3;
+}
+
+.zona-desarrollar {
+    background: #e6e6e6;
+    color: #6c757d;
+}
+
+.zona-ideal {
+    background: #d4edda;
+    color: #28a745;
+}
+
+.estadisticas-card {
+    background: white;
+    padding: 12px;
+    border-radius: 12px;
+    box-shadow: 0 2px 4px rgba(0,0,0,0.1);
+    transition: all 0.3s ease;
+    height: 75px;
+    display: flex;
+    flex-direction: row;
+    align-items: center;
+    gap: 12px;
+    position: relative;
+    overflow: hidden;
+    cursor: pointer;
+}
+
+.estadisticas-card::before {
+    content: '';
+    position: absolute;
+    top: 0;
+    left: 0;
+    right: 0;
+    bottom: 0;
+    opacity: 0.05;
+    pointer-events: none;
+}
+
+.estadisticas-card:hover {
+    transform: translateY(-3px);
+    box-shadow: 0 4px 12px rgba(0,0,0,0.15);
+}
+
+.icon-circle {
+    width: 42px;
+    height: 42px;
+    border-radius: 50%;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    flex-shrink: 0;
+}
+
+.stat-content {
+    flex: 1;
+    display: flex;
+    flex-direction: column;
+    justify-content: center;
+    text-align: left;
+}
+
+.stat-value {
+    font-size: 1.5rem;
+    font-weight: 700;
+    line-height: 1;
+    color: #2C2C2C;
+}
+
+.stat-label {
+    font-size: 0.85rem;
+    color: #6c757d;
+    text-transform: uppercase;
+    letter-spacing: 0.5px;
+}
+
+.tabla-canales {
+    background: white;
+    border-radius: 12px;
+    box-shadow: 0 4px 15px rgba(0,0,0,0.08);
+    overflow: hidden;
+    display: flex;
+    flex-direction: column;
+}
+
+.tabla-scroll {
+    overflow-y: auto;
+    max-height: 420px;
+}
+
+.resumen-derecha {
+    display: flex;
+    flex-direction: column;
+    height: 650px;
+}
+
+.tabla-canales table {
+    margin-bottom: 0;
+}
+
+.tabla-canales th {
+    background: linear-gradient(135deg, #17a2b8, #138496);
+    color: white;
+    font-weight: 600;
+    text-transform: uppercase;
+    font-size: 0.75rem;
+    padding: 12px 8px;
+    border: none;
+    position: sticky;
+    top: 0;
+    z-index: 10;
+}
+
+.tabla-canales td {
+    padding: 10px 8px;
+    vertical-align: middle;
+    font-size: 0.9rem;
+}
+
+.zona-badge {
+    padding: 5px 12px;
+    border-radius: 20px;
+    font-size: 0.8rem;
+    font-weight: 600;
+    display: inline-block;
+}
+
+/* Estilos de tabla similares a Control de Ingreso Real */
+.tabla-canales .table {
+    border-collapse: separate !important;
+    border-spacing: 0 4px;
+}
+
+.tabla-canales tbody tr {
+    transition: all 0.3s ease;
+    border-radius: 8px;
+    background: white;
+    box-shadow: 0 2px 4px rgba(0,0,0,0.03);
+}
+
+.tabla-canales tbody tr:hover {
+    transform: translateY(-2px);
+    box-shadow: 0 6px 20px rgba(0,0,0,0.1);
+    background: rgba(248,249,250,0.8);
+}
+
+.tabla-canales thead th {
+    background: #f8f9fa !important;
+    font-weight: 700 !important;
+    color: #2C2C2C !important;
+    border: none !important;
+    padding: 12px 15px !important;
+    font-size: 0.85rem !important;
+}
+
+.tabla-canales tbody td {
+    padding: 12px 15px !important;
+    vertical-align: middle;
+    border: none !important;
+}
+
+.tabla-canales .badge {
+    transition: all 0.3s ease;
+}
+
+.tabla-canales tbody tr:hover .badge {
+    transform: scale(1.05);
+}
+
+.tabla-scroll {
+    max-height: 400px;
+    overflow-y: auto;
+    border-radius: 10px;
+}
+
+.tabla-scroll::-webkit-scrollbar {
+    width: 6px;
+}
+
+.tabla-scroll::-webkit-scrollbar-track {
+    background: #f1f1f1;
+    border-radius: 10px;
+}
+
+.tabla-scroll::-webkit-scrollbar-thumb {
+    background: rgba(23, 162, 184, 0.5);
+    border-radius: 10px;
+}
+
+.tabla-scroll::-webkit-scrollbar-thumb:hover {
+    background: rgba(23, 162, 184, 0.8);
+}
+</style>
+
+<div class="container mt-4 matriz-container" style="max-width: 1400px;">
+    <!-- Header -->
+    <h2 class="mb-2" data-aos="fade-down" style="color: #2C2C2C; font-weight: 700;">
+        <i class="bi bi-grid-3x3 me-2" style="color: #17a2b8;"></i>{{ titulo }}
+    </h2>
+
+    <!-- Filtros Component -->
+    {% include 'matriz_posicionamiento/partials/filtros.html' %}
+
+    {% if error %}
+    <!-- Mensaje de error -->
+    <div class="row">
+        <div class="col-12">
+            <div class="alert alert-danger">
+                <i class="bi bi-exclamation-triangle me-2"></i>
+                Error: {{ error }}
+            </div>
+        </div>
+    </div>
+    {% else %}
+
+    <!-- Gráfico y Tabla lado a lado -->
+    <div class="row mb-2" data-aos="fade-up" data-aos-delay="100">
+        <!-- Gráfico Principal (Izquierda - 50%) -->
+        <div class="col-lg-6 mb-2 mb-lg-0">
+            <div class="chart-wrapper">
+                <h5 class="text-center mb-2" style="color: #2C2C2C; font-weight: 600; flex-shrink: 0;">
+                    <i class="bi bi-graph-up me-2" style="color: #17a2b8;"></i>Matriz de Posicionamiento
+                </h5>
+                <div class="chart-container">
+                    <canvas id="matrizPosicionamiento"></canvas>
+                </div>
+            </div>
+        </div>
+
+        <!-- Resumen y Tabla (Derecha - 50%) -->
+        <div class="col-lg-6">
+            <div class="resumen-derecha">
+                <!-- Estadísticas Generales -->
+                <div class="row mb-1" data-aos="fade-up" style="flex: 0 0 auto;">
+                    <!-- Ingreso Real Total -->
+                    <div class="col-6 mb-1" data-aos="fade-up" data-aos-delay="100">
+                        <div class="estadisticas-card" style="border: 1px solid rgba(23, 162, 184, 0.2);">
+                            <!-- Fondo sutil -->
+                            <div class="position-absolute top-0 start-0 w-100 h-100 opacity-5"
+                                 style="background: linear-gradient(135deg, rgba(23, 162, 184, 0.08) 0%, transparent 100%);"></div>
+
+                            <!-- Icono circular -->
+                            <div class="icon-circle position-relative"
+                                 style="background: linear-gradient(135deg, #17a2b8, #138496);">
+                                <i class="bi bi-cash-coin text-white" style="font-size: 1rem;"></i>
+                            </div>
+
+                            <!-- Contenido -->
+                            <div class="stat-content position-relative">
+                                <h6 class="mb-0" style="color: #6c757d; font-weight: 600; font-size: 0.7rem;">Ingreso Real Total</h6>
+                                <p class="stat-value mb-0" style="color: #17a2b8; font-size: 1.3rem;" id="statIngresoReal">
+                                    ${{ "{:,.0f}".format(matriz_data.estadisticas.ingreso_real_total) }}
+                                </p>
+                                <p class="mb-0" style="color: #6c757d; font-size: 0.65rem;">
+                                    {{ matriz_data.estadisticas.total_canales }} canales
+                                </p>
+                            </div>
+
+                            <!-- Barra de progreso inferior -->
+                            <div class="position-absolute bottom-0 start-0 w-100" style="height: 3px; background: rgba(23, 162, 184, 0.1); border-radius: 0 0 15px 15px;">
+                                <div style="height: 100%; background: linear-gradient(90deg, #17a2b8, #138496); width: 100%;"></div>
+                            </div>
+                        </div>
+                    </div>
+
+                    <!-- Ventas Totales -->
+                    <div class="col-6 mb-1" data-aos="fade-up" data-aos-delay="150">
+                        <div class="estadisticas-card" style="border: 1px solid rgba(40, 167, 69, 0.2);">
+                            <!-- Fondo sutil -->
+                            <div class="position-absolute top-0 start-0 w-100 h-100 opacity-5"
+                                 style="background: linear-gradient(135deg, rgba(40, 167, 69, 0.08) 0%, transparent 100%);"></div>
+
+                            <!-- Icono circular -->
+                            <div class="icon-circle position-relative"
+                                 style="background: linear-gradient(135deg, #28a745, #20c997);">
+                                <i class="bi bi-currency-dollar text-white" style="font-size: 1rem;"></i>
+                            </div>
+
+                            <!-- Contenido -->
+                            <div class="stat-content position-relative">
+                                <h6 class="mb-1" style="color: #6c757d; font-weight: 600; font-size: 0.7rem;">Ventas Totales</h6>
+                                <p class="stat-value mb-0" style="color: #28a745; font-size: 1.3rem;">
+                                    ${{ "{:,.0f}".format(matriz_data.estadisticas.ventas_totales) }}
+                                </p>
+                            </div>
+
+                            <!-- Barra de progreso inferior -->
+                            <div class="position-absolute bottom-0 start-0 w-100" style="height: 3px; background: rgba(40, 167, 69, 0.1); border-radius: 0 0 15px 15px;">
+                                <div style="height: 100%; background: linear-gradient(90deg, #28a745, #20c997); width: 100%;"></div>
+                            </div>
+                        </div>
+                    </div>
+
+                    <!-- Ingreso Real Promedio -->
+                    <div class="col-6" data-aos="fade-up" data-aos-delay="200">
+                        <div class="estadisticas-card" style="border: 1px solid rgba(111, 66, 193, 0.2);">
+                            <!-- Fondo sutil -->
+                            <div class="position-absolute top-0 start-0 w-100 h-100 opacity-5"
+                                 style="background: linear-gradient(135deg, rgba(111, 66, 193, 0.08) 0%, transparent 100%);"></div>
+
+                            <!-- Icono circular -->
+                            <div class="icon-circle position-relative"
+                                 style="background: linear-gradient(135deg, #6f42c1, #5a32a3);">
+                                <i class="bi bi-graph-up-arrow text-white" style="font-size: 1rem;"></i>
+                            </div>
+
+                            <!-- Contenido -->
+                            <div class="stat-content position-relative">
+                                <h6 class="mb-1" style="color: #6c757d; font-weight: 600; font-size: 0.7rem;">% Ingreso Real</h6>
+                                <p class="stat-value mb-0" style="color: #6f42c1; font-size: 1.5rem;">
+                                    {{ "{:.1f}".format(matriz_data.estadisticas.ingreso_promedio) }}%
+                                </p>
+                            </div>
+
+                            <!-- Barra de progreso inferior -->
+                            <div class="position-absolute bottom-0 start-0 w-100" style="height: 3px; background: rgba(111, 66, 193, 0.1); border-radius: 0 0 15px 15px;">
+                                <div style="height: 100%; background: linear-gradient(90deg, #6f42c1, #5a32a3); width: 100%;"></div>
+                            </div>
+                        </div>
+                    </div>
+
+                    <!-- ROI Promedio -->
+                    <div class="col-6" data-aos="fade-up" data-aos-delay="250">
+                        <div class="estadisticas-card" style="border: 1px solid rgba(255, 193, 7, 0.2);">
+                            <!-- Fondo sutil -->
+                            <div class="position-absolute top-0 start-0 w-100 h-100 opacity-5"
+                                 style="background: linear-gradient(135deg, rgba(255, 193, 7, 0.08) 0%, transparent 100%);"></div>
+
+                            <!-- Icono circular -->
+                            <div class="icon-circle position-relative"
+                                 style="background: linear-gradient(135deg, #ffc107, #ff9800);">
+                                <i class="bi bi-trophy text-white" style="font-size: 1rem;"></i>
+                            </div>
+
+                            <!-- Contenido -->
+                            <div class="stat-content position-relative">
+                                <h6 class="mb-1" style="color: #6c757d; font-weight: 600; font-size: 0.7rem;">ROI Promedio</h6>
+                                <p class="stat-value mb-0" style="color: #ffc107; font-size: 1.5rem;">
+                                    {{ "{:.1f}".format(matriz_data.estadisticas.roi_promedio) }}%
+                                </p>
+                            </div>
+
+                            <!-- Barra de progreso inferior -->
+                            <div class="position-absolute bottom-0 start-0 w-100" style="height: 3px; background: rgba(255, 193, 7, 0.1); border-radius: 0 0 15px 15px;">
+                                <div style="height: 100%; background: linear-gradient(90deg, #ffc107, #ff9800); width: 100%;"></div>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+
+                <!-- Tabla de Canales -->
+                <div class="tabla-canales" style="flex: 1 1 auto; min-height: 0;">
+                <div class="p-3">
+                    <h5 class="text-center mb-3" style="color: #2C2C2C; font-weight: 600;">
+                        <i class="bi bi-table me-2" style="color: #17a2b8;"></i>Resumen por Canal
+                    </h5>
+                </div>
+                <div class="tabla-scroll">
+                    <table class="table table-hover mb-0">
+                        <thead>
+                            <tr>
+                                <th>Canal</th>
+                                <th class="text-center">% IR</th>
+                                <th class="text-end">$ IR</th>
+                                <th class="text-center">% ROI</th>
+                                <th class="text-end">Ventas</th>
+                                <th class="text-center">Zona</th>
+                            </tr>
+                        </thead>
+                        <tbody>
+                            {% for canal in matriz_data.canales %}
+                            <tr>
+                                <td>
+                                    <span style="display: inline-block; width: 12px; height: 12px; border-radius: 50%; background: {{ canal.color_canal }}; margin-right: 8px;"></span>
+                                    <strong>{{ canal.canal }}</strong>
+                                </td>
+                                <td class="text-center">
+                                    <span class="badge" style="background: rgba(111, 66, 193, 0.1); color: #6f42c1; font-size: 0.9rem;">
+                                        {{ "{:.1f}".format(canal.ingreso_real_pct) }}%
+                                    </span>
+                                </td>
+                                <td class="text-end">
+                                    <strong style="color: #17a2b8;">${{ "{:,.0f}".format(canal.ingreso_real) }}</strong>
+                                </td>
+                                <td class="text-center">
+                                    <span class="badge" style="background: rgba(255, 193, 7, 0.1); color: #ffc107; font-size: 0.9rem;">
+                                        {{ "{:.1f}".format(canal.roi_pct) }}%
+                                    </span>
+                                </td>
+                                <td class="text-end">
+                                    <strong>${{ "{:,.0f}".format(canal.ventas) }}</strong>
+                                </td>
+                                <td class="text-center">
+                                    <span class="zona-badge" style="background: {{ canal.color_zona }}; color: {{ canal.color_texto }};">
+                                        {{ canal.icono }} {{ canal.zona }}
+                                    </span>
+                                </td>
+                            </tr>
+                            {% endfor %}
+                        </tbody>
+                    </table>
+                </div>
+            </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- MATRIZ DE CATEGORÍAS - Sección inferior -->
+    <div class="row mt-4 mb-2">
+        <div class="col-12">
+            <hr style="border-top: 3px solid #17a2b8; opacity: 0.3;">
+            <h3 class="mb-2 mt-3" style="color: #2C2C2C; font-weight: 700;">
+                <i class="bi bi-diagram-3 me-2" style="color: #17a2b8;"></i>Matriz de Categorías
+            </h3>
+        </div>
+    </div>
+
+    <!-- Filtros de Categorías -->
+    {% include 'matriz_posicionamiento/partials/filtros_categorias.html' %}
+
+    <!-- Gráfico y Tabla de Categorías -->
+    <div class="row mb-2" data-aos="fade-up" data-aos-delay="100">
+        <!-- Gráfico de Categorías (Izquierda - 50%) -->
+        <div class="col-lg-6 mb-2 mb-lg-0">
+            <div class="chart-wrapper">
+                <h5 class="text-center mb-2" style="color: #2C2C2C; font-weight: 600; flex-shrink: 0;">
+                    <i class="bi bi-graph-up me-2" style="color: #17a2b8;"></i>Gráfico por Categoría
+                </h5>
+                <div class="chart-container">
+                    <canvas id="matrizCategorias"></canvas>
+                </div>
+            </div>
+        </div>
+
+        <!-- Resumen y Tabla de Categorías (Derecha - 50%) -->
+        <div class="col-lg-6">
+            <div class="resumen-derecha">
+                <!-- Estadísticas de Categorías -->
+                <div class="row mb-1" data-aos="fade-up" style="flex: 0 0 auto;">
+                    <!-- Ingreso Real Total -->
+                    <div class="col-6 mb-1" data-aos="fade-up" data-aos-delay="100">
+                        <div class="estadisticas-card" style="border: 1px solid rgba(23, 162, 184, 0.2);">
+                            <!-- Fondo sutil -->
+                            <div class="position-absolute top-0 start-0 w-100 h-100 opacity-5"
+                                 style="background: linear-gradient(135deg, rgba(23, 162, 184, 0.08) 0%, transparent 100%);"></div>
+
+                            <!-- Icono circular -->
+                            <div class="icon-circle position-relative"
+                                 style="background: linear-gradient(135deg, #17a2b8, #138496);">
+                                <i class="bi bi-cash-coin text-white" style="font-size: 1rem;"></i>
+                            </div>
+
+                            <!-- Contenido -->
+                            <div class="stat-content position-relative">
+                                <h6 class="mb-1" style="color: #6c757d; font-weight: 600; font-size: 0.7rem;">Ingreso Real Total</h6>
+                                <p class="stat-value mb-0" id="statIngresoRealCat" style="color: #17a2b8; font-size: 1.3rem;">
+                                    ${{ "{:,.0f}".format(matriz_cat_data.estadisticas.ingreso_real_total) }}
+                                </p>
+                                <small style="color: #6c757d; font-size: 0.6rem;">{{ matriz_cat_data.estadisticas.total_combinaciones }} combinaciones</small>
+                            </div>
+
+                            <!-- Barra de progreso inferior -->
+                            <div class="position-absolute bottom-0 start-0 w-100" style="height: 3px; background: rgba(23, 162, 184, 0.1); border-radius: 0 0 12px 12px;">
+                                <div style="height: 100%; background: linear-gradient(90deg, #17a2b8, #138496); width: 100%;"></div>
+                            </div>
+                        </div>
+                    </div>
+
+                    <!-- Ventas Totales -->
+                    <div class="col-6 mb-1" data-aos="fade-up" data-aos-delay="150">
+                        <div class="estadisticas-card" style="border: 1px solid rgba(40, 167, 69, 0.2);">
+                            <!-- Fondo sutil -->
+                            <div class="position-absolute top-0 start-0 w-100 h-100 opacity-5"
+                                 style="background: linear-gradient(135deg, rgba(40, 167, 69, 0.08) 0%, transparent 100%);"></div>
+
+                            <!-- Icono circular -->
+                            <div class="icon-circle position-relative"
+                                 style="background: linear-gradient(135deg, #28a745, #20c997);">
+                                <i class="bi bi-currency-dollar text-white" style="font-size: 1rem;"></i>
+                            </div>
+
+                            <!-- Contenido -->
+                            <div class="stat-content position-relative">
+                                <h6 class="mb-1" style="color: #6c757d; font-weight: 600; font-size: 0.7rem;">Ventas Totales</h6>
+                                <p class="stat-value mb-0" id="statVentasCat" style="color: #28a745; font-size: 1.3rem;">
+                                    ${{ "{:,.0f}".format(matriz_cat_data.estadisticas.ventas_totales) }}
+                                </p>
+                            </div>
+
+                            <!-- Barra de progreso inferior -->
+                            <div class="position-absolute bottom-0 start-0 w-100" style="height: 3px; background: rgba(40, 167, 69, 0.1); border-radius: 0 0 12px 12px;">
+                                <div style="height: 100%; background: linear-gradient(90deg, #28a745, #20c997); width: 100%;"></div>
+                            </div>
+                        </div>
+                    </div>
+
+                    <!-- Ingreso Real Promedio -->
+                    <div class="col-6" data-aos="fade-up" data-aos-delay="200">
+                        <div class="estadisticas-card" style="border: 1px solid rgba(111, 66, 193, 0.2);">
+                            <!-- Fondo sutil -->
+                            <div class="position-absolute top-0 start-0 w-100 h-100 opacity-5"
+                                 style="background: linear-gradient(135deg, rgba(111, 66, 193, 0.08) 0%, transparent 100%);"></div>
+
+                            <!-- Icono circular -->
+                            <div class="icon-circle position-relative"
+                                 style="background: linear-gradient(135deg, #6f42c1, #5a32a3);">
+                                <i class="bi bi-graph-up-arrow text-white" style="font-size: 1rem;"></i>
+                            </div>
+
+                            <!-- Contenido -->
+                            <div class="stat-content position-relative">
+                                <h6 class="mb-1" style="color: #6c757d; font-weight: 600; font-size: 0.7rem;">% IR Promedio</h6>
+                                <p class="stat-value mb-0" id="statIngresoPromCat" style="color: #6f42c1; font-size: 1.5rem;">
+                                    {{ "{:.1f}".format(matriz_cat_data.estadisticas.ingreso_promedio) }}%
+                                </p>
+                            </div>
+
+                            <!-- Barra de progreso inferior -->
+                            <div class="position-absolute bottom-0 start-0 w-100" style="height: 3px; background: rgba(111, 66, 193, 0.1); border-radius: 0 0 12px 12px;">
+                                <div style="height: 100%; background: linear-gradient(90deg, #6f42c1, #5a32a3); width: 100%;"></div>
+                            </div>
+                        </div>
+                    </div>
+
+                    <!-- ROI Promedio -->
+                    <div class="col-6" data-aos="fade-up" data-aos-delay="250">
+                        <div class="estadisticas-card" style="border: 1px solid rgba(255, 193, 7, 0.2);">
+                            <!-- Fondo sutil -->
+                            <div class="position-absolute top-0 start-0 w-100 h-100 opacity-5"
+                                 style="background: linear-gradient(135deg, rgba(255, 193, 7, 0.08) 0%, transparent 100%);"></div>
+
+                            <!-- Icono circular -->
+                            <div class="icon-circle position-relative"
+                                 style="background: linear-gradient(135deg, #ffc107, #ff9800);">
+                                <i class="bi bi-trophy text-white" style="font-size: 1rem;"></i>
+                            </div>
+
+                            <!-- Contenido -->
+                            <div class="stat-content position-relative">
+                                <h6 class="mb-1" style="color: #6c757d; font-weight: 600; font-size: 0.7rem;">ROI Promedio</h6>
+                                <p class="stat-value mb-0" id="statRoiPromCat" style="color: #ffc107; font-size: 1.5rem;">
+                                    {{ "{:.1f}".format(matriz_cat_data.estadisticas.roi_promedio) }}%
+                                </p>
+                            </div>
+
+                            <!-- Barra de progreso inferior -->
+                            <div class="position-absolute bottom-0 start-0 w-100" style="height: 3px; background: rgba(255, 193, 7, 0.1); border-radius: 0 0 12px 12px;">
+                                <div style="height: 100%; background: linear-gradient(90deg, #ffc107, #ff9800); width: 100%;"></div>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+
+                <!-- Tabla de Categorías -->
+                <div class="tabla-canales tabla-categorias" style="flex: 1 1 auto; min-height: 0;">
+                    <div class="p-3">
+                        <h5 class="text-center mb-3" style="color: #2C2C2C; font-weight: 600;">
+                            <i class="bi bi-table me-2" style="color: #17a2b8;"></i>Resumen por Categoría
+                        </h5>
+                    </div>
+                    <div class="tabla-scroll">
+                        <table class="table table-hover mb-0">
+                            <thead>
+                                <tr>
+                                    <th>Canal - Categoría</th>
+                                    <th class="text-center">% IR</th>
+                                    <th class="text-end">$ IR</th>
+                                    <th class="text-center">% ROI</th>
+                                    <th class="text-end">Ventas</th>
+                                    <th class="text-center">Zona</th>
+                                </tr>
+                            </thead>
+                            <tbody id="tablaCategorias">
+                                {% for cat in matriz_cat_data.categorias %}
+                                <tr>
+                                    <td>
+                                        <span style="display: inline-block; width: 12px; height: 12px; border-radius: 50%; background: {{ cat.color_canal }}; margin-right: 8px;"></span>
+                                        <strong>{{ cat.label }}</strong>
+                                    </td>
+                                    <td class="text-center">
+                                        <span class="badge" style="background: rgba(111, 66, 193, 0.1); color: #6f42c1; font-size: 0.9rem;">
+                                            {{ "{:.1f}".format(cat.ingreso_real_pct) }}%
+                                        </span>
+                                    </td>
+                                    <td class="text-end">
+                                        <strong style="color: #17a2b8;">${{ "{:,.0f}".format(cat.ingreso_real) }}</strong>
+                                    </td>
+                                    <td class="text-center">
+                                        <span class="badge" style="background: rgba(255, 193, 7, 0.1); color: #ffc107; font-size: 0.9rem;">
+                                            {{ "{:.1f}".format(cat.roi_pct) }}%
+                                        </span>
+                                    </td>
+                                    <td class="text-end">
+                                        <strong>${{ "{:,.0f}".format(cat.ventas) }}</strong>
+                                    </td>
+                                    <td class="text-center">
+                                        <span class="zona-badge" style="background: {{ cat.color_zona }}; color: {{ cat.color_texto }};">
+                                            {{ cat.icono }} {{ cat.zona }}
+                                        </span>
+                                    </td>
+                                </tr>
+                                {% endfor %}
+                            </tbody>
+                        </table>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- MATRIZ DE CLASIFICACIÓN - Sección inferior -->
+    <div class="row mt-4 mb-2">
+        <div class="col-12">
+            <hr style="border-top: 3px solid #17a2b8; opacity: 0.3;">
+            <h3 class="mb-2 mt-3" style="color: #2C2C2C; font-weight: 700;">
+                <i class="bi bi-diagram-3 me-2" style="color: #17a2b8;"></i>Matriz de Clasificación
+            </h3>
+        </div>
+    </div>
+
+    <!-- Filtros de Clasificación -->
+    {% include 'matriz_posicionamiento/partials/filtros_clasificacion.html' %}
+
+    <!-- Gráfico y Tabla de Clasificación -->
+    <div class="row mb-2" data-aos="fade-up" data-aos-delay="100">
+        <!-- Gráfico de Clasificación (Izquierda - 50%) -->
+        <div class="col-lg-6 mb-2 mb-lg-0">
+            <div class="chart-wrapper">
+                <h5 class="text-center mb-3" style="color: #2C2C2C; font-weight: 600; flex-shrink: 0;">
+                    <i class="bi bi-graph-up me-2" style="color: #17a2b8;"></i>Gráfico por Clasificación
+                </h5>
+
+                <!-- CONTENIDO DE TABS -->
+                <div class="tab-content" id="tabsClasificacionContent">
+                    <!-- TAB 1: Vista Actual -->
+                    <div class="tab-pane fade show active" id="vistaActual" role="tabpanel">
+                        <div class="chart-container">
+                            <canvas id="matrizClasificacionChart"></canvas>
+                        </div>
+                    </div>
+
+                    <!-- TAB 2: Comparar 3 Meses -->
+                    <div class="tab-pane fade" id="comparar3Meses" role="tabpanel">
+                        <!-- Cards de Resumen -->
+                        <div class="row mb-2" id="cardsResumenComparativo" style="display: none;">
+                            <div class="col-4">
+                                <div class="card text-center" style="border: 2px solid #28a745; background: rgba(40, 167, 69, 0.05);">
+                                    <div class="card-body p-2">
+                                        <h6 class="mb-0" style="color: #28a745; font-size: 1.2rem;" id="countMejoraron">0</h6>
+                                        <small style="font-size: 0.7rem; color: #6c757d;">📈 Mejoraron</small>
+                                    </div>
+                                </div>
+                            </div>
+                            <div class="col-4">
+                                <div class="card text-center" style="border: 2px solid #6c757d; background: rgba(108, 117, 125, 0.05);">
+                                    <div class="card-body p-2">
+                                        <h6 class="mb-0" style="color: #6c757d; font-size: 1.2rem;" id="countEstable">0</h6>
+                                        <small style="font-size: 0.7rem; color: #6c757d;">📊 Sin Cambio</small>
+                                    </div>
+                                </div>
+                            </div>
+                            <div class="col-4">
+                                <div class="card text-center" style="border: 2px solid #dc3545; background: rgba(220, 53, 69, 0.05);">
+                                    <div class="card-body p-2">
+                                        <h6 class="mb-0" style="color: #dc3545; font-size: 1.2rem;" id="countEmpeoraron">0</h6>
+                                        <small style="font-size: 0.7rem; color: #6c757d;">📉 Empeoraron</small>
+                                    </div>
+                                </div>
+                            </div>
+                        </div>
+
+                        <!-- Controles del gráfico comparativo -->
+                        <div class="d-flex justify-content-end mb-2">
+                            <button id="btnToggleAllLineas" class="btn btn-sm btn-outline-secondary" style="border-radius: 8px; font-size: 0.8rem;" onclick="toggleTodasLineas()">
+                                <i class="bi bi-eye-slash me-1"></i>Ocultar todas
+                            </button>
+                        </div>
+
+                        <!-- Gráfico Comparativo -->
+                        <div class="chart-container">
+                            <canvas id="matrizComparativaChart"></canvas>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <!-- Resumen y Tabla de Clasificación (Derecha - 50%) -->
+        <div class="col-lg-6">
+            <div class="resumen-derecha">
+                <!-- Estadísticas de Clasificación -->
+                <div class="row mb-1" data-aos="fade-up" style="flex: 0 0 auto;">
+                    <!-- Ingreso Real Total -->
+                    <div class="col-6 mb-1" data-aos="fade-up" data-aos-delay="100">
+                        <div class="estadisticas-card" style="border: 1px solid rgba(23, 162, 184, 0.2);">
+                            <div class="position-absolute top-0 start-0 w-100 h-100 opacity-5"
+                                 style="background: linear-gradient(135deg, rgba(23, 162, 184, 0.08) 0%, transparent 100%);"></div>
+                            <div class="icon-circle position-relative"
+                                 style="background: linear-gradient(135deg, #17a2b8, #138496);">
+                                <i class="bi bi-cash-coin text-white" style="font-size: 1rem;"></i>
+                            </div>
+                            <div class="stat-content position-relative">
+                                <h6 class="mb-1" style="color: #6c757d; font-weight: 600; font-size: 0.7rem;">Ingreso Real</h6>
+                                <p class="stat-value mb-0" id="statIngresoRealClasif" style="color: #17a2b8; font-size: 1.5rem;">$0</p>
+                            </div>
+                            <div class="position-absolute bottom-0 start-0 w-100" style="height: 3px; background: rgba(23, 162, 184, 0.1); border-radius: 0 0 12px 12px;">
+                                <div style="height: 100%; background: linear-gradient(90deg, #17a2b8, #138496); width: 100%;"></div>
+                            </div>
+                        </div>
+                    </div>
+
+                    <!-- Ventas Totales -->
+                    <div class="col-6 mb-1" data-aos="fade-up" data-aos-delay="150">
+                        <div class="estadisticas-card" style="border: 1px solid rgba(40, 167, 69, 0.2);">
+                            <div class="position-absolute top-0 start-0 w-100 h-100 opacity-5"
+                                 style="background: linear-gradient(135deg, rgba(40, 167, 69, 0.08) 0%, transparent 100%);"></div>
+                            <div class="icon-circle position-relative"
+                                 style="background: linear-gradient(135deg, #28a745, #218838);">
+                                <i class="bi bi-currency-dollar text-white" style="font-size: 1rem;"></i>
+                            </div>
+                            <div class="stat-content position-relative">
+                                <h6 class="mb-1" style="color: #6c757d; font-weight: 600; font-size: 0.7rem;">Ventas Totales</h6>
+                                <p class="stat-value mb-0" id="statVentasTotalesClasif" style="color: #28a745; font-size: 1.5rem;">$0</p>
+                            </div>
+                            <div class="position-absolute bottom-0 start-0 w-100" style="height: 3px; background: rgba(40, 167, 69, 0.1); border-radius: 0 0 12px 12px;">
+                                <div style="height: 100%; background: linear-gradient(90deg, #28a745, #218838); width: 100%;"></div>
+                            </div>
+                        </div>
+                    </div>
+
+                    <!-- Ingreso Real Promedio -->
+                    <div class="col-6 mb-1" data-aos="fade-up" data-aos-delay="200">
+                        <div class="estadisticas-card" style="border: 1px solid rgba(111, 66, 193, 0.2);">
+                            <div class="position-absolute top-0 start-0 w-100 h-100 opacity-5"
+                                 style="background: linear-gradient(135deg, rgba(111, 66, 193, 0.08) 0%, transparent 100%);"></div>
+                            <div class="icon-circle position-relative"
+                                 style="background: linear-gradient(135deg, #6f42c1, #5a32a3);">
+                                <i class="bi bi-graph-up-arrow text-white" style="font-size: 1rem;"></i>
+                            </div>
+                            <div class="stat-content position-relative">
+                                <h6 class="mb-1" style="color: #6c757d; font-weight: 600; font-size: 0.7rem;">% IR Promedio</h6>
+                                <p class="stat-value mb-0" id="statIngresoPromClasif" style="color: #6f42c1; font-size: 1.5rem;">0%</p>
+                            </div>
+                            <div class="position-absolute bottom-0 start-0 w-100" style="height: 3px; background: rgba(111, 66, 193, 0.1); border-radius: 0 0 12px 12px;">
+                                <div style="height: 100%; background: linear-gradient(90deg, #6f42c1, #5a32a3); width: 100%;"></div>
+                            </div>
+                        </div>
+                    </div>
+
+                    <!-- ROI Promedio -->
+                    <div class="col-6 mb-1" data-aos="fade-up" data-aos-delay="250">
+                        <div class="estadisticas-card" style="border: 1px solid rgba(255, 193, 7, 0.2);">
+                            <div class="position-absolute top-0 start-0 w-100 h-100 opacity-5"
+                                 style="background: linear-gradient(135deg, rgba(255, 193, 7, 0.08) 0%, transparent 100%);"></div>
+                            <div class="icon-circle position-relative"
+                                 style="background: linear-gradient(135deg, #ffc107, #ff9800);">
+                                <i class="bi bi-trophy text-white" style="font-size: 1rem;"></i>
+                            </div>
+                            <div class="stat-content position-relative">
+                                <h6 class="mb-1" style="color: #6c757d; font-weight: 600; font-size: 0.7rem;">ROI Promedio</h6>
+                                <p class="stat-value mb-0" id="statRoiPromClasif" style="color: #ffc107; font-size: 1.5rem;">0%</p>
+                            </div>
+                            <div class="position-absolute bottom-0 start-0 w-100" style="height: 3px; background: rgba(255, 193, 7, 0.1); border-radius: 0 0 12px 12px;">
+                                <div style="height: 100%; background: linear-gradient(90deg, #ffc107, #ff9800); width: 100%;"></div>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+
+                <!-- Tabla de SKUs -->
+                <div class="tabla-canales" style="flex: 1 1 auto; min-height: 0; overflow: hidden; border-radius: 15px; box-shadow: 0 4px 10px rgba(0,0,0,0.08);">
+                    <div style="background: white; padding: 15px 20px; border-bottom: 2px solid #f8f9fa;">
+                        <h5 class="text-center mb-0" style="color: #2C2C2C; font-weight: 600;">
+                            <i class="bi bi-table me-2" style="color: #17a2b8;"></i>Resumen por SKU
+                        </h5>
+                    </div>
+                    <div class="tabla-scroll">
+                        <table class="table table-hover mb-0">
+                            <thead>
+                                <tr>
+                                    <th>SKU - Canal</th>
+                                    <th class="text-center">Clasificación</th>
+                                    <th class="text-center">% IR</th>
+                                    <th class="text-end">$ IR</th>
+                                    <th class="text-center">% ROI</th>
+                                    <th class="text-center">Zona</th>
+                                </tr>
+                            </thead>
+                            <tbody id="tablaSkusClasif">
+                                <tr>
+                                    <td colspan="6" class="text-center text-muted py-4">
+                                        <i class="bi bi-inbox" style="font-size: 2rem; display: block; margin-bottom: 10px;"></i>
+                                        Selecciona SKUs para visualizar
+                                    </td>
+                                </tr>
+                            </tbody>
+                        </table>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    {% endif %}
+</div>
+
+<!-- Chart.js -->
+<script src="https://cdn.jsdelivr.net/npm/chart.js@3.9.1/dist/chart.min.js"></script>
+
+<!-- Scripts de módulos (IMPORTANTE: categorías ANTES de posicionamiento) -->
+<script src="{{ url_for('static', filename='js/matriz_categorias/main.js') }}"></script>
+<script src="{{ url_for('static', filename='js/matriz_posicionamiento/main.js') }}"></script>
+
+<script>
+// Datos del backend
+const matrizData = {{ matriz_data | tojson | safe }};
+
+// Variable global para el gráfico (accesible desde main.js)
+window.matrizChart = null;
+
+// Configuración del gráfico
+const ctx = document.getElementById('matrizPosicionamiento');
+if (!ctx) {
+    console.error('❌ Canvas matrizPosicionamiento NO encontrado');
+}
+
+// Plugin para dibujar zonas de fondo
+const backgroundZonesPlugin = {
+    id: 'backgroundZones',
+    beforeDraw: (chart) => {
+        const {ctx, chartArea: {left, right, top, bottom, width, height}} = chart;
+        const xScale = chart.scales.x;
+        const yScale = chart.scales.y;
+
+        // Obtener coordenadas de las líneas divisorias
+        const x20 = xScale.getPixelForValue(20);  // Línea vertical en X=20%
+        const y40 = yScale.getPixelForValue(40);  // Línea horizontal en Y=40%
+
+        ctx.save();
+
+        // Zona CRÍTICO (0-20% IR, 0-40% ROI) - Rojo
+        ctx.fillStyle = 'rgba(255, 204, 204, 0.3)';
+        ctx.fillRect(left, y40, x20 - left, bottom - y40);
+
+        // Zona EFICIENTE (0-20% IR, 40-100% ROI) - Azul
+        ctx.fillStyle = 'rgba(204, 229, 255, 0.3)';
+        ctx.fillRect(left, top, x20 - left, y40 - top);
+
+        // Zona A DESARROLLAR (20-50% IR, 0-40% ROI) - Gris
+        ctx.fillStyle = 'rgba(230, 230, 230, 0.3)';
+        ctx.fillRect(x20, y40, right - x20, bottom - y40);
+
+        // Zona IDEAL (20-50% IR, 40-100% ROI) - Verde
+        ctx.fillStyle = 'rgba(212, 237, 218, 0.3)';
+        ctx.fillRect(x20, top, right - x20, y40 - top);
+
+        // Líneas divisorias punteadas
+        ctx.setLineDash([5, 5]);
+        ctx.strokeStyle = '#0056b3';
+        ctx.lineWidth = 2;
+
+        // Línea vertical en X=20%
+        ctx.beginPath();
+        ctx.moveTo(x20, top);
+        ctx.lineTo(x20, bottom);
+        ctx.stroke();
+
+        // Línea horizontal en Y=40%
+        ctx.beginPath();
+        ctx.moveTo(left, y40);
+        ctx.lineTo(right, y40);
+        ctx.stroke();
+
+        // Etiquetas de zonas en las esquinas
+        ctx.setLineDash([]);
+        ctx.font = 'bold 11px Arial';
+
+        // CRÍTICO (esquina inferior izquierda)
+        ctx.fillStyle = '#dc3545';
+        ctx.textAlign = 'left';
+        ctx.textBaseline = 'bottom';
+        ctx.fillText('CRÍTICO', left + 10, bottom - 10);
+
+        // EFICIENTE (esquina superior izquierda)
+        ctx.fillStyle = '#0056b3';
+        ctx.textAlign = 'left';
+        ctx.textBaseline = 'top';
+        ctx.fillText('EFICIENTE', left + 10, top + 10);
+
+        // A DESARROLLAR (esquina inferior derecha)
+        ctx.fillStyle = '#6c757d';
+        ctx.textAlign = 'right';
+        ctx.textBaseline = 'bottom';
+        ctx.fillText('A DESARROLLAR', right - 10, bottom - 10);
+
+        // IDEAL (esquina superior derecha)
+        ctx.fillStyle = '#28a745';
+        ctx.textAlign = 'right';
+        ctx.textBaseline = 'top';
+        ctx.fillText('IDEAL', right - 10, top + 10);
+
+        ctx.restore();
+    }
+};
+
+// Crear gráfico
+if (ctx) {
+    window.matrizChart = new Chart(ctx, {
+        type: 'bubble',
+        data: {
+            datasets: matrizData.datasets
+        },
+    options: {
+        responsive: true,
+        maintainAspectRatio: false,
+        plugins: {
+            legend: {
+                display: true,
+                position: 'bottom',
+                labels: {
+                    usePointStyle: true,
+                    padding: 10,
+                    font: {
+                        size: 11,
+                        weight: '600'
+                    },
+                    boxWidth: 10,
+                    boxHeight: 10
+                },
+                maxHeight: 100
+            },
+            tooltip: {
+                callbacks: {
+                    label: function(context) {
+                        const canal = context.dataset.label;
+                        const ir = context.parsed.x.toFixed(1);
+                        const roi = context.parsed.y.toFixed(1);
+                        return [
+                            `${canal}`,
+                            `% Ingreso Real: ${ir}%`,
+                            `% ROI: ${roi}%`
+                        ];
+                    }
+                }
+            },
+            title: {
+                display: true,
+                text: '% Ingreso Real vs ROI Costo de Venta',
+                font: {
+                    size: 16,
+                    weight: 'bold'
+                },
+                padding: {
+                    bottom: 20
+                }
+            }
+        },
+        scales: {
+            x: {
+                title: {
+                    display: true,
+                    text: '% Ingreso Real',
+                    font: {
+                        size: 14,
+                        weight: 'bold'
+                    }
+                },
+                min: 0,
+                max: 50,
+                ticks: {
+                    callback: function(value) {
+                        return value + '%';
+                    }
+                },
+                grid: {
+                    drawOnChartArea: true,
+                    color: 'rgba(0, 0, 0, 0.05)'
+                }
+            },
+            y: {
+                title: {
+                    display: true,
+                    text: 'ROI Costo de Venta %',
+                    font: {
+                        size: 14,
+                        weight: 'bold'
+                    }
+                },
+                min: 0,
+                max: matrizData.estadisticas.eje_y_max || 100,  // ← DINÁMICO
+                ticks: {
+                    callback: function(value) {
+                        return value + '%';
+                    }
+                },
+                grid: {
+                    drawOnChartArea: true,
+                    color: 'rgba(0, 0, 0, 0.05)'
+                }
+            }
+        }
+    },
+    plugins: [backgroundZonesPlugin]
+    });
+
+    console.log('✅ Matriz de Posicionamiento cargada exitosamente');
+    console.log(`📊 Gráfico inicializado con ${window.matrizChart.data.datasets.length} datasets`);
+
+    // Exponer función de actualización globalmente para debugging
+    window.debugActualizarGrafico = function(data) {
+        console.log('🔧 DEBUG: Actualizando gráfico manualmente');
+        if (window.matrizChart) {
+            window.matrizChart.data.datasets = data.datasets;
+            window.matrizChart.update();
+            console.log('✅ Actualizado');
+        }
+    };
+} else {
+    console.error('❌ No se pudo crear el gráfico - canvas no encontrado');
+}
+
+// ========== MATRIZ DE CATEGORÍAS ==========
+
+// Datos de categorías del backend
+const matrizCatData = {{ matriz_cat_data | tojson | safe }};
+
+// Variable global para el gráfico de categorías
+window.matrizCategoriasChart = null;
+
+// Configuración del gráfico de categorías
+const ctxCat = document.getElementById('matrizCategorias');
+if (!ctxCat) {
+    console.error('❌ Canvas matrizCategorias NO encontrado');
+}
+
+// Plugin para dibujar zonas de fondo (categorías)
+const backgroundZonesPluginCat = {
+    id: 'backgroundZonesCat',
+    beforeDraw: (chart) => {
+        const {ctx, chartArea: {left, right, top, bottom, width, height}} = chart;
+        const xScale = chart.scales.x;
+        const yScale = chart.scales.y;
+
+        const x20 = xScale.getPixelForValue(20);
+        const y40 = yScale.getPixelForValue(40);
+
+        ctx.save();
+
+        // Zonas de fondo
+        ctx.fillStyle = 'rgba(255, 204, 204, 0.3)';
+        ctx.fillRect(left, y40, x20 - left, bottom - y40);
+
+        ctx.fillStyle = 'rgba(204, 229, 255, 0.3)';
+        ctx.fillRect(left, top, x20 - left, y40 - top);
+
+        ctx.fillStyle = 'rgba(230, 230, 230, 0.3)';
+        ctx.fillRect(x20, y40, right - x20, bottom - y40);
+
+        ctx.fillStyle = 'rgba(212, 237, 218, 0.3)';
+        ctx.fillRect(x20, top, right - x20, y40 - top);
+
+        // Líneas divisorias
+        ctx.setLineDash([5, 5]);
+        ctx.strokeStyle = '#0056b3';
+        ctx.lineWidth = 2;
+
+        ctx.beginPath();
+        ctx.moveTo(x20, top);
+        ctx.lineTo(x20, bottom);
+        ctx.stroke();
+
+        ctx.beginPath();
+        ctx.moveTo(left, y40);
+        ctx.lineTo(right, y40);
+        ctx.stroke();
+
+        // Etiquetas en esquinas
+        ctx.setLineDash([]);
+        ctx.font = 'bold 11px Arial';
+
+        ctx.fillStyle = '#dc3545';
+        ctx.textAlign = 'left';
+        ctx.textBaseline = 'bottom';
+        ctx.fillText('CRÍTICO', left + 10, bottom - 10);
+
+        ctx.fillStyle = '#0056b3';
+        ctx.textAlign = 'left';
+        ctx.textBaseline = 'top';
+        ctx.fillText('EFICIENTE', left + 10, top + 10);
+
+        ctx.fillStyle = '#6c757d';
+        ctx.textAlign = 'right';
+        ctx.textBaseline = 'bottom';
+        ctx.fillText('A DESARROLLAR', right - 10, bottom - 10);
+
+        ctx.fillStyle = '#28a745';
+        ctx.textAlign = 'right';
+        ctx.textBaseline = 'top';
+        ctx.fillText('IDEAL', right - 10, top + 10);
+
+        ctx.restore();
+    }
+};
+
+// Plugin personalizado para mostrar etiquetas en cada punto
+const labelPluginCat = {
+    id: 'labelPluginCat',
+    afterDatasetsDraw: function(chart) {
+        const ctx = chart.ctx;
+        chart.data.datasets.forEach((dataset, datasetIndex) => {
+            const meta = chart.getDatasetMeta(datasetIndex);
+            if (!meta.hidden) {
+                meta.data.forEach((element, index) => {
+                    // Obtener la etiqueta del dataset (ej: "ML - MESAS")
+                    const label = dataset.label;
+
+                    // Posición del punto
+                    const x = element.x;
+                    const y = element.y;
+
+                    // Configurar estilo del texto (más pequeño, sin fondo)
+                    ctx.fillStyle = '#333333';
+                    ctx.font = 'bold 8px Arial';
+                    ctx.textAlign = 'center';
+                    ctx.textBaseline = 'top';
+
+                    // Dibujar el texto DEBAJO del punto
+                    ctx.fillText(label, x, y + 8);
+                });
+            }
+        });
+    }
+};
+
+// Crear gráfico de categorías
+if (ctxCat) {
+    window.matrizCategoriasChart = new Chart(ctxCat, {
+        type: 'bubble',
+        data: {
+            datasets: matrizCatData.datasets
+        },
+        options: {
+            responsive: true,
+            maintainAspectRatio: false,
+            plugins: {
+                legend: {
+                    display: true,
+                    position: 'bottom',
+                    labels: {
+                        usePointStyle: true,
+                        padding: 8,
+                        font: {
+                            size: 9,
+                            weight: '600'
+                        },
+                        boxWidth: 8,
+                        boxHeight: 8
+                    },
+                    maxHeight: 120
+                },
+                tooltip: {
+                    callbacks: {
+                        label: function(context) {
+                            const label = context.dataset.label;
+                            const ir = context.parsed.x.toFixed(1);
+                            const roi = context.parsed.y.toFixed(1);
+                            return [
+                                `${label}`,
+                                `% Ingreso Real: ${ir}%`,
+                                `% ROI: ${roi}%`
+                            ];
+                        }
+                    }
+                },
+                title: {
+                    display: true,
+                    text: '% IR vs ROI por Categoría',
+                    font: {
+                        size: 14,
+                        weight: 'bold'
+                    },
+                    padding: {
+                        bottom: 15
+                    }
+                }
+            },
+            scales: {
+                x: {
+                    title: {
+                        display: true,
+                        text: '% Ingreso Real',
+                        font: {
+                            size: 14,
+                            weight: 'bold'
+                        }
+                    },
+                    min: 0,
+                    max: 50,
+                    ticks: {
+                        callback: function(value) {
+                            return value + '%';
+                        }
+                    },
+                    grid: {
+                        drawOnChartArea: true,
+                        color: 'rgba(0, 0, 0, 0.05)'
+                    }
+                },
+                y: {
+                    title: {
+                        display: true,
+                        text: 'ROI %',
+                        font: {
+                            size: 14,
+                            weight: 'bold'
+                        }
+                    },
+                    min: 0,
+                    max: matrizCatData.estadisticas.eje_y_max || 100,  // ← DINÁMICO
+                    ticks: {
+                        callback: function(value) {
+                            return value + '%';
+                        }
+                    },
+                    grid: {
+                        drawOnChartArea: true,
+                        color: 'rgba(0, 0, 0, 0.05)'
+                    }
+                }
+            }
+        },
+        plugins: [backgroundZonesPluginCat, labelPluginCat]
+    });
+
+    console.log('✅ Matriz de Categorías cargada exitosamente');
+    console.log(`📊 Gráfico categorías inicializado con ${window.matrizCategoriasChart.data.datasets.length} datasets`);
+} else {
+    console.error('❌ No se pudo crear el gráfico de categorías - canvas no encontrado');
+}
+</script>
+
+<!-- Script para la Matriz de Clasificación -->
+<script src="{{ url_for('static', filename='js/matriz_clasificacion/main.js') }}"></script>
+
+<script>
+// Inicializar gráfico de clasificación vacío
+const ctxClasif = document.getElementById('matrizClasificacionChart');
+
+if (ctxClasif) {
+    console.log('🔧 Inicializando gráfico de clasificación...');
+
+    // Plugin para dibujar zonas de fondo (igual que las otras matrices)
+    // IMPORTANTE: Definir como variable global para que main.js pueda usarlo
+    window.backgroundZonesPluginClasif = {
+        id: 'backgroundZonesClasif',
+        beforeDraw: (chart) => {
+            const {ctx, chartArea: {left, right, top, bottom}} = chart;
+            const xScale = chart.scales.x;
+            const yScale = chart.scales.y;
+
+            if (!chart.chartArea) return;
+
+            // Obtener coordenadas de las líneas divisorias
+            const x20 = xScale.getPixelForValue(20);  // Línea vertical en X=20%
+            const y40 = yScale.getPixelForValue(40);  // Línea horizontal en Y=40%
+
+            ctx.save();
+
+            // Zona CRÍTICO (0-20% IR, 0-40% ROI) - Rojo
+            ctx.fillStyle = 'rgba(255, 204, 204, 0.3)';
+            ctx.fillRect(left, y40, x20 - left, bottom - y40);
+
+            // Zona EFICIENTE (0-20% IR, 40-100% ROI) - Azul
+            ctx.fillStyle = 'rgba(204, 229, 255, 0.3)';
+            ctx.fillRect(left, top, x20 - left, y40 - top);
+
+            // Zona A DESARROLLAR (20-50% IR, 0-40% ROI) - Gris
+            ctx.fillStyle = 'rgba(230, 230, 230, 0.3)';
+            ctx.fillRect(x20, y40, right - x20, bottom - y40);
+
+            // Zona IDEAL (20-50% IR, 40-100% ROI) - Verde
+            ctx.fillStyle = 'rgba(212, 237, 218, 0.3)';
+            ctx.fillRect(x20, top, right - x20, y40 - top);
+
+            // Dibujar líneas divisorias punteadas
+            ctx.setLineDash([5, 5]);
+            ctx.strokeStyle = 'rgba(0, 0, 0, 0.3)';
+            ctx.lineWidth = 1.5;
+
+            // Línea vertical en X=20%
+            ctx.beginPath();
+            ctx.moveTo(x20, top);
+            ctx.lineTo(x20, bottom);
+            ctx.stroke();
+
+            // Línea horizontal en Y=40%
+            ctx.beginPath();
+            ctx.moveTo(left, y40);
+            ctx.lineTo(right, y40);
+            ctx.stroke();
+
+            // Etiquetas de zonas en las esquinas
+            ctx.setLineDash([]);
+            ctx.font = 'bold 11px Arial';
+
+            // CRÍTICO (esquina inferior izquierda)
+            ctx.fillStyle = '#dc3545';
+            ctx.textAlign = 'left';
+            ctx.textBaseline = 'bottom';
+            ctx.fillText('CRÍTICO', left + 10, bottom - 10);
+
+            // EFICIENTE (esquina superior izquierda)
+            ctx.fillStyle = '#0056b3';
+            ctx.textAlign = 'left';
+            ctx.textBaseline = 'top';
+            ctx.fillText('EFICIENTE', left + 10, top + 10);
+
+            // A DESARROLLAR (esquina inferior derecha)
+            ctx.fillStyle = '#6c757d';
+            ctx.textAlign = 'right';
+            ctx.textBaseline = 'bottom';
+            ctx.fillText('A DESARROLLAR', right - 10, bottom - 10);
+
+            // IDEAL (esquina superior derecha)
+            ctx.fillStyle = '#28a745';
+            ctx.textAlign = 'right';
+            ctx.textBaseline = 'top';
+            ctx.fillText('IDEAL', right - 10, top + 10);
+
+            ctx.restore();
+        }
+    };
+
+    // Plugin para dibujar etiquetas sobre cada punto (ABREV - SKU)
+    const pointLabelsPluginClasif = {
+        id: 'pointLabelsClasif',
+        afterDatasetsDraw: (chart) => {
+            const {ctx, chartArea: {top, bottom}} = chart;
+
+            chart.data.datasets.forEach((dataset, datasetIndex) => {
+                const meta = chart.getDatasetMeta(datasetIndex);
+
+                if (!meta.hidden) {
+                    meta.data.forEach((element, index) => {
+                        const dataPoint = dataset.data[index];
+                        const label = dataset.label || '';
+
+                        // Obtener posición del punto
+                        const x = element.x;
+                        const y = element.y;
+
+                        // Configurar estilo del texto
+                        ctx.save();
+                        ctx.font = 'bold 9px Arial';
+                        ctx.fillStyle = dataset.borderColor || '#000';  // Color del canal
+                        ctx.textAlign = 'center';
+
+                        // Posición: debajo del punto (offset de 12px)
+                        ctx.textBaseline = 'top';
+                        const labelY = y + 12;
+
+                        // Dibujar texto
+                        ctx.fillText(label, x, labelY);
+
+                        ctx.restore();
+                    });
+                }
+            });
+        }
+    };
+
+    window.matrizClasificacionChart = new Chart(ctxClasif, {
+        type: 'scatter',  // Cambio: scatter en lugar de bubble para permitir pointStyle
+        data: {
+            datasets: []  // Vacío inicialmente
+        },
+        options: {
+            responsive: true,
+            maintainAspectRatio: false,
+            elements: {
+                point: {
+                    pointStyle: 'cross',  // Forma de 'X' para todos los puntos
+                    radius: 8,            // Tamaño base (se sobreescribe por dataset)
+                    hoverRadius: 12       // Tamaño al hover
+                }
+            },
+            plugins: {
+                legend: {
+                    display: true,  // Mostrar leyenda con formato "ABREV - SKU"
+                    position: 'bottom',
+                    labels: {
+                        usePointStyle: true,  // Usar el mismo estilo que los puntos (X)
+                        padding: 8,
+                        font: {
+                            size: 10,
+                            weight: '600'
+                        },
+                        boxWidth: 12,
+                        boxHeight: 12
+                    }
+                },
+                tooltip: {
+                    backgroundColor: 'rgba(0, 0, 0, 0.8)',
+                    padding: 12,
+                    titleFont: {
+                        size: 14,
+                        weight: 'bold'
+                    },
+                    bodyFont: {
+                        size: 13
+                    },
+                    callbacks: {
+                        title: function(tooltipItems) {
+                            const item = tooltipItems[0];
+                            const dataset = item.dataset;
+                            return dataset.label || 'SKU';
+                        },
+                        label: function(context) {
+                            const dataset = context.dataset;
+                            const point = context.parsed;
+                            return [
+                                `Canal: ${dataset._canal || 'N/A'}`,
+                                `Clasificación: ${dataset._clasificacion || 'N/A'}`,
+                                `% IR: ${point.x.toFixed(2)}%`,
+                                `% ROI: ${point.y.toFixed(2)}%`,
+                                `Ventas: $${dataset._ventas ? dataset._ventas.toFixed(0).replace(/\B(?=(\d{3})+(?!\d))/g, ",") : '0'}`,
+                                `Ingreso Real: $${dataset._ingreso_real ? dataset._ingreso_real.toFixed(0).replace(/\B(?=(\d{3})+(?!\d))/g, ",") : '0'}`
+                            ];
+                        }
+                    }
+                }
+            },
+            scales: {
+                x: {
+                    title: {
+                        display: true,
+                        text: '% Ingreso Real',
+                        font: {
+                            size: 14,
+                            weight: 'bold'
+                        }
+                    },
+                    min: 0,
+                    max: 50,
+                    ticks: {
+                        callback: function(value) {
+                            return value + '%';
+                        }
+                    },
+                    grid: {
+                        drawOnChartArea: true,
+                        color: 'rgba(0, 0, 0, 0.05)'
+                    }
+                },
+                y: {
+                    title: {
+                        display: true,
+                        text: 'ROI %',
+                        font: {
+                            size: 14,
+                            weight: 'bold'
+                        }
+                    },
+                    min: 0,
+                    max: 100,
+                    ticks: {
+                        callback: function(value) {
+                            return value + '%';
+                        }
+                    },
+                    grid: {
+                        drawOnChartArea: true,
+                        color: 'rgba(0, 0, 0, 0.05)'
+                    }
+                }
+            }
+        },
+        plugins: [window.backgroundZonesPluginClasif, pointLabelsPluginClasif]
+    });
+
+    console.log('✅ Gráfico de clasificación inicializado (vacío)');
+} else {
+    console.error('❌ No se pudo crear el gráfico de clasificación - canvas no encontrado');
+}
+</script>
+
+{% endblock %}

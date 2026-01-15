@@ -1,0 +1,247 @@
+<!-- NAVBAR PROFESIONAL LOOMBER -->
+<nav class="navbar navbar-expand-lg navbar-light bg-white fixed-top shadow-sm border-bottom" style="border-bottom: 3px solid #D4AF37;">
+  <div class="container-fluid px-4">
+    
+    <!-- LOGO Y MARCA - CÓDIGO COMPLETAMENTE NUEVO -->
+    <a href="/" class="navbar-brand d-flex align-items-center" style="text-decoration: none;">
+      <!-- Logo SVG de Loomber - TOTALMENTE DIFERENTE -->
+      <div class="logo-container" style="position: relative;">
+        <svg width="180" height="50" viewBox="0 0 180 50" xmlns="http://www.w3.org/2000/svg">
+          <!-- Línea dorada ARRIBA - MÁS PEQUEÑA y sobre las "O" -->
+          <rect x="50" y="6" width="30" height="4" rx="2" fill="#D4AF37"/>
+          
+          <!-- LOOMBER -->
+          <text x="8" y="32" font-family="Arial, sans-serif" font-size="20" font-weight="900" fill="#2C2C2C" letter-spacing="1px">
+            LOOMBER
+          </text>
+          
+          <!-- Línea dorada ABAJO - MÁS PEQUEÑA y bajo las "O" -->
+          <rect x="50" y="40" width="30" height="4" rx="2" fill="#D4AF37"/>
+          
+          <!-- Marca registrada -->
+          <text x="160" y="12" font-family="Arial, sans-serif" font-size="8" fill="#2C2C2C">®</text>
+        </svg>
+      </div>
+    </a>
+
+    <!-- Botón toggle para móvil -->
+    <button class="navbar-toggler border-0 shadow-none" type="button" data-bs-toggle="collapse" data-bs-target="#navbarNav" 
+            style="color: #2C2C2C;">
+      <i class="bi bi-list fs-4"></i>
+    </button>
+
+    <!-- Menú de navegación -->
+    <div class="collapse navbar-collapse justify-content-end" id="navbarNav">
+      
+      <!-- Enlaces de navegación principales -->
+      <ul class="navbar-nav">
+        <li class="nav-item">
+          <a class="nav-link position-relative" href="/?tab=analisis"
+             style="color: {% if active_tab == 'analisis' %}#D4AF37{% else %}#6c757d{% endif %};
+                    font-weight: {% if active_tab == 'analisis' %}600{% else %}400{% endif %};
+                    padding: 0.6rem 0.8rem;
+                    border-radius: 8px;
+                    transition: all 0.3s ease;
+                    font-size: 0.9rem;
+                    {% if active_tab == 'analisis' %}background: linear-gradient(135deg, rgba(212, 175, 55, 0.1), rgba(212, 175, 55, 0.05));{% endif %}">
+            <i class="bi bi-graph-up me-1" style="font-size: 0.95rem;"></i>
+            Análisis de Ventas
+            {% if active_tab == 'analisis' %}
+            <div style="position: absolute; bottom: -2px; left: 50%; transform: translateX(-50%); 
+                        width: 60%; height: 3px; background: #D4AF37; border-radius: 2px;"></div>
+            {% endif %}
+          </a>
+        </li>
+        
+        <li class="nav-item">
+          <a class="nav-link position-relative" href="/clasificacion"
+             style="color: {% if active_tab == 'clasificacion' %}#D4AF37{% else %}#6c757d{% endif %};
+                    font-weight: {% if active_tab == 'clasificacion' %}600{% else %}400{% endif %};
+                    padding: 0.6rem 0.8rem;
+                    border-radius: 8px;
+                    transition: all 0.3s ease;
+                    font-size: 0.9rem;
+                    {% if active_tab == 'clasificacion' %}background: linear-gradient(135deg, rgba(212, 175, 55, 0.1), rgba(212, 175, 55, 0.05));{% endif %}">
+            <i class="bi bi-pie-chart-fill me-1" style="font-size: 0.95rem;"></i>
+            Clasificación
+            {% if active_tab == 'clasificacion' %}
+            <div style="position: absolute; bottom: -2px; left: 50%; transform: translateX(-50%); 
+                        width: 60%; height: 3px; background: #D4AF37; border-radius: 2px;"></div>
+            {% endif %}
+          </a>
+        </li>
+        
+        <li class="nav-item">
+          <a class="nav-link position-relative" href="/radar-comercial"
+             style="color: {% if active_tab == 'radar_comercial' %}#D4AF37{% else %}#6c757d{% endif %};
+                    font-weight: {% if active_tab == 'radar_comercial' %}600{% else %}400{% endif %};
+                    padding: 0.6rem 0.8rem;
+                    border-radius: 8px;
+                    transition: all 0.3s ease;
+                    font-size: 0.9rem;
+                    {% if active_tab == 'radar_comercial' %}background: linear-gradient(135deg, rgba(212, 175, 55, 0.1), rgba(212, 175, 55, 0.05));{% endif %}">
+            <i class="bi bi-radar me-1" style="font-size: 0.95rem;"></i>
+            Radar Comercial
+            {% if active_tab == 'radar_comercial' %}
+            <div style="position: absolute; bottom: -2px; left: 50%; transform: translateX(-50%);
+                        width: 60%; height: 3px; background: #D4AF37; border-radius: 2px;"></div>
+            {% endif %}
+          </a>
+        </li>        
+        <li class="nav-item">
+          <a class="nav-link position-relative" href="/analisis-rentabilidad"
+             style="color: {% if active_tab == 'analisis-rentabilidad' %}#D4AF37{% else %}#6c757d{% endif %};
+                    font-weight: {% if active_tab == 'analisis-rentabilidad' %}600{% else %}400{% endif %};
+                    padding: 0.6rem 0.8rem;
+                    border-radius: 8px;
+                    transition: all 0.3s ease;
+                    font-size: 0.9rem;
+                    {% if active_tab == 'analisis-rentabilidad' %}background: linear-gradient(135deg, rgba(212, 175, 55, 0.1), rgba(212, 175, 55, 0.05));{% endif %}">
+            <i class="bi bi-bar-chart me-1" style="font-size: 0.95rem;"></i>
+            Control de Ingreso Real
+            {% if active_tab == 'analisis-rentabilidad' %}
+            <div style="position: absolute; bottom: -2px; left: 50%; transform: translateX(-50%);
+                        width: 60%; height: 3px; background: #D4AF37; border-radius: 2px;"></div>
+            {% endif %}
+          </a>
+        </li>
+
+        <li class="nav-item">
+          <a class="nav-link position-relative" href="/matriz-posicionamiento"
+             style="color: {% if active_tab == 'matriz-posicionamiento' %}#D4AF37{% else %}#6c757d{% endif %};
+                    font-weight: {% if active_tab == 'matriz-posicionamiento' %}600{% else %}400{% endif %};
+                    padding: 0.6rem 0.8rem;
+                    border-radius: 8px;
+                    transition: all 0.3s ease;
+                    font-size: 0.9rem;
+                    {% if active_tab == 'matriz-posicionamiento' %}background: linear-gradient(135deg, rgba(212, 175, 55, 0.1), rgba(212, 175, 55, 0.05));{% endif %}">
+            <i class="bi bi-grid-3x3 me-1" style="font-size: 0.95rem;"></i>
+            Matriz de Posicionamiento
+            {% if active_tab == 'matriz-posicionamiento' %}
+            <div style="position: absolute; bottom: -2px; left: 50%; transform: translateX(-50%);
+                        width: 60%; height: 3px; background: #D4AF37; border-radius: 2px;"></div>
+            {% endif %}
+          </a>
+        </li>
+
+        <li class="nav-item">
+          <a class="nav-link position-relative" href="/cumplimiento-metas"
+             style="color: {% if active_tab == 'cumplimiento-metas' %}#D4AF37{% else %}#6c757d{% endif %};
+                    font-weight: {% if active_tab == 'cumplimiento-metas' %}600{% else %}400{% endif %};
+                    padding: 0.6rem 0.8rem;
+                    border-radius: 8px;
+                    transition: all 0.3s ease;
+                    font-size: 0.9rem;
+                    {% if active_tab == 'cumplimiento-metas' %}background: linear-gradient(135deg, rgba(212, 175, 55, 0.1), rgba(212, 175, 55, 0.05));{% endif %}">
+            <i class="bi bi-bullseye me-1" style="font-size: 0.95rem;"></i>
+            Metas
+            {% if active_tab == 'cumplimiento-metas' %}
+            <div style="position: absolute; bottom: -2px; left: 50%; transform: translateX(-50%);
+                        width: 60%; height: 3px; background: #D4AF37; border-radius: 2px;"></div>
+            {% endif %}
+          </a>
+        </li>
+
+        <li class="nav-item">
+          <a class="nav-link position-relative" href="/reparto-inventario"
+             style="color: {% if active_tab == 'reparto-inventario' %}#D4AF37{% else %}#6c757d{% endif %};
+                    font-weight: {% if active_tab == 'reparto-inventario' %}600{% else %}400{% endif %};
+                    padding: 0.6rem 0.8rem;
+                    border-radius: 8px;
+                    transition: all 0.3s ease;
+                    font-size: 0.9rem;
+                    {% if active_tab == 'reparto-inventario' %}background: linear-gradient(135deg, rgba(212, 175, 55, 0.1), rgba(212, 175, 55, 0.05));{% endif %}">
+            <i class="bi bi-truck me-1" style="font-size: 0.95rem;"></i>
+            Reparto Inventario
+            {% if active_tab == 'reparto-inventario' %}
+            <div style="position: absolute; bottom: -2px; left: 50%; transform: translateX(-50%);
+                        width: 60%; height: 3px; background: #D4AF37; border-radius: 2px;"></div>
+            {% endif %}
+          </a>
+        </li>
+
+        <!-- Menú desplegable simplificado -->
+        <li class="nav-item dropdown">
+          <a class="nav-link dropdown-toggle" href="#" role="button" data-bs-toggle="dropdown"
+             style="color: #6c757d; padding: 0.6rem 0.7rem; transition: all 0.3s ease; font-size: 0.9rem;">
+            <i class="bi bi-gear me-1" style="font-size: 0.95rem;"></i>
+            <span class="d-none d-md-inline">Más</span>
+          </a>
+          <ul class="dropdown-menu dropdown-menu-end shadow border-0"
+              style="border-radius: 12px; border-top: 3px solid #D4AF37;">
+            <li><a class="dropdown-item" href="/cumplimiento-bf" style="color: #6c757d; transition: all 0.2s ease;">
+              <i class="bi bi-lightning-charge-fill me-2"></i>Cumplimiento BF</a></li>
+            <li><a class="dropdown-item" href="/ventas-hora-meli" style="color: #6c757d; transition: all 0.2s ease;">
+              <i class="bi bi-clock-history me-2"></i>Ventas por Hora Meli</a></li>
+            <li><a class="dropdown-item" href="/distribucion-inventario" style="color: #6c757d; transition: all 0.2s ease;">
+              <i class="bi bi-boxes me-2"></i>Distribución Inventario</a></li>
+            <li><hr class="dropdown-divider"></li>
+            <li><a class="dropdown-item" href="#" style="color: #6c757d; transition: all 0.2s ease;">
+              <i class="bi bi-download me-2"></i>Exportar Datos</a></li>
+          </ul>
+        </li>
+
+        <!-- Botón de usuario/perfil -->
+        <li class="nav-item ms-2">
+          <div class="nav-link p-0">
+            <div class="user-avatar" 
+                 style="width: 36px; height: 36px; background: linear-gradient(135deg, #D4AF37, #B8941F); 
+                        border-radius: 50%; display: flex; align-items: center; justify-content: center; 
+                        color: white; font-weight: 600; font-size: 0.85rem; cursor: pointer; 
+                        transition: all 0.3s ease; box-shadow: 0 2px 8px rgba(212, 175, 55, 0.3);"
+                 onmouseover="this.style.transform='scale(1.1)'; this.style.boxShadow='0 4px 12px rgba(212, 175, 55, 0.4)'"
+                 onmouseout="this.style.transform='scale(1)'; this.style.boxShadow='0 2px 8px rgba(212, 175, 55, 0.3)'">
+              <i class="bi bi-person-fill"></i>
+            </div>
+          </div>
+        </li>
+      </ul>
+    </div>
+  </div>
+</nav>
+
+<!-- Estilos adicionales -->
+<style>
+  /* Efectos hover para los enlaces */
+  .nav-link:hover {
+    color: #D4AF37 !important;
+    background: linear-gradient(135deg, rgba(212, 175, 55, 0.1), rgba(212, 175, 55, 0.05)) !important;
+    transform: translateY(-1px);
+  }
+
+  /* Efectos hover para dropdown items */
+  .dropdown-item:hover {
+    background: linear-gradient(135deg, rgba(212, 175, 55, 0.1), rgba(212, 175, 55, 0.05)) !important;
+    color: #D4AF37 !important;
+  }
+
+  /* Responsividad para el logo */
+  @media (max-width: 768px) {
+    .logo-container svg {
+      width: 130px;
+      height: 36px;
+    }
+  }
+
+  /* Animación sutil para el navbar al hacer scroll */
+  .navbar {
+    transition: all 0.3s ease;
+  }
+  
+  .navbar.scrolled {
+    background: rgba(255, 255, 255, 0.95) !important;
+    backdrop-filter: blur(10px);
+  }
+</style>
+
+<!-- Script para efectos de scroll -->
+<script>
+  window.addEventListener('scroll', function() {
+    const navbar = document.querySelector('.navbar');
+    if (window.scrollY > 50) {
+      navbar.classList.add('scrolled');
+    } else {
+      navbar.classList.remove('scrolled');
+    }
+  });
+</script>

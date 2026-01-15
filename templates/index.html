@@ -1,0 +1,1275 @@
+{% extends "layout.html" %}
+
+{% block content %}
+<div class="container mt-4">
+    <h2 class="mb-4" data-aos="fade-down" style="color: #2C2C2C; font-weight: 700;">Dashboard de Ventas</h2>
+
+    <form method="POST" class="filtros row g-3 align-items-end mb-4" id="filtros-form" data-aos="fade-up" data-aos-delay="100">
+
+        <div class="col-md-3">
+            <label for="preset_main" class="form-label" style="color: #2C2C2C; font-weight: 600;"><strong>Periodo principal:</strong></label>
+            <select name="preset_main" id="preset_main" class="form-select" style="border: 2px solid #f8f9fa; transition: all 0.3s ease;">
+                <option value="hoy" {% if selected_preset_main == "hoy" %}selected{% endif %}>Hoy</option>
+                <option value="7" {% if selected_preset_main == "7" %}selected{% endif %}>Últimos 7 días</option>
+                <option value="15" {% if selected_preset_main == "15" %}selected{% endif %}>Últimos 15 días</option>
+                <option value="30" {% if selected_preset_main == "30" %}selected{% endif %}>Últimos 30 días</option>
+                <option value="personalizado" {% if selected_preset_main == "personalizado" %}selected{% endif %}>Fecha personalizada</option>
+            </select>
+        </div>
+
+        <div class="col-md-3" id="main_range_group" {% if selected_preset_main != "personalizado" %}style="display:none;"{% endif %}>
+            <label for="main_range" class="form-label" style="color: #2C2C2C; font-weight: 600;">Rango personalizado:</label>
+            <input type="text" id="main_range" name="main_range" class="form-control" 
+                   value="{{ selected_main_range }}" placeholder="Selecciona un rango" readonly
+                   style="border: 2px solid #f8f9fa; transition: all 0.3s ease;">
+        </div>
+
+        <div class="col-md-3">
+            <label for="preset_compare" class="form-label" style="color: #2C2C2C; font-weight: 600;"><strong>Comparar con:</strong></label>
+            <select name="preset_compare" id="preset_compare" class="form-select" style="border: 2px solid #f8f9fa; transition: all 0.3s ease;">
+                <option value="anterior" {% if selected_preset_compare == "anterior" %}selected{% endif %}>Período anterior</option>
+                <option value="anual" {% if selected_preset_compare == "anual" %}selected{% endif %}>Año anterior</option>
+                <option value="personalizado" {% if selected_preset_compare == "personalizado" %}selected{% endif %}>Fecha personalizada</option>
+            </select>
+        </div>
+
+        <div class="col-md-3" id="compare_range_group" {% if selected_preset_compare != "personalizado" %}style="display:none;"{% endif %}>
+            <label for="compare_range" class="form-label" style="color: #2C2C2C; font-weight: 600;">Comparar con este rango:</label>
+            <input type="text" id="compare_range" name="compare_range" class="form-control" 
+                   value="{{ selected_compare_range }}" placeholder="Comparar con este rango" readonly
+                   style="border: 2px solid #f8f9fa; transition: all 0.3s ease;">
+        </div>
+
+        <div class="col-md-2">
+            <label class="form-label d-block invisible">Filtros</label>
+            <button type="button" class="btn btn-outline-warning w-100 position-relative" data-bs-toggle="modal" data-bs-target="#filtroModal"
+                    style="border-color: #D4AF37; color: #D4AF37; font-weight: 600; transition: all 0.3s ease;">
+                <i class="bi bi-sliders"></i> Filtros
+                {% if selected_channels or selected_warehouses or selected_skus %}
+                <span class="position-absolute top-0 start-100 translate-middle badge rounded-pill bg-warning filter-badge-counter" id="filterBadge"
+                      style="background-color: #D4AF37 !important;">
+                    {{ (selected_channels|length) + (selected_warehouses|length) + (selected_skus|length) }}
+                </span>
+                {% endif %}
+            </button>
+        </div>
+
+        <div class="col-12">
+            <button type="submit" class="btn btn-warning" id="filterButton" 
+                    style="background-color: #D4AF37; border-color: #D4AF37; color: #2C2C2C; font-weight: 600; transition: all 0.3s ease;">
+                <i class="bi bi-funnel-fill me-2"></i>Filtrar
+            </button>
+        </div>
+
+        {% if selected_channels or selected_warehouses or selected_skus %}
+        <div class="col-12" data-aos="slide-down" data-aos-duration="400">
+            <div class="alert" style="background: linear-gradient(135deg, rgba(212, 175, 55, 0.1), rgba(212, 175, 55, 0.05)); border: 1px solid rgba(212, 175, 55, 0.3); border-radius: 12px;">
+                <strong style="color: #2C2C2C;">Filtros activos:</strong>
+                <div class="d-flex flex-wrap gap-1 mt-1">
+                    {% set canales_ecommerce = ['Mercado Libre', 'Doto', 'Yuhu', 'Aliexpress', 'Coppel', 'Liverpool', 'Shein', 'CrediTienda', 'Walmart', 'TikTok Shop'] %}
+                    {% set canales_b2b = ['ASI', 'Betterware', 'Amazon', 'Loomber'] %}
+                    {% set canales_ecommerce_seleccionados = [] %}
+                    {% set canales_b2b_seleccionados = [] %}
+                    {% set otros_canales_seleccionados = [] %}
+                    
+                    {% for channel in selected_channels %}
+                        {% if channel in canales_ecommerce %}
+                            {% set _ = canales_ecommerce_seleccionados.append(channel) %}
+                        {% elif channel in canales_b2b %}
+                            {% set _ = canales_b2b_seleccionados.append(channel) %}
+                        {% else %}
+                            {% set _ = otros_canales_seleccionados.append(channel) %}
+                        {% endif %}
+                    {% endfor %}
+                    
+                    <!-- Badge agrupado para Ecommerce -->
+                    {% if canales_ecommerce_seleccionados|length == canales_ecommerce|length %}
+                    <!-- Todos los canales Ecommerce seleccionados - mostrar badge agrupado -->
+                    <span class="badge animate-badge" style="background: linear-gradient(135deg, #dc3545, #c82333); color: white; font-size: 0.9rem; padding: 8px 12px;">
+                        <i class="bi bi-cart me-1"></i>Canales Ecommerce
+                        <button type="button" class="btn-close btn-close-white ms-1" aria-label="Eliminar" 
+                                onclick="clearEcommerceChannels()"></button>
+                    </span>
+                    {% else %}
+                    <!-- Solo algunos canales Ecommerce - mostrar individualmente -->
+                    {% for channel in canales_ecommerce_seleccionados %}
+                    <span class="badge animate-badge" style="background: linear-gradient(135deg, #dc3545, #c82333); color: white;">
+                        <i class="bi bi-cart me-1"></i>Ecommerce: {{ channel }}
+                        <button type="button" class="btn-close btn-close-white ms-1" aria-label="Eliminar" 
+                                onclick="removeFilter('channel', '{{ channel }}')"></button>
+                    </span>
+                    {% endfor %}
+                    {% endif %}
+                    
+                    <!-- Badge agrupado para B2B -->
+                    {% if canales_b2b_seleccionados|length == canales_b2b|length %}
+                    <!-- Todos los canales B2B seleccionados - mostrar badge agrupado -->
+                    <span class="badge animate-badge" style="background: linear-gradient(135deg, #0d6efd, #0056b3); color: white; font-size: 0.9rem; padding: 8px 12px;">
+                        <i class="bi bi-building-gear me-1"></i>Canales B2B
+                        <button type="button" class="btn-close btn-close-white ms-1" aria-label="Eliminar" 
+                                onclick="clearB2BChannels()"></button>
+                    </span>
+                    {% else %}
+                    <!-- Solo algunos canales B2B - mostrar individualmente -->
+                    {% for channel in canales_b2b_seleccionados %}
+                    <span class="badge animate-badge" style="background: linear-gradient(135deg, #0d6efd, #0056b3); color: white;">
+                        <i class="bi bi-building-gear me-1"></i>B2B: {{ channel }}
+                        <button type="button" class="btn-close btn-close-white ms-1" aria-label="Eliminar" 
+                                onclick="removeFilter('channel', '{{ channel }}')"></button>
+                    </span>
+                    {% endfor %}
+                    {% endif %}
+                    
+                    <!-- Otros canales individualmente -->
+                    {% for channel in otros_canales_seleccionados %}
+                    <span class="badge animate-badge" style="background: linear-gradient(135deg, #6c757d, #495057); color: white;">
+                        <i class="bi bi-question-circle me-1"></i>Otro: {{ channel }}
+                        <button type="button" class="btn-close btn-close-white ms-1" aria-label="Eliminar" 
+                                onclick="removeFilter('channel', '{{ channel }}')"></button>
+                    </span>
+                    {% endfor %}
+                    {% for warehouse in selected_warehouses %}
+                    <span class="badge animate-badge" style="background: linear-gradient(135deg, #2C2C2C, #4a4a4a); color: white;">
+                        Bodega: {{ warehouse }}
+                        <button type="button" class="btn-close btn-close-white ms-1" aria-label="Eliminar"
+                                onclick="removeFilter('warehouse', '{{ warehouse }}')"></button>
+                    </span>
+                    {% endfor %}
+                    {% for sku in selected_skus %}
+                    <span class="badge animate-badge" style="background: linear-gradient(135deg, #6c757d, #495057); color: white;">
+                        SKU: {{ sku }}
+                        <button type="button" class="btn-close btn-close-white ms-1" aria-label="Eliminar"
+                                onclick="removeFilter('sku', '{{ sku }}')"></button>
+                    </span>
+                    {% endfor %}
+                </div>
+                <button type="button" class="btn btn-sm btn-outline-danger mt-2" onclick="clearAllFilters()"
+                        style="border-color: #D4AF37; color: #D4AF37;">
+                    <i class="bi bi-x-circle"></i> Limpiar todos los filtros
+                </button>
+            </div>
+        </div>
+        {% endif %}
+
+        <!-- MODAL FILTROS DINÁMICOS -->
+        <div class="modal fade" id="filtroModal" tabindex="-1" aria-labelledby="filtroModalLabel" aria-hidden="true">
+          <div class="modal-dialog modal-dialog-scrollable modal-lg">
+            <div class="modal-content" style="border: none; border-radius: 15px; border-top: 4px solid #D4AF37;">
+              <div class="modal-header" style="border-bottom: 1px solid rgba(212, 175, 55, 0.2); background: rgba(212, 175, 55, 0.05);">
+                <h5 class="modal-title" id="filtroModalLabel" style="color: #2C2C2C; font-weight: 700;">
+                    <i class="bi bi-funnel me-2" style="color: #D4AF37;"></i>Filtrar resultados
+                </h5>
+                <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Cerrar"></button>
+              </div>
+              <div class="modal-body">
+                {% if channels %}
+                <div class="d-flex justify-content-between align-items-center mb-2">
+                    <h6 class="fw-bold mb-0" style="color: #2C2C2C;">
+                        <i class="bi bi-broadcast me-2" style="color: #D4AF37;"></i>Canal
+                    </h6>
+                    <div>
+                        <button type="button" class="btn btn-sm btn-outline-warning" onclick="selectAllChannels()"
+                                style="border-color: #D4AF37; color: #D4AF37;">Todos</button>
+                        <button type="button" class="btn btn-sm btn-outline-secondary" onclick="clearChannels()">Ninguno</button>
+                    </div>
+                </div>
+
+                <!-- ECOMMERCE -->
+                <div class="mb-3">
+                    <div class="d-flex justify-content-between align-items-center mb-2" style="background: rgba(220, 53, 69, 0.05); padding: 8px 12px; border-radius: 8px; border-left: 4px solid #dc3545;">
+                        <h6 class="fw-bold mb-0" style="color: #dc3545; font-size: 0.9rem;">
+                            <i class="bi bi-cart me-2"></i>Ecommerce
+                        </h6>
+                        <button type="button" class="btn btn-sm btn-outline-danger" onclick="selectEcommerceChannels()"
+                                style="border-color: #dc3545; color: #dc3545; font-size: 0.8rem; padding: 4px 8px;">
+                            Seleccionar Ecommerce
+                        </button>
+                    </div>
+                    <div class="row">
+                      {% for canal in channels %}
+                      {% if canal in ['Mercado Libre', 'Doto', 'Yuhu', 'Aliexpress', 'Coppel', 'Liverpool', 'Shein', 'CrediTienda', 'Walmart', 'TikTok Shop'] %}
+                      <div class="col-md-6">
+                        <div class="form-check">
+                          <input class="form-check-input ecommerce-channel" type="checkbox" name="channel" value="{{ canal }}" 
+                                 id="channel_{{ loop.index }}" 
+                                 {% if canal in selected_channels %}checked{% endif %}
+                                 style="border-color: #dc3545;">
+                          <label class="form-check-label" for="channel_{{ loop.index }}" style="color: #2C2C2C; font-size: 0.9rem;">{{ canal }}</label>
+                        </div>
+                      </div>
+                      {% endif %}
+                      {% endfor %}
+                    </div>
+                </div>
+
+                <!-- B2B -->
+                <div class="mb-3">
+                    <div class="d-flex justify-content-between align-items-center mb-2" style="background: rgba(13, 110, 253, 0.05); padding: 8px 12px; border-radius: 8px; border-left: 4px solid #0d6efd;">
+                        <h6 class="fw-bold mb-0" style="color: #0d6efd; font-size: 0.9rem;">
+                            <i class="bi bi-building-gear me-2"></i>B2B
+                        </h6>
+                        <button type="button" class="btn btn-sm btn-outline-primary" onclick="selectB2BChannels()"
+                                style="border-color: #0d6efd; color: #0d6efd; font-size: 0.8rem; padding: 4px 8px;">
+                            Seleccionar B2B
+                        </button>
+                    </div>
+                    <div class="row">
+                      {% for canal in channels %}
+                      {% if canal in ['ASI', 'Betterware', 'Amazon', 'Loomber'] %}
+                      <div class="col-md-6">
+                        <div class="form-check">
+                          <input class="form-check-input b2b-channel" type="checkbox" name="channel" value="{{ canal }}" 
+                                 id="channel_{{ loop.index }}" 
+                                 {% if canal in selected_channels %}checked{% endif %}
+                                 style="border-color: #0d6efd;">
+                          <label class="form-check-label" for="channel_{{ loop.index }}" style="color: #2C2C2C; font-size: 0.9rem;">{{ canal }}</label>
+                        </div>
+                      </div>
+                      {% endif %}
+                      {% endfor %}
+                    </div>
+                </div>
+
+                <!-- OTROS CANALES (si existen canales que no están en las categorías) -->
+                {% set otros_canales = [] %}
+                {% for canal in channels %}
+                    {% if canal not in ['Mercado Libre', 'Doto', 'Yuhu', 'Aliexpress', 'Coppel', 'Liverpool', 'Shein', 'CrediTienda', 'Walmart', 'TikTok Shop', 'ASI', 'Betterware', 'Amazon', 'Loomber'] %}
+                        {% set _ = otros_canales.append(canal) %}
+                    {% endif %}
+                {% endfor %}
+                
+                {% if otros_canales %}
+                <div class="mb-3">
+                    <div class="d-flex justify-content-between align-items-center mb-2" style="background: rgba(108, 117, 125, 0.05); padding: 8px 12px; border-radius: 8px; border-left: 4px solid #6c757d;">
+                        <h6 class="fw-bold mb-0" style="color: #6c757d; font-size: 0.9rem;">
+                            <i class="bi bi-question-circle me-2"></i>Otros
+                        </h6>
+                    </div>
+                    <div class="row">
+                      {% for canal in otros_canales %}
+                      <div class="col-md-6">
+                        <div class="form-check">
+                          <input class="form-check-input other-channel" type="checkbox" name="channel" value="{{ canal }}" 
+                                 id="channel_otros_{{ loop.index }}" 
+                                 {% if canal in selected_channels %}checked{% endif %}
+                                 style="border-color: #6c757d;">
+                          <label class="form-check-label" for="channel_otros_{{ loop.index }}" style="color: #2C2C2C; font-size: 0.9rem;">{{ canal }}</label>
+                        </div>
+                      </div>
+                      {% endfor %}
+                    </div>
+                </div>
+                {% endif %}
+                {% endif %}
+
+                {% if warehouses %}
+                <div class="d-flex justify-content-between align-items-center mb-2">
+                    <h6 class="fw-bold mb-0" style="color: #2C2C2C;">
+                        <i class="bi bi-building me-2" style="color: #D4AF37;"></i>Bodega
+                    </h6>
+                    <div>
+                        <button type="button" class="btn btn-sm btn-outline-warning" onclick="selectAllWarehouses()"
+                                style="border-color: #D4AF37; color: #D4AF37;">Todos</button>
+                        <button type="button" class="btn btn-sm btn-outline-secondary" onclick="clearWarehouses()">Ninguno</button>
+                    </div>
+                </div>
+                <div class="row">
+                  {% for wh in warehouses %}
+                  <div class="col-md-4">
+                    <div class="form-check">
+                      <input class="form-check-input" type="checkbox" name="warehouse" value="{{ wh }}" 
+                             id="warehouse_{{ loop.index }}"
+                             {% if wh in selected_warehouses %}checked{% endif %}
+                             style="border-color: #D4AF37;">
+                      <label class="form-check-label" for="warehouse_{{ loop.index }}" style="color: #2C2C2C;">{{ wh }}</label>
+                    </div>
+                  </div>
+                  {% endfor %}
+                </div>
+                {% endif %}
+
+                {% if skus %}
+                <div class="d-flex justify-content-between align-items-center mb-2 mt-4">
+                    <h6 class="fw-bold mb-0" style="color: #2C2C2C;">
+                        <i class="bi bi-box-seam me-2" style="color: #D4AF37;"></i>SKUs Específicos
+                    </h6>
+                    <div>
+                        <button type="button" class="btn btn-sm btn-outline-warning" onclick="selectAllSkus()"
+                                style="border-color: #D4AF37; color: #D4AF37;">Todos</button>
+                        <button type="button" class="btn btn-sm btn-outline-secondary" onclick="clearSkus()">Ninguno</button>
+                    </div>
+                </div>
+                <div class="row">
+                  {% for sku_item in skus %}
+                  <div class="col-12 mb-2">
+                    <div class="form-check">
+                      <input class="form-check-input" type="checkbox" name="sku" value="{{ sku_item.sku }}" 
+                             id="sku_{{ loop.index }}"
+                             {% if sku_item.sku in selected_skus %}checked{% endif %}
+                             style="border-color: #D4AF37;">
+                      <label class="form-check-label d-flex align-items-center" for="sku_{{ loop.index }}" style="color: #2C2C2C; width: 100%;">
+                        <span class="badge bg-light text-dark me-2" style="font-family: monospace; font-size: 0.8rem;">{{ sku_item.sku }}</span>
+                        <span class="text-truncate" style="font-size: 0.9rem;">{{ sku_item.descripcion }}</span>
+                      </label>
+                    </div>
+                  </div>
+                  {% endfor %}
+                </div>
+                {% endif %}
+              </div>
+              <div class="modal-footer" style="border-top: 1px solid rgba(212, 175, 55, 0.2);">
+                <button type="button" class="btn btn-secondary" onclick="limpiarFiltros()">Limpiar filtros</button>
+                <button type="submit" class="btn btn-warning" style="background-color: #D4AF37; border-color: #D4AF37; color: #2C2C2C; font-weight: 600;">
+                    <i class="bi bi-check-circle me-2"></i>Aplicar
+                </button>
+              </div>
+            </div>
+          </div>
+        </div>
+        <!-- FIN MODAL -->
+    </form>
+
+    {% if resumen %}
+    <div class="mb-3 text-muted" data-aos="fade-right" data-aos-delay="200">
+        <strong style="color: #2C2C2C;">Comparar con:</strong> {{ comparacion }}
+    </div>
+
+    <!-- TARJETAS MEJORADAS CON PALETA LOOMBER -->
+    <div class="row g-4 mb-4" id="metricsContainer" style="overflow: visible;">
+        {% for card in resumen %}
+        <div class="col-md-4" data-aos="fade-up" data-aos-delay="{{ loop.index0 * 100 + 300 }}">
+            <div class="p-4 shadow-sm border rounded-3 bg-white position-relative" 
+                 style="height: 170px; display: flex; flex-direction: column; justify-content: center; align-items: center; 
+                        transition: all 0.3s ease; cursor: pointer; border: 1px solid rgba(212, 175, 55, 0.2);"
+                 onclick="updateChart('{{ card.label }}')"
+                 onmouseenter="animateMetricCard(this)"
+                 onmouseleave="resetMetricCard(this)">
+                
+                <!-- Efecto de fondo sutil con degradado verde/rojo -->
+                <div class="position-absolute top-0 start-0 w-100 h-100 opacity-5" 
+                     style="background: linear-gradient(135deg, {{ 'rgba(40, 167, 69, 0.08)' if card.delta >= 0 else 'rgba(220, 53, 69, 0.08)' }} 0%, transparent 100%);"></div>
+                
+                <div class="text-muted fw-semibold text-uppercase mb-1 position-relative" 
+                     style="font-size: 0.85rem; letter-spacing: 0.5px; transition: all 0.2s ease; color: #6c757d;">
+                    {{ card.label }}
+                    {% if card.label == "Ventas brutas" %}
+                    <span class="simple-tooltip">
+                        <span class="tooltip-icon">?</span>
+                        <span class="tooltip-text">Es el monto generado por todas las ventas en el período seleccionado, sin considerar comisiones, cancelaciones o devoluciones.</span>
+                    </span>
+                    {% endif %}
+                    {% if card.label == "Cancelaciones" %}
+                    <span class="simple-tooltip">
+                        <span class="tooltip-icon">?</span>
+                        <span class="tooltip-text">Es el monto total de las ventas que fueron anuladas durante el período seleccionado, ya sea por devolución, error o decisión del cliente. No representan ingresos efectivos para la empresa.</span>
+                    </span>
+                    {% endif %}
+                    {% if card.label == "Ingreso Neto" %}
+                    <span class="simple-tooltip">
+                        <span class="tooltip-icon">?</span>
+                        <span class="tooltip-text">Es el monto generado por todas las ventas en el período seleccionado, después de restar las cancelaciones.</span>
+                    </span>
+                    {% endif %}
+                </div>
+                
+                <div class="fw-bold position-relative" 
+                     style="font-size: 1.8rem; color: #2C2C2C; transition: all 0.2s ease;">
+                    <span class="animated-number" id="metric-{{ loop.index0 }}" 
+                          data-value="{{ card.valor|replace('$', '')|replace(',', '') }}"
+                          data-type="currency">
+                        {{ card.valor }}
+                    </span>
+                </div>
+                
+                <div class="fw-medium position-relative" 
+                     style="font-size: 0.9rem; transition: all 0.2s ease;">
+                    <span class="delta-indicator" data-delta="{{ card.delta }}">
+                        <span style="color: {{ '#28a745' if card.delta >= 0 else '#dc3545' }};">
+                            {{ card.diferencia.split(' ')[0] }}
+                        </span>
+                        <span style="color: #D4AF37;">
+                            {{ ' '.join(card.diferencia.split(' ')[1:]) }}
+                        </span>
+                    </span>
+                </div>
+                
+                <!-- Barra de progreso sutil en la parte inferior - todas doradas -->
+                <div class="position-absolute bottom-0 start-0 w-100" style="height: 3px; background: rgba(212, 175, 55, 0.1);">
+                    <div class="h-100 transition-all" 
+                         style="background: linear-gradient(90deg, #D4AF37, #F4E4A6); 
+                                width: 0%; 
+                                transition: width 1.5s ease {{ loop.index0 * 0.2 + 1 }}s;"></div>
+                </div>
+            </div>
+        </div>
+        {% endfor %}
+    </div>
+
+    <!-- GRÁFICO PRIMERO -->
+    <div class="chart-container" data-aos="fade-up" data-aos-delay="700">
+        <canvas id="ventasChart" style="width: 100%; height: 400px;"></canvas>
+    </div>
+
+    {% if top_skus %}
+    <!-- TABLA TOP 10 SKUs - AHORA DEBAJO DEL GRÁFICO -->
+    <div class="row mb-4 mt-4" data-aos="fade-up" data-aos-delay="900">
+        <div class="col-12">
+            <div class="card" style="border: 1px solid rgba(212, 175, 55, 0.2); border-radius: 12px; overflow: hidden;">
+                <div class="card-header d-flex justify-content-between align-items-center" style="background: linear-gradient(135deg, rgba(212, 175, 55, 0.1), rgba(212, 175, 55, 0.05)); border-bottom: 1px solid rgba(212, 175, 55, 0.2);">
+                    <div>
+                        <h5 class="mb-0" style="color: #2C2C2C; font-weight: 700;">
+                            <i class="bi bi-list-stars me-2" style="color: #D4AF37;"></i>
+                            Ranking Completo de SKUs
+                        </h5>
+                        <small class="text-muted">Todos los SKUs con ventas ordenados por unidades vendidas (descendente)</small>
+                    </div>
+                    
+                    <!-- Filtro de Búsqueda -->
+                    <div class="d-flex align-items-center gap-2" style="min-width: 250px;">
+                        <label for="busqueda_ranking_skus" class="form-label mb-0 fw-semibold" style="color: #2C2C2C; white-space: nowrap; font-size: 0.85rem;">
+                            <i class="bi bi-search me-1" style="color: #D4AF37;"></i>
+                            Buscar:
+                        </label>
+                        <input type="text" id="busqueda_ranking_skus" class="form-control form-control-sm" 
+                               placeholder="SKU o descripción..." 
+                               style="border: 2px solid rgba(212, 175, 55, 0.3); min-width: 180px; font-size: 0.85rem;"
+                               oninput="filtrarTablaRankingSKUs()">
+                    </div>
+                </div>
+                <div class="card-body p-0">
+                    <div class="table-responsive">
+                        <table class="table table-hover mb-0">
+                            <thead style="background-color: #f8f9fa;">
+                                <tr>
+                                    <th class="border-0 py-3 px-4" style="color: #2C2C2C; font-weight: 600; width: 8%;">#</th>
+                                    <th class="border-0 py-3 px-4" style="color: #2C2C2C; font-weight: 600; width: 48%;">Producto Comercial</th>
+                                    <th class="border-0 py-3 px-4 text-center" style="color: #2C2C2C; font-weight: 600; width: 14%;">
+                                        <i class="bi bi-box me-1" style="color: #D4AF37;"></i>Unidades
+                                    </th>
+                                    <th class="border-0 py-3 px-4 text-end" style="color: #2C2C2C; font-weight: 600; width: 15%;">
+                                        <i class="bi bi-currency-dollar me-1" style="color: #D4AF37;"></i>Monto Total
+                                    </th>
+                                    <th class="border-0 py-3 px-4 text-end" style="color: #2C2C2C; font-weight: 600; width: 15%;">
+                                        <i class="bi bi-calculator me-1" style="color: #D4AF37;"></i>Precio Promedio
+                                    </th>
+                                </tr>
+                            </thead>
+                            <tbody>
+                                {% for sku in top_skus %}
+                                <tr class="sku-row" data-aos="fade-up" data-aos-delay="{{ loop.index0 * 50 + 950 }}" 
+                                    style="transition: all 0.2s ease;"
+                                    onmouseenter="highlightSkuRow(this)" 
+                                    onmouseleave="resetSkuRow(this)">
+                                    <td class="py-3 px-4">
+                                        <div class="d-flex align-items-center">
+                                            <span class="badge rounded-pill" 
+                                                  style="background: linear-gradient(135deg, 
+                                                         {% if loop.index <= 3 %}#D4AF37{% elif loop.index <= 10 %}#B8941F{% elif loop.index <= 50 %}#A67C00{% else %}#6c757d{% endif %}); 
+                                                         color: white; font-weight: 600; min-width: 30px;">
+                                                {{ loop.index }}
+                                            </span>
+                                        </div>
+                                    </td>
+                                    <td class="py-3 px-4">
+                                        <div class="d-flex flex-column">
+                                            <div class="d-flex align-items-center mb-1">
+                                                <code class="text-dark bg-light px-2 py-1 rounded me-2" style="font-size: 0.75rem;">
+                                                    {{ sku.sku }}
+                                                </code>
+                                                {% if sku.skus_componentes and sku.skus_componentes|length > 1 %}
+                                                <span class="badge bg-info text-white ms-2" style="font-size: 0.65rem;" 
+                                                      title="Producto unificado con {{ sku.skus_componentes|length }} SKUs">
+                                                    <i class="bi bi-collection me-1"></i>{{ sku.skus_componentes|length }} SKUs
+                                                </span>
+                                                {% endif %}
+                                            </div>
+                                            <div class="fw-medium" style="color: #2C2C2C; line-height: 1.3; font-size: 0.85rem;">
+                                                {{ sku.descripcion | truncate(55, True) }}
+                                            </div>
+                                            {% if sku.skus_componentes and sku.skus_componentes|length > 1 %}
+                                            <div class="mt-1">
+                                                <small class="text-muted" style="font-size: 0.7rem;">
+                                                    <i class="bi bi-diagram-3 me-1"></i>Incluye: 
+                                                    {% for componente in sku.skus_componentes %}
+                                                        <code style="font-size: 0.65rem; background: rgba(212, 175, 55, 0.1); color: #A67C00;">{{ componente }}</code>{% if not loop.last %}, {% endif %}
+                                                    {% endfor %}
+                                                </small>
+                                            </div>
+                                            {% endif %}
+                                        </div>
+                                    </td>
+                                    <td class="py-3 px-4 text-center">
+                                        <span class="badge bg-light text-dark px-3 py-2" style="font-size: 0.9rem; font-weight: 600;">
+                                            {{ "{:,}".format(sku.unidades) }}
+                                        </span>
+                                    </td>
+                                    <td class="py-3 px-4 text-end">
+                                        <span class="fw-bold" style="color: #D4AF37; font-size: 1rem;">
+                                            ${{ "{:,.0f}".format(sku.monto) }}
+                                        </span>
+                                    </td>
+                                    <td class="py-3 px-4 text-end">
+                                        <span class="fw-bold" style="color: #28a745; font-size: 0.95rem;">
+                                            ${{ "{:,.2f}".format(sku.precio_promedio) }}
+                                        </span>
+                                    </td>
+                                </tr>
+                                {% endfor %}
+                            </tbody>
+                        </table>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+    {% endif %}
+
+    {% endif %}
+</div>
+
+<style>
+    /* Estilos personalizados para paleta Loomber */
+    .form-control:focus, .form-select:focus {
+        border-color: #D4AF37 !important;
+        box-shadow: 0 0 0 0.2rem rgba(212, 175, 55, 0.25) !important;
+    }
+    
+    .btn-outline-warning:hover {
+        background-color: #D4AF37 !important;
+        border-color: #D4AF37 !important;
+        color: #2C2C2C !important;
+    }
+    
+    .btn-warning:hover {
+        background-color: #B8941F !important;
+        border-color: #B8941F !important;
+        transform: translateY(-2px);
+        box-shadow: 0 4px 12px rgba(212, 175, 55, 0.3);
+    }
+    
+    .form-check-input:checked {
+        background-color: #D4AF37 !important;
+        border-color: #D4AF37 !important;
+    }
+    
+    .form-check-input:focus {
+        border-color: #D4AF37 !important;
+        box-shadow: 0 0 0 0.2rem rgba(212, 175, 55, 0.25) !important;
+    }
+    
+    /* Animación para badges */
+    .animate-badge {
+        animation: slideInBadge 0.3s ease-out;
+    }
+    
+    @keyframes slideInBadge {
+        from {
+            opacity: 0;
+            transform: translateX(-10px);
+        }
+        to {
+            opacity: 1;
+            transform: translateX(0);
+        }
+    }
+
+    /* Estilos para la tabla de SKUs */
+    .sku-row:hover {
+        background-color: rgba(212, 175, 55, 0.05) !important;
+        transform: translateX(3px);
+        box-shadow: 0 2px 8px rgba(0, 0, 0, 0.08);
+    }
+
+    .table th {
+        border-top: none !important;
+        position: sticky;
+        top: 0;
+        z-index: 10;
+    }
+
+    .table-responsive {
+        max-height: 700px;
+        overflow-y: auto;
+    }
+
+    /* Personalización de scrollbar */
+    .table-responsive::-webkit-scrollbar {
+        width: 6px;
+    }
+
+    .table-responsive::-webkit-scrollbar-track {
+        background: #f1f1f1;
+        border-radius: 3px;
+    }
+
+    .table-responsive::-webkit-scrollbar-thumb {
+        background: #D4AF37;
+        border-radius: 3px;
+    }
+
+    .table-responsive::-webkit-scrollbar-thumb:hover {
+        background: #B8941F;
+    }
+    /* Estilos específicos para el filtro de clasificación */
+    #clasificacionForm .card {
+        transition: all 0.3s ease;
+    }
+
+    #clasificacionForm .card:hover {
+        box-shadow: 0 4px 12px rgba(212, 175, 55, 0.15);
+        transform: translateY(-2px);
+    }
+
+    /* Animación para cambio de mes */
+    @keyframes fadeInClassification {
+        from {
+            opacity: 0;
+            transform: translateY(20px);
+        }
+        to {
+            opacity: 1;
+            transform: translateY(0);
+        }
+    }
+
+    .classification-content {
+        animation: fadeInClassification 0.5s ease-out;
+    }
+
+    /* Personalización del spinner */
+    .spinner-border-sm {
+        width: 1rem !important;
+        height: 1rem !important;
+        border-width: 0.15em !important;
+    }
+
+    /* Estilos para el filtro de búsqueda del ranking */
+    #busqueda_ranking_skus:focus {
+        border-color: #D4AF37 !important;
+        box-shadow: 0 0 0 0.2rem rgba(212, 175, 55, 0.25) !important;
+        outline: none;
+    }
+    
+    #busqueda_ranking_skus {
+        transition: all 0.3s ease;
+    }
+    
+    #busqueda_ranking_skus:hover {
+        border-color: rgba(212, 175, 55, 0.5);
+    }
+    
+    #busqueda_ranking_skus::placeholder {
+        color: #6c757d;
+        opacity: 0.8;
+    }
+    
+    /* Animación para filas que aparecen/desaparecen en el filtrado del ranking */
+    .sku-row {
+        transition: opacity 0.2s ease, transform 0.2s ease;
+    }
+    
+    .sku-row[style*="display: none"] {
+        opacity: 0;
+        transform: translateX(-10px);
+    }
+</style>
+
+<script>
+    let diasPeriodoPrincipal = null;
+    let mainPicker, comparePicker;
+    let currentChart = null;
+
+    // Inicializar todo cuando la página esté lista
+    document.addEventListener('DOMContentLoaded', function() {
+        // Inicializar Flatpickr
+        mainPicker = flatpickr("#main_range", {
+            mode: "range",
+            dateFormat: "Y-m-d",
+            altInput: true,
+            altFormat: "d/m/Y",
+            allowSingleDateSelection: true,
+            onChange: function(selectedDates, dateStr, instance) {
+                if (selectedDates.length === 2) {
+                    diasPeriodoPrincipal = (selectedDates[1] - selectedDates[0]) / (1000 * 60 * 60 * 24);
+                } else if (selectedDates.length === 1) {
+                    diasPeriodoPrincipal = 0; // Un solo día
+                    // Actualizar el valor del input para un solo día
+                    instance.input.value = dateStr;
+                } else {
+                    diasPeriodoPrincipal = null;
+                }
+            }
+        });
+
+        comparePicker = flatpickr("#compare_range", {
+            mode: "range",
+            dateFormat: "Y-m-d",
+            altInput: true,
+            altFormat: "d/m/Y",
+            allowSingleDateSelection: true,
+            onChange: function(selectedDates, dateStr, instance) {
+                // Auto-completar cuando se selecciona la primera fecha y hay un período principal definido
+                if (diasPeriodoPrincipal !== null && selectedDates.length === 1) {
+                    if (diasPeriodoPrincipal > 0) {
+                        // Si el período principal es un rango, auto-completar el rango de comparación
+                        const inicio = selectedDates[0];
+                        const fin = new Date(inicio);
+                        fin.setDate(inicio.getDate() + diasPeriodoPrincipal);
+                        instance.setDate([inicio, fin], true);
+                    } else {
+                        // Si el período principal es un solo día, mantener un solo día
+                        instance.input.value = dateStr;
+                    }
+                }
+                // Auto-completar también cuando se abre el picker y hay un período principal definido
+                else if (diasPeriodoPrincipal !== null && selectedDates.length === 0) {
+                    // No hacer nada, esperar a que seleccione la primera fecha
+                }
+            },
+            onOpen: function(selectedDates, dateStr, instance) {
+                // Cuando se abre el picker de comparación y hay días del período principal definidos
+                // mostrar un placeholder o hint sobre el autocompletado
+                if (diasPeriodoPrincipal !== null && diasPeriodoPrincipal > 0) {
+                    instance.input.placeholder = `Selecciona fecha inicial (se completarán ${diasPeriodoPrincipal + 1} días automáticamente)`;
+                } else if (diasPeriodoPrincipal === 0) {
+                    instance.input.placeholder = 'Selecciona una fecha (modo día único)';
+                }
+            }
+        });
+
+        // Funciones para mostrar/ocultar campos con animaciones
+        function toggleMainRange() {
+            const show = document.getElementById("preset_main").value === "personalizado";
+            const element = document.getElementById("main_range_group");
+            
+            if (show) {
+                element.style.display = "block";
+                element.style.opacity = "0";
+                element.style.transform = "translateY(-10px)";
+                
+                setTimeout(() => {
+                    element.style.transition = "all 0.3s ease";
+                    element.style.opacity = "1";
+                    element.style.transform = "translateY(0)";
+                }, 10);
+            } else {
+                element.style.transition = "all 0.3s ease";
+                element.style.opacity = "0";
+                element.style.transform = "translateY(-10px)";
+                
+                setTimeout(() => {
+                    element.style.display = "none";
+                    document.getElementById("main_range").value = "";
+                    diasPeriodoPrincipal = null;
+                }, 300);
+            }
+        }
+
+        function toggleCompareRange() {
+            const show = document.getElementById("preset_compare").value === "personalizado";
+            const element = document.getElementById("compare_range_group");
+            
+            if (show) {
+                element.style.display = "block";
+                element.style.opacity = "0";
+                element.style.transform = "translateY(-10px)";
+                
+                setTimeout(() => {
+                    element.style.transition = "all 0.3s ease";
+                    element.style.opacity = "1";
+                    element.style.transform = "translateY(0)";
+                    
+                    // Actualizar el placeholder cuando se muestra el campo
+                    if (diasPeriodoPrincipal !== null && diasPeriodoPrincipal > 0) {
+                        document.getElementById("compare_range").placeholder = `Selecciona fecha inicial (se completarán ${diasPeriodoPrincipal + 1} días automáticamente)`;
+                    } else if (diasPeriodoPrincipal === 0) {
+                        document.getElementById("compare_range").placeholder = 'Selecciona una fecha (modo día único)';
+                    } else {
+                        document.getElementById("compare_range").placeholder = 'Comparar con este rango';
+                    }
+                }, 10);
+            } else {
+                element.style.transition = "all 0.3s ease";
+                element.style.opacity = "0";
+                element.style.transform = "translateY(-10px)";
+                
+                setTimeout(() => {
+                    element.style.display = "none";
+                    document.getElementById("compare_range").value = "";
+                }, 300);
+            }
+        }
+
+        // Event listeners
+        document.getElementById("preset_main").addEventListener("change", toggleMainRange);
+        document.getElementById("preset_compare").addEventListener("change", toggleCompareRange);
+
+        // Inicializar estados
+        toggleMainRange();
+        toggleCompareRange();
+
+        // Animar números de las métricas después de que AOS termine
+        setTimeout(() => {
+            animateMetricNumbers();
+            animateProgressBars();
+        }, 500);
+
+        {% if datasets %}
+        // Inicializar Chart.js después de una pequeña pausa
+        setTimeout(function() {
+            if (typeof Chart !== 'undefined') {
+                const labels = {{ labels | safe }};
+                const unit = "{{ unidad }}";
+                const datasets = {{ datasets | safe }};
+
+                function renderChart(label) {
+                    const data = datasets[label] || datasets["Ventas brutas"];
+                    const canvas = document.getElementById("ventasChart");
+                    const ctx = canvas.getContext("2d");
+                    
+                    if (currentChart) {
+                        currentChart.destroy();
+                    }
+                    
+                    // Resetear dimensiones del canvas explícitamente
+                    canvas.style.width = '100%';
+                    canvas.style.height = '400px';
+                    
+                    // USAR ETIQUETAS CORRECTAS PARA CADA DATASET
+                    const labelsToUse = data.labels_main || labels;
+                    
+                    currentChart = new Chart(ctx, {
+                        type: 'line',
+                        data: {
+                            labels: labelsToUse,
+                            datasets: [
+                                {
+                                    label: "Periodo Principal",
+                                    data: data.main,
+                                    borderColor: "#D4AF37",
+                                    backgroundColor: "rgba(212, 175, 55, 0.1)",
+                                    tension: 0.4,
+                                    fill: false,
+                                    pointBackgroundColor: "#D4AF37",
+                                    pointBorderColor: "#ffffff",
+                                    pointBorderWidth: 2,
+                                    pointRadius: 4,
+                                    pointHoverRadius: 6
+                                },
+                                {
+                                    label: "Periodo Comparado", 
+                                    data: data.compare,
+                                    borderColor: "#adb5bd",
+                                    backgroundColor: "rgba(173, 181, 189, 0.1)",
+                                    borderDash: [5, 5],
+                                    tension: 0.4,
+                                    fill: false,
+                                    pointBackgroundColor: "#adb5bd",
+                                    pointBorderColor: "#ffffff",
+                                    pointBorderWidth: 2,
+                                    pointRadius: 4,
+                                    pointHoverRadius: 6
+                                }
+                            ]
+                        },
+                        options: {
+                            responsive: true,
+                            maintainAspectRatio: false,
+                            animation: {
+                                duration: 1500,
+                                easing: 'easeInOutQuart'
+                            },
+                            interaction: {
+                                mode: 'index',
+                                intersect: false,
+                            },
+                            plugins: {
+                                legend: { 
+                                    display: true,
+                                    position: 'bottom',
+                                    labels: {
+                                        usePointStyle: true,
+                                        padding: 20
+                                    }
+                                },
+                                tooltip: {
+                                    backgroundColor: 'rgba(0, 0, 0, 0.8)',
+                                    titleColor: '#ffffff',
+                                    bodyColor: '#ffffff',
+                                    borderColor: '#D4AF37',
+                                    borderWidth: 1,
+                                    cornerRadius: 8,
+                                    displayColors: true,
+                                    callbacks: {
+                                        title: function(context) {
+                                            const index = context[0].dataIndex;
+                                            const dataset = context[0].dataset;
+                                            
+                                            // MOSTRAR LA ETIQUETA CORRECTA SEGÚN EL DATASET
+                                            if (dataset.label === "Periodo Principal") {
+                                                return data.labels_main ? data.labels_main[index] : labelsToUse[index];
+                                           } else {
+                                               return data.labels_compare ? data.labels_compare[index] : labelsToUse[index];
+                                           }
+                                       },
+                                       label: function(context) {
+                                           return context.dataset.label + ': $' + context.parsed.y.toLocaleString();
+                                       }
+                                   }
+                               }
+                           },
+                           scales: {
+                               x: {
+                                   title: {
+                                       display: true,
+                                       text: unit,
+                                       font: {
+                                           size: 12,
+                                           weight: 'bold'
+                                       }
+                                   },
+                                   grid: {
+                                       color: 'rgba(0, 0, 0, 0.05)'
+                                   }
+                               },
+                               y: {
+                                   beginAtZero: true,
+                                   title: {
+                                       display: true,
+                                       text: label,
+                                       font: {
+                                           size: 12,
+                                           weight: 'bold'
+                                       }
+                                   },
+                                   grid: {
+                                       color: 'rgba(0, 0, 0, 0.05)'
+                                   },
+                                   ticks: {
+                                       callback: function(value) {
+                                           return '$' + value.toLocaleString();
+                                       }
+                                   }
+                               }
+                           }
+                       }
+                   });
+               }
+
+               // Hacer la función accesible globalmente
+               window.updateChart = function(label) {
+                   // Agregar efecto de loading
+                   const chartContainer = document.querySelector('.chart-container');
+                   addLoadingState(chartContainer);
+                   
+                   // Usar requestAnimationFrame para mejor rendimiento
+                   requestAnimationFrame(() => {
+                       setTimeout(() => {
+                           renderChart(label);
+                           removeLoadingState(chartContainer);
+                       }, 100);
+                   });
+               };
+
+               // Renderizar gráfico inicial
+               renderChart("Ventas brutas");
+           } else {
+               console.error('Chart.js no está disponible');
+           }
+       }, 800);
+       {% endif %}
+   });
+
+   // Función para animar números de métricas (MISMA QUE INDICADORES)
+   function animateMetricNumbers() {
+       document.querySelectorAll('.animated-number').forEach((element, index) => {
+           const value = element.getAttribute('data-value');
+           const type = element.getAttribute('data-type');
+           
+           if (value && !isNaN(value)) {
+               const numericValue = parseFloat(value);
+               
+               setTimeout(() => {
+                   if (typeof window.animateNumber === 'function') {
+                       let prefix = '';
+                       let suffix = '';
+                       
+                       if (type === 'currency') {
+                           prefix = '$';
+                       } else if (type === 'percentage') {
+                           suffix = ' %';
+                       }
+                       
+                       window.animateNumber(element.id, numericValue, 800, prefix, suffix);
+                   }
+               }, index * 100);
+           }
+       });
+   }
+
+   // Función para animar las barras de progreso - SIEMPRE AL 100%
+   function animateProgressBars() {
+       const progressBars = document.querySelectorAll('.position-absolute.bottom-0 .h-100');
+       
+       progressBars.forEach((bar, index) => {
+           setTimeout(() => {
+               bar.style.width = '100%';
+           }, index * 50 + 100);
+       });
+   }
+
+   // Funciones para efectos hover en las cards de métricas (MISMAS QUE INDICADORES)
+   function animateMetricCard(card) {
+       card.style.transform = 'translateY(-5px) scale(1.02)';
+       card.style.boxShadow = '0 8px 25px rgba(212, 175, 55, 0.2)';
+       card.style.borderColor = 'rgba(212, 175, 55, 0.5)';
+       
+       const title = card.querySelector('.text-muted');
+       const value = card.querySelector('.fw-bold');
+       const delta = card.querySelector('.fw-medium');
+       
+       if (title) title.style.transform = 'scale(1.05)';
+       if (value) value.style.transform = 'scale(1.08)';
+       if (delta) delta.style.transform = 'scale(1.05)';
+   }
+
+   function resetMetricCard(card) {
+       card.style.transform = 'translateY(0) scale(1)';
+       card.style.boxShadow = '0 2px 6px rgba(0, 0, 0, 0.05)';
+       card.style.borderColor = 'rgba(212, 175, 55, 0.2)';
+       
+       const title = card.querySelector('.text-muted');
+       const value = card.querySelector('.fw-bold');
+       const delta = card.querySelector('.fw-medium');
+       
+       if (title) title.style.transform = 'scale(1)';
+       if (value) value.style.transform = 'scale(1)';
+       if (delta) delta.style.transform = 'scale(1)';
+   }
+
+   // Funciones para efectos hover en las filas de SKUs
+   function highlightSkuRow(row) {
+       row.style.backgroundColor = 'rgba(212, 175, 55, 0.08)';
+       row.style.transform = 'translateX(5px)';
+       row.style.boxShadow = '0 3px 10px rgba(212, 175, 55, 0.15)';
+   }
+
+   function resetSkuRow(row) {
+       row.style.backgroundColor = '';
+       row.style.transform = 'translateX(0)';
+       row.style.boxShadow = '';
+   }
+
+   // FILTROS SIMPLIFICADOS - SIN ANIMACIONES CONFLICTIVAS
+   function limpiarFiltros() {
+       document.querySelectorAll('input[type=checkbox]').forEach(cb => cb.checked = false);
+   }
+
+   function clearAllFilters() {
+       limpiarFiltros();
+       document.querySelector('form').submit();
+   }
+
+   function removeFilter(type, value) {
+       const checkbox = document.querySelector(`input[name="${type}"][value="${value}"]`);
+       if (checkbox) {
+           checkbox.checked = false;
+       }
+       document.querySelector('form').submit();
+   }
+
+   function selectAllChannels() {
+       document.querySelectorAll('input[name="channel"]').forEach(cb => cb.checked = true);
+   }
+
+   function clearChannels() {
+       document.querySelectorAll('input[name="channel"]').forEach(cb => cb.checked = false);
+   }
+
+   // Función para seleccionar todos los canales de Ecommerce
+   function selectEcommerceChannels() {
+       document.querySelectorAll('.ecommerce-channel').forEach(cb => cb.checked = true);
+   }
+
+   // Función para seleccionar todos los canales de B2B  
+   function selectB2BChannels() {
+       document.querySelectorAll('.b2b-channel').forEach(cb => cb.checked = true);
+   }
+
+   // Función para limpiar todos los canales de Ecommerce (desde badge agrupado)
+   function clearEcommerceChannels() {
+       document.querySelectorAll('.ecommerce-channel').forEach(cb => cb.checked = false);
+       document.querySelector('form').submit();
+   }
+
+   // Función para limpiar todos los canales de B2B (desde badge agrupado)  
+   function clearB2BChannels() {
+       document.querySelectorAll('.b2b-channel').forEach(cb => cb.checked = false);
+       document.querySelector('form').submit();
+   }
+
+   // Función para asegurar que los canales ecommerce por defecto estén marcados
+   function ensureDefaultEcommerceChannels() {
+       const defaultEcommerceChannels = ['Mercado Libre', 'Doto', 'Yuhu', 'Aliexpress', 'Coppel', 'Liverpool', 'Shein', 'CrediTienda', 'Walmart', 'TikTok Shop'];
+       const ecommerceCheckboxes = document.querySelectorAll('.ecommerce-channel');
+       
+       // Contar cuántos canales ecommerce están marcados
+       let checkedCount = 0;
+       ecommerceCheckboxes.forEach(cb => {
+           if (cb.checked) checkedCount++;
+       });
+       
+       // Si no hay canales marcados o faltan algunos, marcar todos los por defecto
+       if (checkedCount === 0) {
+           console.log('No hay canales ecommerce marcados, marcando todos por defecto');
+           selectEcommerceChannels();
+       } else if (checkedCount < defaultEcommerceChannels.length) {
+           // Si faltan algunos canales, verificar cuáles son los que faltan
+           let missingChannels = [];
+           ecommerceCheckboxes.forEach(cb => {
+               if (!cb.checked && defaultEcommerceChannels.includes(cb.value)) {
+                   missingChannels.push(cb.value);
+               }
+           });
+           
+           if (missingChannels.length > 0) {
+               console.log('Faltan canales ecommerce por defecto:', missingChannels);
+               // Marcar solo los canales que faltan para completar el set por defecto
+               ecommerceCheckboxes.forEach(cb => {
+                   if (defaultEcommerceChannels.includes(cb.value)) {
+                       cb.checked = true;
+                   }
+               });
+           }
+       }
+   }
+
+   // Event listener para cuando se abre el modal de filtros
+   document.addEventListener('DOMContentLoaded', function() {
+       const filtroModal = document.getElementById('filtroModal');
+       if (filtroModal) {
+           filtroModal.addEventListener('show.bs.modal', function() {
+               // Asegurar que los canales ecommerce por defecto estén marcados cuando se abre el modal
+               ensureDefaultEcommerceChannels();
+           });
+       }
+       
+       // También ejecutar al cargar la página
+       setTimeout(() => {
+           ensureDefaultEcommerceChannels();
+       }, 100);
+   });
+
+   function selectAllWarehouses() {
+       document.querySelectorAll('input[name="warehouse"]').forEach(cb => cb.checked = true);
+   }
+
+   function clearWarehouses() {
+       document.querySelectorAll('input[name="warehouse"]').forEach(cb => cb.checked = false);
+   }
+
+   function selectAllSkus() {
+       document.querySelectorAll('input[name="sku"]').forEach(cb => cb.checked = true);
+   }
+
+   function clearSkus() {
+       document.querySelectorAll('input[name="sku"]').forEach(cb => cb.checked = false);
+   }
+    // Función global para animar números (AGREGAR ESTA)
+    window.animateNumber = function(elementId, targetValue, duration, prefix = '', suffix = '') {
+        const element = document.getElementById(elementId);
+        if (!element) return;
+        
+        const startValue = 0;
+        const increment = targetValue / (duration / 16);
+        let currentValue = startValue;
+        
+        const timer = setInterval(() => {
+            currentValue += increment;
+            if (currentValue >= targetValue) {
+                currentValue = targetValue;
+                clearInterval(timer);
+            }
+            
+            element.textContent = prefix + Math.floor(currentValue).toLocaleString() + suffix;
+        }, 16);
+    };
+
+    // Función para estados de carga (AGREGAR ESTA)
+    function addLoadingState(container) {
+        container.style.opacity = '0.6';
+        container.style.pointerEvents = 'none';
+    }
+
+    function removeLoadingState(container) {
+        container.style.opacity = '1';
+        container.style.pointerEvents = 'auto';
+    }
+
+    // Función para filtrar tabla de Ranking SKUs por búsqueda
+    function filtrarTablaRankingSKUs() {
+        const busqueda = document.getElementById('busqueda_ranking_skus').value.toLowerCase().trim();
+        const tabla = document.querySelector('.table tbody');
+        
+        if (!tabla) {
+            console.warn('No se encontró la tabla de SKUs para filtrar');
+            return;
+        }
+        
+        const filas = tabla.querySelectorAll('tr.sku-row');
+        let filasVisibles = 0;
+        
+        filas.forEach(fila => {
+            // Obtener SKU y descripción de la fila
+            const celdaProducto = fila.querySelector('td:nth-child(2)');
+            if (!celdaProducto) return;
+            
+            const codigoSku = celdaProducto.querySelector('code');
+            const descripcionDiv = celdaProducto.querySelector('.fw-medium');
+            
+            const sku = codigoSku ? codigoSku.textContent.toLowerCase().trim() : '';
+            const descripcion = descripcionDiv ? descripcionDiv.textContent.toLowerCase().trim() : '';
+            
+            // Verificar si la búsqueda coincide con SKU o descripción
+            const coincideSku = sku.includes(busqueda);
+            const coincideDescripcion = descripcion.includes(busqueda);
+            
+            if (busqueda === '' || coincideSku || coincideDescripcion) {
+                fila.style.display = '';
+                filasVisibles++;
+            } else {
+                fila.style.display = 'none';
+            }
+        });
+        
+        // Mostrar mensaje si no hay resultados
+        mostrarMensajeSinResultadosRanking(tabla, filasVisibles, busqueda);
+    }
+
+    // Función auxiliar para mostrar mensaje cuando no hay resultados de búsqueda en ranking
+    function mostrarMensajeSinResultadosRanking(tabla, filasVisibles, busqueda) {
+        // Eliminar mensaje previo si existe
+        const mensajePrevio = tabla.querySelector('.mensaje-sin-resultados-ranking');
+        if (mensajePrevio) {
+            mensajePrevio.remove();
+        }
+        
+        // Si no hay filas visibles y hay búsqueda activa, mostrar mensaje
+        if (filasVisibles === 0 && busqueda.length > 0) {
+            const mensajeRow = document.createElement('tr');
+            mensajeRow.className = 'mensaje-sin-resultados-ranking';
+            mensajeRow.innerHTML = `
+                <td colspan="5" class="text-center py-4">
+                    <div class="alert alert-warning mb-0">
+                        <i class="bi bi-search me-2" style="color: #D4AF37;"></i>
+                        <strong>No se encontraron resultados</strong><br>
+                        <small class="text-muted">No hay SKUs que coincidan con "<em>${busqueda}</em>"</small>
+                    </div>
+                </td>
+            `;
+            tabla.appendChild(mensajeRow);
+        }
+    }
+
+</script>
+{% endblock %}

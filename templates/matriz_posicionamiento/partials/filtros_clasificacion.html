@@ -1,0 +1,534 @@
+<!-- Componente: Filtros de Matriz de Clasificación -->
+<style>
+.multiselect-dropdown-skus {
+    position: relative;
+    width: 100%;
+}
+
+.multiselect-dropdown-skus-button {
+    width: 100%;
+    text-align: left;
+    background: white;
+    border: 2px solid #e9ecef;
+    border-radius: 10px;
+    padding: 8px 12px;
+    cursor: pointer;
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    min-height: 42px;
+}
+
+.multiselect-dropdown-skus-button:hover {
+    border-color: #17a2b8;
+}
+
+.multiselect-dropdown-skus-menu {
+    position: absolute;
+    top: 100%;
+    left: 0;
+    right: 0;
+    background: white;
+    border: 2px solid #e9ecef;
+    border-radius: 10px;
+    margin-top: 4px;
+    max-height: 400px;
+    overflow-y: auto;
+    z-index: 1000;
+    box-shadow: 0 4px 12px rgba(0,0,0,0.15);
+    display: none;
+}
+
+.multiselect-dropdown-skus-menu.show {
+    display: block;
+}
+
+.multiselect-option-sku {
+    padding: 8px 12px;
+    cursor: pointer;
+    display: flex;
+    align-items: center;
+    gap: 8px;
+    border-bottom: 1px solid #f8f9fa;
+}
+
+.multiselect-option-sku:hover {
+    background-color: #f8f9fa;
+}
+
+.multiselect-option-sku input[type="checkbox"] {
+    cursor: pointer;
+    flex-shrink: 0;
+}
+
+.sku-info {
+    flex: 1;
+    display: flex;
+    flex-direction: column;
+    gap: 2px;
+    min-width: 0;
+}
+
+.sku-code {
+    font-weight: 600;
+    color: #2C2C2C;
+    font-size: 0.9rem;
+}
+
+.sku-desc {
+    font-size: 0.8rem;
+    color: #6c757d;
+    white-space: nowrap;
+    overflow: hidden;
+    text-overflow: ellipsis;
+}
+
+.sku-clasificacion {
+    font-size: 0.75rem;
+    padding: 2px 6px;
+    border-radius: 4px;
+    font-weight: 600;
+    flex-shrink: 0;
+}
+
+.clasificacion-estrellas { background-color: #FFD700; color: #000; }
+.clasificacion-prometedores { background-color: #28a745; color: #fff; }
+.clasificacion-potenciales { background-color: #17a2b8; color: #fff; }
+.clasificacion-revision { background-color: #ffc107; color: #000; }
+.clasificacion-remover { background-color: #dc3545; color: #fff; }
+.clasificacion-sin { background-color: #6c757d; color: #fff; }
+
+.search-box-skus {
+    padding: 8px 12px;
+    border-bottom: 2px solid #e9ecef;
+    background-color: #f8f9fa;
+    position: sticky;
+    top: 0;
+    z-index: 1001;
+}
+
+.search-box-skus input {
+    width: 100%;
+    padding: 6px 10px;
+    border: 1px solid #e9ecef;
+    border-radius: 6px;
+    font-size: 0.85rem;
+}
+
+.search-box-skus input:focus {
+    outline: none;
+    border-color: #17a2b8;
+}
+
+/* Estilo para botón toggle de Comparar 3 Meses */
+.btn-toggle-comparar {
+    padding: 10px 24px;
+    border-radius: 10px;
+    border: 2px solid #e9ecef;
+    background: white;
+    color: #6c757d;
+    font-weight: 600;
+    font-size: 0.9rem;
+    cursor: pointer;
+    transition: all 0.3s ease;
+    white-space: nowrap;
+    height: 42px;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+}
+
+.btn-toggle-comparar:hover {
+    border-color: #17a2b8;
+    color: #17a2b8;
+    transform: translateY(-1px);
+    box-shadow: 0 2px 8px rgba(23, 162, 184, 0.2);
+}
+
+.btn-toggle-comparar.active {
+    background: linear-gradient(135deg, #17a2b8, #138496);
+    border-color: #17a2b8;
+    color: white;
+    box-shadow: 0 4px 12px rgba(23, 162, 184, 0.3);
+}
+
+.btn-toggle-comparar.active:hover {
+    background: linear-gradient(135deg, #138496, #117a8b);
+    transform: translateY(-1px);
+}
+
+.btn-toggle-comparar i {
+    font-size: 1rem;
+}
+</style>
+
+<div class="filtros-clasificacion-container mb-2" data-aos="fade-down">
+    <div class="d-flex align-items-start gap-3">
+        <!-- Filtro por Canal (Multiselect con Checkboxes) -->
+        <div style="width: 220px;">
+                <label class="form-label fw-bold mb-2" style="color: #2C2C2C; font-size: 0.85rem;">
+                    <i class="bi bi-shop me-1" style="color: #17a2b8;"></i>Filtrar por Canal
+                    <span id="canalesSeleccionadosCount" class="badge bg-info ms-2" style="font-size: 0.7rem;">0</span>
+                </label>
+            <div class="dropdown" style="width: 100%;">
+                <button class="btn btn-outline-secondary dropdown-toggle w-100 text-start d-flex justify-content-between align-items-center"
+                        type="button"
+                        id="dropdownCanalesClasif"
+                        data-bs-toggle="dropdown"
+                        aria-expanded="false"
+                        style="border-radius: 10px; border: 2px solid #e9ecef; height: 42px; font-size: 0.9rem;">
+                    <span id="canalesPlaceholder">Todos los canales</span>
+                    <i class="bi bi-chevron-down"></i>
+                </button>
+                <ul class="dropdown-menu w-100 p-2" aria-labelledby="dropdownCanalesClasif" style="max-height: 300px; overflow-y: auto;">
+                    <!-- Checkbox "Todos" -->
+                    <li class="px-2 py-1">
+                        <div class="form-check">
+                            <input class="form-check-input canal-checkbox-clasif" type="checkbox" id="canalTodosClasif" value="Todos" checked>
+                            <label class="form-check-label w-100" for="canalTodosClasif" style="font-weight: 600; color: #6f42c1;">
+                                Todos los canales
+                            </label>
+                        </div>
+                    </li>
+                    <li><hr class="dropdown-divider"></li>
+                    <!-- Lista de Canales -->
+                    {% for canal in canales_disponibles %}
+                    <li class="px-2 py-1">
+                        <div class="form-check">
+                            <input class="form-check-input canal-checkbox-clasif" type="checkbox" id="canalClasif{{ loop.index }}" value="{{ canal }}">
+                            <label class="form-check-label w-100" for="canalClasif{{ loop.index }}">
+                                {{ canal }}
+                            </label>
+                        </div>
+                    </li>
+                    {% endfor %}
+                </ul>
+            </div>
+        </div>
+
+        <!-- Filtro por SKU (Multiselect con Checkboxes y búsqueda) -->
+        <div style="width: 550px;">
+            <label class="form-label fw-bold mb-2" style="color: #2C2C2C; font-size: 0.85rem;">
+                <i class="bi bi-upc-scan me-1" style="color: #17a2b8;"></i>Seleccionar SKUs
+            </label>
+            <div class="multiselect-dropdown-skus" id="multiselectSKUs">
+                <button type="button" class="multiselect-dropdown-skus-button" onclick="toggleDropdownSKUs()">
+                    <span id="skusSelectedText">Ningún SKU seleccionado</span>
+                    <i class="bi bi-chevron-down"></i>
+                </button>
+                <div class="multiselect-dropdown-skus-menu" id="skusDropdownMenu">
+                    <!-- Barra de búsqueda -->
+                    <div class="search-box-skus">
+                        <input type="text" id="searchSKUs" placeholder="🔍 Buscar por SKU, descripción o clasificación..." onkeyup="filterSKUs()">
+                    </div>
+                    <!-- Opciones de SKUs (se llenarán dinámicamente con JavaScript) -->
+                    <div id="skusOptionsContainer">
+                        <div style="padding: 20px; text-align: center; color: #6c757d;">
+                            <i class="bi bi-inbox" style="font-size: 2rem;"></i>
+                            <p class="mb-0 mt-2">Cargando SKUs...</p>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <!-- Botón de Filtrar y Limpiar -->
+        <div style="display: flex; flex-direction: column; gap: 10px; padding-top: 28px;">
+            <button id="btnActualizarClasif" class="btn btn-primary" style="border-radius: 10px; background: linear-gradient(135deg, #17a2b8, #138496); border: none; font-weight: 600; height: 42px; padding: 0 20px; white-space: nowrap;">
+                <i class="bi bi-funnel me-2"></i>Filtrar
+            </button>
+            <button id="btnLimpiarFiltrosClasif" class="btn btn-outline-secondary btn-sm" style="border-radius: 8px; white-space: nowrap;">
+                <i class="bi bi-x-circle me-1"></i>Limpiar Filtros
+            </button>
+        </div>
+
+        <!-- Indicador de carga -->
+        <div id="loadingIndicatorClasif" style="display: none; padding-top: 28px;">
+            <div class="spinner-border text-primary" role="status" style="width: 28px; height: 28px;">
+                <span class="visually-hidden">Cargando...</span>
+            </div>
+        </div>
+
+        <!-- Botón Toggle: Comparar 3 Meses -->
+        <div style="padding-top: 28px; margin-left: 20px;">
+            <button class="btn-toggle-comparar" id="btnToggleComparar" type="button" onclick="toggleVistaComparativa()">
+                <i class="bi bi-graph-up-arrow me-2"></i>Comparar 3 Meses
+            </button>
+        </div>
+    </div>
+</div>
+
+<script>
+// Variables globales para SKUs
+let todosLosSKUs = [];
+
+// Función para alternar entre Vista Actual y Comparar 3 Meses
+function toggleVistaComparativa() {
+    const btnToggle = document.getElementById('btnToggleComparar');
+    const vistaActual = document.getElementById('vistaActual');
+    const comparar3Meses = document.getElementById('comparar3Meses');
+
+    // Alternar el estado activo del botón
+    btnToggle.classList.toggle('active');
+
+    // Alternar las vistas
+    if (btnToggle.classList.contains('active')) {
+        // Mostrar vista comparativa
+        vistaActual.classList.remove('show', 'active');
+        comparar3Meses.classList.add('show', 'active');
+
+        // Actualizar tabla comparativa
+        console.log('📊 [COMPARAR] Vista comparativa activada');
+        if (window.datosComparativo3Meses) {
+            console.log('✅ [COMPARAR] Usando datos precargados');
+            if (typeof actualizarTablaComparativa3Meses === 'function') {
+                actualizarTablaComparativa3Meses(window.datosComparativo3Meses);
+            }
+        } else {
+            console.log('⚠️ [COMPARAR] Datos no precargados');
+        }
+    } else {
+        // Mostrar vista actual
+        comparar3Meses.classList.remove('show', 'active');
+        vistaActual.classList.add('show', 'active');
+
+        // Restaurar tabla normal
+        console.log('📊 [CLASIFICACION] Vista actual activada');
+        if (window.datosClasificacionActual && window.datosClasificacionActual.skus) {
+            if (typeof actualizarTablaSkus === 'function') {
+                actualizarTablaSkus(window.datosClasificacionActual.skus);
+            }
+        }
+    }
+}
+
+// Función para cargar SKUs desde el backend
+async function cargarSKUs() {
+    const mesSeleccionado = document.getElementById('filtroMes').value;
+
+    console.log('📥 [CLASIFICACION] Cargando SKUs para mes:', mesSeleccionado);
+
+    try {
+        const response = await fetch('/matriz-posicionamiento/obtener-skus', {
+            method: 'POST',
+            headers: {
+                'Content-Type': 'application/json',
+            },
+            body: JSON.stringify({
+                mes: parseInt(mesSeleccionado)
+            })
+        });
+
+        const result = await response.json();
+
+        if (result.success) {
+            todosLosSKUs = result.skus;
+            console.log(`✅ [CLASIFICACION] ${todosLosSKUs.length} SKUs cargados`);
+            renderizarSKUs();
+        } else {
+            console.error('❌ Error cargando SKUs:', result.error);
+        }
+    } catch (error) {
+        console.error('❌ Error en la petición de SKUs:', error);
+    }
+}
+
+// Renderizar lista de SKUs en el dropdown
+function renderizarSKUs() {
+    const container = document.getElementById('skusOptionsContainer');
+
+    if (todosLosSKUs.length === 0) {
+        container.innerHTML = `
+            <div style="padding: 20px; text-align: center; color: #6c757d;">
+                <i class="bi bi-inbox" style="font-size: 2rem;"></i>
+                <p class="mb-0 mt-2">No hay SKUs disponibles</p>
+            </div>
+        `;
+        return;
+    }
+
+    let html = '';
+
+    todosLosSKUs.forEach((skuData, index) => {
+        const clasificacionClass = obtenerClaseClasificacion(skuData.clasificacion);
+
+        html += `
+            <div class="multiselect-option-sku" data-sku="${skuData.sku}" data-descripcion="${skuData.descripcion.toLowerCase()}" data-clasificacion="${skuData.clasificacion.toLowerCase()}">
+                <input type="checkbox" class="sku-checkbox" id="sku_${index}" value="${skuData.sku}" onchange="updateSKUsSelection();">
+                <label for="sku_${index}" style="cursor: pointer; margin: 0; flex: 1; display: flex; align-items: center; gap: 8px;">
+                    <div class="sku-info">
+                        <div class="sku-code">${skuData.sku}</div>
+                        <div class="sku-desc" title="${skuData.descripcion}">${skuData.descripcion}</div>
+                    </div>
+                    <span class="sku-clasificacion ${clasificacionClass}">${skuData.clasificacion}</span>
+                </label>
+            </div>
+        `;
+    });
+
+    container.innerHTML = html;
+}
+
+// Obtener clase CSS según clasificación
+function obtenerClaseClasificacion(clasificacion) {
+    const clases = {
+        'Estrellas': 'clasificacion-estrellas',
+        'Prometedores': 'clasificacion-prometedores',
+        'Potenciales': 'clasificacion-potenciales',
+        'Revision': 'clasificacion-revision',
+        'Remover': 'clasificacion-remover',
+        'Sin Clasificar': 'clasificacion-sin'
+    };
+    return clases[clasificacion] || 'clasificacion-sin';
+}
+
+// Filtrar SKUs según búsqueda
+function filterSKUs() {
+    const searchText = document.getElementById('searchSKUs').value.toLowerCase();
+    const options = document.querySelectorAll('.multiselect-option-sku');
+
+    options.forEach(option => {
+        const sku = option.dataset.sku.toLowerCase();
+        const descripcion = option.dataset.descripcion;
+        const clasificacion = option.dataset.clasificacion;
+
+        if (sku.includes(searchText) || descripcion.includes(searchText) || clasificacion.includes(searchText)) {
+            option.style.display = 'flex';
+        } else {
+            option.style.display = 'none';
+        }
+    });
+}
+
+// Toggle dropdown de SKUs
+function toggleDropdownSKUs() {
+    const menu = document.getElementById('skusDropdownMenu');
+    menu.classList.toggle('show');
+
+    // Cargar SKUs si aún no se han cargado
+    if (todosLosSKUs.length === 0) {
+        cargarSKUs();
+    }
+}
+
+// Cerrar dropdown al hacer click fuera
+document.addEventListener('click', function(event) {
+    if (!event.target.closest('.multiselect-dropdown-skus')) {
+        document.getElementById('skusDropdownMenu').classList.remove('show');
+    }
+});
+
+// ========================================
+// FUNCIONES PARA CANALES
+// ========================================
+
+// Actualizar selección de canales
+function updateCanalesSelection(event) {
+    const checkboxes = document.querySelectorAll('.canal-checkbox-clasif');
+    const canalTodos = document.getElementById('canalTodosClasif');
+    const otrosCanales = Array.from(checkboxes).filter(cb => cb.value !== 'Todos');
+
+    // Si se marca/desmarca "Todos"
+    if (event && event.target && event.target.value === 'Todos') {
+        if (canalTodos.checked) {
+            // Desmarcar todos los demás
+            otrosCanales.forEach(cb => cb.checked = false);
+        }
+    } else {
+        // Si se marca cualquier otro canal, desmarcar "Todos"
+        if (event && event.target && event.target.checked) {
+            canalTodos.checked = false;
+        }
+    }
+
+    // Contar canales seleccionados
+    const checked = Array.from(checkboxes).filter(cb => cb.checked && cb.value !== 'Todos');
+    const count = canalTodos.checked ? 0 : checked.length;
+
+    // Actualizar contador
+    const countBadge = document.getElementById('canalesSeleccionadosCount');
+    countBadge.textContent = count;
+
+    // Actualizar texto del placeholder
+    const placeholder = document.getElementById('canalesPlaceholder');
+    if (canalTodos.checked || count === 0) {
+        placeholder.textContent = 'Todos los canales';
+    } else if (count === 1) {
+        placeholder.textContent = checked[0].value;
+    } else {
+        placeholder.textContent = `${count} canales seleccionados`;
+    }
+}
+
+// Obtener canales seleccionados
+function getSelectedCanales() {
+    const canalTodos = document.getElementById('canalTodosClasif');
+
+    if (canalTodos && canalTodos.checked) {
+        return ['Todos'];
+    }
+
+    const checkboxes = document.querySelectorAll('.canal-checkbox-clasif:checked');
+    const canales = Array.from(checkboxes)
+        .filter(cb => cb.value !== 'Todos')
+        .map(cb => cb.value);
+
+    return canales.length > 0 ? canales : ['Todos'];
+}
+
+// Event listeners para canales
+document.addEventListener('DOMContentLoaded', function() {
+    const canalesCheckboxes = document.querySelectorAll('.canal-checkbox-clasif');
+    canalesCheckboxes.forEach(cb => {
+        cb.addEventListener('change', updateCanalesSelection);
+    });
+
+    // Inicializar
+    updateCanalesSelection();
+});
+
+// ========================================
+// FUNCIONES PARA SKUs
+// ========================================
+
+// Actualizar texto de SKUs seleccionados
+function updateSKUsSelection() {
+    const checkboxes = document.querySelectorAll('.sku-checkbox');
+    const checked = Array.from(checkboxes).filter(cb => cb.checked);
+    const text = document.getElementById('skusSelectedText');
+
+    if (checked.length === 0) {
+        text.textContent = 'Ningún SKU seleccionado';
+    } else if (checked.length === 1) {
+        text.textContent = `${checked[0].value}`;
+    } else {
+        text.textContent = `${checked.length} SKUs seleccionados`;
+    }
+}
+
+// Obtener SKUs seleccionados
+function getSelectedSKUs() {
+    const checkboxes = document.querySelectorAll('.sku-checkbox:checked');
+    return Array.from(checkboxes).map(cb => cb.value);
+}
+
+// Limpiar filtros
+function limpiarFiltrosClasificacion() {
+    // Canales: marcar "Todos" y desmarcar el resto
+    document.getElementById('canalTodosClasif').checked = true;
+    document.querySelectorAll('.canal-checkbox-clasif').forEach(cb => {
+        if (cb.value !== 'Todos') {
+            cb.checked = false;
+        }
+    });
+    updateCanalesSelection();
+
+    // Deseleccionar todos los SKUs
+    document.querySelectorAll('.sku-checkbox').forEach(cb => cb.checked = false);
+    updateSKUsSelection();
+
+    // Limpiar búsqueda
+    document.getElementById('searchSKUs').value = '';
+    filterSKUs();
+}
+</script>

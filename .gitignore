@@ -1,0 +1,7 @@
+__pycache__/
+*.pyc
+*.log
+.claude/
+_backups_old_code/
+nul
+

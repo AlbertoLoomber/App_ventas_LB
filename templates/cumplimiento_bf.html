@@ -1,0 +1,1315 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Cumplimiento BF - Loomber Dashboard</title>
+
+    <!-- Bootstrap CSS -->
+    <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/css/bootstrap.min.css" rel="stylesheet">
+    <!-- Bootstrap Icons -->
+    <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/bootstrap-icons@1.10.5/font/bootstrap-icons.css">
+    <!-- Chart.js -->
+    <script src="https://cdn.jsdelivr.net/npm/chart.js@4.4.0/dist/chart.umd.js"></script>
+    <!-- Flatpickr CSS -->
+    <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/flatpickr@4.6.13/dist/flatpickr.min.css">
+    <!-- Flatpickr Spanish Locale (opcional) -->
+    <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/flatpickr@4.6.13/dist/themes/material_blue.css">
+
+    <style>
+        body {
+            background: linear-gradient(135deg, #f5f7fa 0%, #e9ecef 100%);
+            font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+            padding-top: 65px;
+        }
+
+        .main-container {
+            max-width: 1750px;
+            margin: 0 auto;
+            padding: 0.9rem 2.5rem;
+        }
+
+        .page-header {
+            background: white;
+            border-radius: 10px;
+            padding: 0.9rem 1.2rem;
+            margin-bottom: 0.9rem;
+            box-shadow: 0 2px 6px rgba(0, 0, 0, 0.05);
+            border-left: 4px solid #D4AF37;
+        }
+
+        .page-header h1 {
+            color: #2C2C2C;
+            font-weight: 700;
+            margin: 0;
+            display: flex;
+            align-items: center;
+            gap: 0.6rem;
+            font-size: 1.4rem;
+        }
+
+        .page-header h1 i {
+            color: #D4AF37;
+            font-size: 1.4rem;
+        }
+
+        .page-header p {
+            font-size: 0.82rem;
+            margin-bottom: 0;
+        }
+
+        .card-custom {
+            background: white;
+            border-radius: 10px;
+            padding: 1rem;
+            margin-bottom: 0.9rem;
+            box-shadow: 0 2px 6px rgba(0, 0, 0, 0.05);
+            border: none;
+        }
+
+        .card-header-custom {
+            font-size: 1rem;
+            font-weight: 600;
+            color: #2C2C2C;
+            margin-bottom: 0.75rem;
+            padding-bottom: 0.4rem;
+            border-bottom: 2px solid #D4AF37;
+        }
+
+        .stats-grid {
+            display: flex;
+            flex-nowrap: nowrap;
+            gap: 10px;
+            margin-bottom: 0.9rem;
+            justify-content: stretch;
+            overflow: visible;
+            width: 100%;
+        }
+
+        .stats-grid > div {
+            flex: 1 1 0;
+            min-width: 0;
+        }
+
+        .rentabilidad-card {
+            background: white;
+            border-radius: 12px;
+            padding: 1rem;
+            height: 220px;
+            border: 1px solid rgba(212, 175, 55, 0.2);
+            transition: all 0.3s ease;
+            display: flex;
+            flex-direction: column;
+            position: relative;
+            box-shadow: 0 2px 4px rgba(0,0,0,0.1);
+            cursor: pointer;
+        }
+
+        .rentabilidad-card:hover {
+            transform: translateY(-1px);
+            box-shadow: 0 4px 8px rgba(0,0,0,0.15);
+        }
+
+        .rentabilidad-card.card-skus { border-color: rgba(108, 117, 125, 0.2); }
+        .rentabilidad-card.card-ventas { border-color: rgba(212, 175, 55, 0.2); }
+        .rentabilidad-card.card-costo { border-color: rgba(220, 53, 69, 0.2); }
+        .rentabilidad-card.card-gastos { border-color: rgba(255, 193, 7, 0.2); }
+        .rentabilidad-card.card-ingreso { border-color: rgba(40, 167, 69, 0.2); }
+        .rentabilidad-card.card-roi { border-color: rgba(23, 162, 184, 0.2); }
+
+        .icon-circle {
+            width: 40px;
+            height: 40px;
+            border-radius: 50%;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            margin: 0 auto 0.5rem;
+        }
+
+        .rentabilidad-card .stat-icon {
+            font-size: 1rem;
+            color: white;
+        }
+
+        .rentabilidad-card h6 {
+            font-size: 0.85rem;
+            color: #2C2C2C;
+            font-weight: 600;
+            margin-bottom: 0.5rem;
+            text-align: center;
+        }
+
+        .rentabilidad-card .stat-value {
+            font-size: 1.4rem;
+            font-weight: 700;
+            line-height: 1;
+            text-align: center;
+            margin-bottom: 0.5rem;
+        }
+
+        .rentabilidad-card small {
+            font-size: 0.75rem;
+            text-align: center;
+            color: #6c757d;
+            font-weight: 500;
+        }
+
+        /* Barra de progreso inferior */
+        .rentabilidad-card .progress-bar-bottom {
+            position: absolute;
+            bottom: 0;
+            left: 0;
+            width: 100%;
+            height: 3px;
+            background: rgba(0, 0, 0, 0.05);
+            border-radius: 0 0 12px 12px;
+        }
+
+        .rentabilidad-card .progress-bar-bottom > div {
+            height: 100%;
+            transition: width 1.5s ease 0.5s;
+            border-radius: 0 0 12px 12px;
+        }
+
+        .table-custom {
+            width: 100%;
+            margin-top: 0.5rem;
+            font-size: 0.85rem;
+            border-collapse: separate;
+            border-spacing: 0 2px;
+        }
+
+        .table-custom thead {
+            position: sticky;
+            top: -15px;
+            z-index: 1050;
+        }
+
+        .table-custom thead th {
+            background: #f8f9fa !important;
+            padding: 12px 12px !important;
+            font-weight: 700 !important;
+            color: #2C2C2C !important;
+            border: none !important;
+            border-bottom: 4px solid rgba(0,0,0,0.15) !important;
+            font-size: 0.8rem !important;
+            text-shadow: 0 1px 2px rgba(255, 255, 255, 0.8);
+            vertical-align: middle;
+            backdrop-filter: saturate(180%) blur(20px);
+        }
+
+        .table-custom tbody tr {
+            transition: all 0.3s ease;
+            border-radius: 8px;
+            background: white;
+            box-shadow: 0 2px 4px rgba(0,0,0,0.03);
+            margin-bottom: 4px;
+        }
+
+        .table-custom tbody tr:hover {
+            transform: translateY(-2px);
+            box-shadow: 0 6px 20px rgba(0,0,0,0.1);
+            background: rgba(248,249,250,0.8);
+        }
+
+        .table-custom tbody td {
+            padding: 13px 12px !important;
+            vertical-align: middle;
+            border: none;
+            position: relative;
+            z-index: 1;
+        }
+
+        .table-custom tbody td:first-child {
+            border-radius: 8px 0 0 8px;
+        }
+
+        .table-custom tbody td:last-child {
+            border-radius: 0 8px 8px 0;
+        }
+
+        .table-custom .badge {
+            font-size: 0.7rem !important;
+            padding: 6px 10px !important;
+            transition: all 0.3s ease;
+        }
+
+        .table-custom tbody tr:hover .badge {
+            transform: scale(1.05);
+            box-shadow: 0 2px 8px rgba(0, 0, 0, 0.15);
+        }
+
+        /* Contenedor de tabla con scroll */
+        .table-responsive {
+            max-height: 600px;
+            overflow-y: auto;
+            overflow-x: auto;
+            border-radius: 12px;
+            position: relative;
+        }
+
+        /* Scrollbar personalizado */
+        .table-responsive::-webkit-scrollbar {
+            width: 8px;
+            height: 8px;
+        }
+
+        .table-responsive::-webkit-scrollbar-track {
+            background: rgba(0, 0, 0, 0.05);
+            border-radius: 4px;
+        }
+
+        .table-responsive::-webkit-scrollbar-thumb {
+            background: rgba(212, 175, 55, 0.4);
+            border-radius: 4px;
+            transition: background 0.3s ease;
+        }
+
+        .table-responsive::-webkit-scrollbar-thumb:hover {
+            background: rgba(212, 175, 55, 0.6);
+        }
+
+        /* Asegurar que el thead sticky funcione con scroll */
+        .table-responsive .table-custom thead {
+            position: sticky;
+            top: 0;
+            z-index: 10;
+        }
+
+        .table-responsive .table-custom thead th {
+            position: sticky;
+            top: 0;
+            z-index: 10;
+        }
+
+        /* Estilos para tabla colapsable mejorada */
+        .tipo-resumen-row {
+            cursor: pointer;
+            height: 50px;
+            box-shadow: 0 1px 3px rgba(0,0,0,0.08);
+            transition: all 0.3s ease;
+        }
+
+        .tipo-resumen-row:hover {
+            box-shadow: 0 3px 8px rgba(0,0,0,0.15);
+            transform: translateY(-1px);
+        }
+
+        .tipo-detalle-row-1 {
+            border-left: 4px solid;
+            background: white !important;
+            transition: all 0.3s ease;
+        }
+
+        .tipo-detalle-row-1:nth-child(even) {
+            background: rgba(0,0,0,0.015) !important;
+        }
+
+        .badge-almacen-inventario {
+            background: linear-gradient(135deg, rgba(23,162,184,0.1), rgba(23,162,184,0.18));
+            border-left: 3px solid #17a2b8;
+            color: #0c5460;
+            padding: 4px 8px;
+            font-size: 0.7rem;
+            border-radius: 4px;
+            display: inline-block;
+            margin: 2px;
+            font-weight: 600;
+            transition: all 0.2s ease;
+        }
+
+        .badge-almacen-inventario:hover {
+            background: linear-gradient(135deg, rgba(23,162,184,0.2), rgba(23,162,184,0.28));
+            transform: translateY(-1px);
+            box-shadow: 0 2px 4px rgba(23,162,184,0.2);
+        }
+
+        .badge-almacen-inventario i {
+            font-size: 0.65rem;
+            margin-right: 3px;
+        }
+
+        .icono-categoria-tipo {
+            width: 28px;
+            height: 28px;
+            border-radius: 50%;
+            display: inline-flex;
+            align-items: center;
+            justify-content: center;
+            margin-right: 8px;
+            font-size: 0.7rem;
+            box-shadow: 0 2px 4px rgba(0,0,0,0.1);
+        }
+
+        .badge-cumplimiento {
+            padding: 0.5rem 1rem;
+            border-radius: 20px;
+            font-weight: 600;
+            font-size: 0.9rem;
+        }
+
+        .badge-success {
+            background: linear-gradient(135deg, #28a745 0%, #218838 100%);
+            color: white;
+        }
+
+        .badge-warning {
+            background: linear-gradient(135deg, #ffc107 0%, #e0a800 100%);
+            color: #2C2C2C;
+        }
+
+        .badge-danger {
+            background: linear-gradient(135deg, #dc3545 0%, #c82333 100%);
+            color: white;
+        }
+
+        .chart-container {
+            position: relative;
+            height: 300px;
+            margin-top: 0.5rem;
+        }
+
+        .filters-section {
+            background: white;
+            border-radius: 10px;
+            padding: 1rem;
+            margin-bottom: 0.9rem;
+            box-shadow: 0 2px 5px rgba(0, 0, 0, 0.04);
+        }
+
+        .filters-section label {
+            font-size: 0.8rem;
+            margin-bottom: 0.3rem;
+            font-weight: 500;
+        }
+
+        .filters-section .form-select {
+            font-size: 0.85rem;
+            padding: 0.45rem 0.65rem;
+        }
+
+        .btn-golden {
+            background: linear-gradient(135deg, #D4AF37 0%, #B8941F 100%);
+            color: white;
+            border: none;
+            padding: 0.5rem 1.25rem;
+            border-radius: 7px;
+            font-weight: 600;
+            font-size: 0.85rem;
+            transition: all 0.3s ease;
+        }
+
+        .btn-golden:hover {
+            transform: translateY(-2px);
+            box-shadow: 0 4px 10px rgba(212, 175, 55, 0.35);
+            color: white;
+        }
+
+        .error-message {
+            background: linear-gradient(135deg, #f8d7da 0%, #f5c6cb 100%);
+            color: #721c24;
+            padding: 1rem;
+            border-radius: 10px;
+            border-left: 4px solid #dc3545;
+            margin-bottom: 0.9rem;
+            font-size: 0.85rem;
+        }
+
+        .no-data-message {
+            text-align: center;
+            padding: 2rem;
+            color: #6c757d;
+        }
+
+        .no-data-message h4 {
+            font-size: 1.1rem;
+        }
+
+        .no-data-message p {
+            font-size: 0.85rem;
+        }
+
+        .no-data-message i {
+            font-size: 4rem;
+            color: #D4AF37;
+            margin-bottom: 1rem;
+        }
+
+        /* Estilos para tooltips de almacenes */
+        .existencia-con-tooltip {
+            display: inline-block;
+            transition: all 0.2s ease;
+        }
+
+        .existencia-con-tooltip:hover {
+            transform: scale(1.05);
+        }
+
+        .existencia-con-tooltip i.bi-info-circle-fill {
+            transition: opacity 0.2s ease;
+        }
+
+        .existencia-con-tooltip:hover i.bi-info-circle-fill {
+            opacity: 1 !important;
+        }
+
+        /* Estilos personalizados para los tooltips de Bootstrap */
+        .tooltip {
+            font-size: 0.85rem;
+        }
+
+        .tooltip-inner {
+            max-width: 350px;
+            padding: 12px 15px;
+            background: white;
+            color: #2C2C2C;
+            border-radius: 8px;
+            box-shadow: 0 4px 15px rgba(0, 0, 0, 0.2);
+            text-align: left;
+        }
+
+        .tooltip.bs-tooltip-start .tooltip-arrow::before,
+        .tooltip.bs-tooltip-end .tooltip-arrow::before,
+        .tooltip.bs-tooltip-top .tooltip-arrow::before,
+        .tooltip.bs-tooltip-bottom .tooltip-arrow::before {
+            border-left-color: white;
+        }
+
+        /* Estilos para la fila de totales */
+        .fila-totales {
+            background: linear-gradient(135deg, #f8f9fa 0%, #e9ecef 100%) !important;
+            border-top: 3px solid #D4AF37 !important;
+            font-weight: 700 !important;
+            position: sticky;
+            bottom: 0;
+            z-index: 5;
+        }
+
+        .fila-totales td {
+            padding: 15px 12px !important;
+            font-size: 0.9rem !important;
+            border: none !important;
+        }
+
+        .fila-totales:hover {
+            background: linear-gradient(135deg, #e9ecef 0%, #dee2e6 100%) !important;
+            transform: none !important;
+            box-shadow: 0 -2px 8px rgba(0,0,0,0.1) !important;
+        }
+
+        /* Estilos para botones de exportación */
+        .btn-export {
+            background: linear-gradient(135deg, #1e7e34, #28a745);
+            color: white;
+            border: none;
+            padding: 8px 16px;
+            border-radius: 6px;
+            font-size: 0.85rem;
+            font-weight: 600;
+            transition: all 0.3s ease;
+            box-shadow: 0 2px 8px rgba(40, 167, 69, 0.3);
+        }
+
+        .btn-export:hover {
+            background: linear-gradient(135deg, #28a745, #1e7e34);
+            transform: translateY(-2px);
+            box-shadow: 0 4px 12px rgba(40, 167, 69, 0.5);
+            color: white;
+        }
+
+        .btn-export i {
+            margin-right: 6px;
+        }
+    </style>
+</head>
+<body>
+    <!-- Incluir navbar -->
+    {% include 'navbar.html' %}
+
+    <div class="main-container">
+        <!-- Encabezado de página -->
+        <div class="page-header">
+            <h1>
+                <i class="bi bi-lightning-charge-fill"></i>
+                Cumplimiento BF - Seguimiento de SKUs
+            </h1>
+            <p class="text-muted mb-0 mt-2">Monitoreo de metas para productos específicos de Black Friday</p>
+        </div>
+
+        <!-- Mensaje de error si existe -->
+        {% if error %}
+        <div class="error-message">
+            <i class="bi bi-exclamation-triangle-fill me-2"></i>
+            <strong>Error:</strong> {{ error }}
+        </div>
+        {% endif %}
+
+        <!-- Sección de filtros -->
+        <div class="filters-section">
+            <form method="POST" action="/cumplimiento-bf" id="filtros-form-bf">
+                <div class="row align-items-end g-2">
+                    <!-- Filtro de Período -->
+                    <div class="col-md-2">
+                        <label class="form-label fw-bold">
+                            <i class="bi bi-calendar-range me-2"></i>Período
+                        </label>
+                        <select name="preset" id="preset_bf" class="form-select">
+                            <option value="hoy" {% if preset_actual == 'hoy' %}selected{% endif %}>Hoy</option>
+                            <option value="7" {% if preset_actual == '7' %}selected{% endif %}>Últimos 7 días</option>
+                            <option value="mes_completo" {% if preset_actual == 'mes_completo' %}selected{% endif %}>Mes completo</option>
+                            <option value="personalizado" {% if preset_actual == 'personalizado' %}selected{% endif %}>Fecha personalizada</option>
+                        </select>
+                    </div>
+
+                    <!-- Campo de rango personalizado (oculto por defecto) -->
+                    <div class="col-md-2" id="rango_personalizado_group" style="display: {% if preset_actual == 'personalizado' %}block{% else %}none{% endif %};">
+                        <label class="form-label fw-bold">Rango personalizado:</label>
+                        <input type="text" id="rango_personalizado" name="rango_personalizado" class="form-control"
+                               placeholder="Selecciona un rango" readonly value="{{ rango_personalizado_valor }}">
+                    </div>
+
+                    <div class="col-md-2">
+                        <label class="form-label fw-bold">
+                            <i class="bi bi-funnel-fill me-2"></i>Tipo de producto
+                        </label>
+                        <select name="filtro_tipo" class="form-select">
+                            <option value="todos" {% if not filtro_tipo %}selected{% endif %}>Todos</option>
+                            <option value="relevante" {% if filtro_tipo == 'relevante' %}selected{% endif %}>Relevantes</option>
+                            <option value="nuevo" {% if filtro_tipo == 'nuevo' %}selected{% endif %}>Nuevos</option>
+                            <option value="remate" {% if filtro_tipo == 'remate' %}selected{% endif %}>Remates</option>
+                        </select>
+                    </div>
+                    <div class="col-md-2">
+                        <label class="form-label fw-bold">
+                            <i class="bi bi-shop me-2"></i>Canal
+                        </label>
+                        <select name="filtro_canal" class="form-select">
+                            <option value="todos" {% if not filtro_canal %}selected{% endif %}>Todos</option>
+                            {% for canal in canales_bf %}
+                            <option value="{{ canal }}" {% if filtro_canal == canal %}selected{% endif %}>{{ canal }}</option>
+                            {% endfor %}
+                        </select>
+                    </div>
+                    <div class="col-md-2">
+                        <label class="form-label fw-bold">
+                            <i class="bi bi-tags-fill me-2"></i>Categoría
+                        </label>
+                        <select name="filtro_categoria" class="form-select">
+                            <option value="todas" {% if not filtro_categoria %}selected{% endif %}>Todas</option>
+                            {% for categoria in categorias_bf %}
+                            <option value="{{ categoria }}" {% if filtro_categoria == categoria %}selected{% endif %}>{{ categoria }}</option>
+                            {% endfor %}
+                        </select>
+                    </div>
+                    <div class="col-md-2">
+                        <button type="submit" id="btnActualizarBF" class="btn btn-golden w-100">
+                            <i class="bi bi-arrow-clockwise me-2"></i>Actualizar
+                        </button>
+                    </div>
+                </div>
+            </form>
+        </div>
+
+        <!-- Resumen General -->
+        <div id="bf-content-container" class="stats-grid">
+            <!-- Total SKUs BF -->
+            <div>
+                <div class="rentabilidad-card card-skus">
+                    <div class="position-absolute top-0 start-0 w-100 h-100 opacity-5"
+                         style="background: linear-gradient(135deg, rgba(108, 117, 125, 0.08) 0%, transparent 100%);"></div>
+
+                    <div class="text-center position-relative flex-shrink-0">
+                        <div class="icon-circle" style="background: linear-gradient(135deg, #6c757d, #5a6268);">
+                            <i class="bi bi-box-seam stat-icon"></i>
+                        </div>
+                        <h6>Total SKUs BF</h6>
+                        <p class="stat-value" style="color: #6c757d;">
+                            {{ "{:,}".format(resumen_general.total_skus) }}
+                        </p>
+                    </div>
+
+                    <div class="progress-bar-bottom">
+                        <div style="background: linear-gradient(90deg, #6c757d, #5a6268); width: 100%;"></div>
+                    </div>
+                </div>
+            </div>
+
+            <!-- Ventas Totales -->
+            <div>
+                <div class="rentabilidad-card card-ventas">
+                    <div class="position-absolute top-0 start-0 w-100 h-100 opacity-5"
+                         style="background: linear-gradient(135deg, rgba(212, 175, 55, 0.08) 0%, transparent 100%);"></div>
+
+                    <div class="text-center position-relative flex-shrink-0">
+                        <div class="icon-circle" style="background: linear-gradient(135deg, #D4AF37, #B8941F);">
+                            <i class="bi bi-graph-up-arrow stat-icon"></i>
+                        </div>
+                        <h6>Ventas Totales</h6>
+                        <p class="stat-value" style="color: #D4AF37;">
+                            ${{ "{:,.0f}".format(resumen_general.total_real) }}
+                        </p>
+                        <small>{{ "{:,}".format(resumen_general.total_cantidad) }} unidades</small>
+                    </div>
+
+                    <div class="progress-bar-bottom">
+                        <div style="background: linear-gradient(90deg, #D4AF37, #B8941F); width: 100%;"></div>
+                    </div>
+                </div>
+            </div>
+
+            <!-- Costo de Venta -->
+            <div>
+                <div class="rentabilidad-card card-costo">
+                    <div class="position-absolute top-0 start-0 w-100 h-100 opacity-5"
+                         style="background: linear-gradient(135deg, rgba(220, 53, 69, 0.08) 0%, transparent 100%);"></div>
+
+                    <div class="text-center position-relative flex-shrink-0">
+                        <div class="icon-circle" style="background: linear-gradient(135deg, rgba(220, 53, 69, 0.8), rgba(200, 35, 51, 0.9));">
+                            <i class="bi bi-currency-dollar stat-icon"></i>
+                        </div>
+                        <h6>Costo de Venta</h6>
+                        <p class="stat-value" style="color: #dc3545;">
+                            ${{ "{:,.0f}".format(resumen_general.total_costo) }}
+                        </p>
+                        <small>{{ "{:.1f}".format((resumen_general.total_costo / resumen_general.total_real * 100) if resumen_general.total_real > 0 else 0) }}% de ventas</small>
+                    </div>
+
+                    <div class="progress-bar-bottom">
+                        <div style="background: linear-gradient(90deg, #dc3545, #c82333); width: {{ (resumen_general.total_costo / resumen_general.total_real * 100) if resumen_general.total_real > 0 else 0 }}%;"></div>
+                    </div>
+                </div>
+            </div>
+
+            <!-- Gastos Directos -->
+            <div>
+                <div class="rentabilidad-card card-gastos">
+                    <div class="position-absolute top-0 start-0 w-100 h-100 opacity-5"
+                         style="background: linear-gradient(135deg, rgba(255, 193, 7, 0.08) 0%, transparent 100%);"></div>
+
+                    <div class="text-center position-relative flex-shrink-0">
+                        <div class="icon-circle" style="background: linear-gradient(135deg, rgba(255, 193, 7, 0.8), rgba(224, 168, 0, 0.9));">
+                            <i class="bi bi-receipt stat-icon"></i>
+                        </div>
+                        <h6>Gastos Directos</h6>
+                        <p class="stat-value" style="color: #ffc107;">
+                            ${{ "{:,.0f}".format(resumen_general.total_gastos_directos) }}
+                        </p>
+                        <small>{{ "{:.1f}".format((resumen_general.total_gastos_directos / resumen_general.total_real * 100) if resumen_general.total_real > 0 else 0) }}% de ventas</small>
+                    </div>
+
+                    <div class="progress-bar-bottom">
+                        <div style="background: linear-gradient(90deg, #ffc107, #e0a800); width: {{ (resumen_general.total_gastos_directos / resumen_general.total_real * 100) if resumen_general.total_real > 0 else 0 }}%;"></div>
+                    </div>
+                </div>
+            </div>
+
+            <!-- Ingreso Real -->
+            <div>
+                <div class="rentabilidad-card card-ingreso">
+                    <div class="position-absolute top-0 start-0 w-100 h-100 opacity-5"
+                         style="background: linear-gradient(135deg, rgba(40, 167, 69, 0.08) 0%, transparent 100%);"></div>
+
+                    <div class="text-center position-relative flex-shrink-0">
+                        <div class="icon-circle" style="background: linear-gradient(135deg, #28a745, #20c997);">
+                            <i class="bi bi-cash-coin stat-icon"></i>
+                        </div>
+                        <h6>Ingreso Real</h6>
+                        <p class="stat-value" style="color: #28a745;">
+                            ${{ "{:,.0f}".format(resumen_general.total_ingreso_real) }}
+                        </p>
+                        <small>{{ "{:.1f}".format((resumen_general.total_ingreso_real / resumen_general.total_real * 100) if resumen_general.total_real > 0 else 0) }}% de ventas</small>
+                    </div>
+
+                    <div class="progress-bar-bottom">
+                        <div style="background: linear-gradient(90deg, #28a745, #20c997); width: {{ (resumen_general.total_ingreso_real / resumen_general.total_real * 100) if resumen_general.total_real > 0 else 0 }}%;"></div>
+                    </div>
+                </div>
+            </div>
+
+            <!-- ROI Promedio -->
+            <div>
+                <div class="rentabilidad-card card-roi">
+                    <div class="position-absolute top-0 start-0 w-100 h-100 opacity-5"
+                         style="background: linear-gradient(135deg, rgba(23, 162, 184, 0.08) 0%, transparent 100%);"></div>
+
+                    <div class="text-center position-relative flex-shrink-0">
+                        <div class="icon-circle" style="background: linear-gradient(135deg, #17a2b8, #138496);">
+                            <i class="bi bi-graph-up stat-icon"></i>
+                        </div>
+                        <h6>ROI Promedio</h6>
+                        <p class="stat-value" style="color: #17a2b8;">
+                            {{ "{:.1f}".format(resumen_general.roi_promedio) }}%
+                        </p>
+                        <small>Ingreso Real / Costo Venta</small>
+                    </div>
+
+                    <div class="progress-bar-bottom">
+                        <div style="background: linear-gradient(90deg, #17a2b8, #138496); width: 100%;"></div>
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <!-- Tabla de Inventario y Ventas (Colapsable por Tipo) -->
+        <div class="card-custom">
+            <div class="card-header-custom d-flex justify-content-between align-items-center">
+                <div class="d-flex flex-column">
+                    <span><i class="bi bi-boxes me-2"></i>Inventario y Ventas del Mes</span>
+                    <small class="text-muted" style="font-size: 0.7rem; font-style: italic; margin-top: 2px;">
+                        <i class="bi bi-info-circle me-1"></i>Cantidades descomponen combos en piezas. "Detalle por SKU" muestra todos los productos con ventas (individual o combo).
+                    </small>
+                </div>
+                <div class="d-flex align-items-center gap-2">
+                    <button type="button" id="btnExportarBF" class="btn btn-export btn-sm" onclick="exportarCompleto()">
+                        <i class="bi bi-file-earmark-excel"></i>Exportar Todo a Excel (2 hojas)
+                    </button>
+                    <span class="badge" style="background: linear-gradient(135deg, #D4AF37, #B8941F); color: white; font-size: 0.75rem; padding: 0.4rem 0.8rem;">
+                        {% set total_productos = inventario_agrupado.resumen | map(attribute='total_skus') | sum %}
+                        {{ total_productos }} producto{{ 's' if total_productos != 1 else '' }}
+                    </span>
+                </div>
+            </div>
+
+            {% if inventario_agrupado and inventario_agrupado.resumen and inventario_agrupado.resumen|length > 0 %}
+            <div class="table-responsive">
+                <table class="table table-custom" style="table-layout: fixed; width: 100%;">
+                    <thead>
+                        <tr>
+                            <th style="width: 4%;" class="text-center"></th>
+                            <th style="width: 35%;">Tipo de Producto</th>
+                            <th class="text-center" style="width: 12%;">Cantidad SKUs</th>
+                            <th class="text-end" style="width: 20%;">Existencias Totales</th>
+                            <th class="text-center" style="width: 18%; padding-right: 20px !important;">
+                                Cantidad Vendida
+                                <i class="bi bi-info-circle-fill ms-1"
+                                   style="font-size: 0.75rem; cursor: help;"
+                                   data-bs-toggle="tooltip"
+                                   data-bs-placement="top"
+                                   title="Incluye piezas individuales dentro de combos. Ejemplo: 1 combo con 2 unidades = 2 piezas vendidas"></i>
+                            </th>
+                        </tr>
+                    </thead>
+                    <tbody>
+                        {% for tipo in inventario_agrupado.resumen %}
+                        <!-- Fila de Resumen (Clickeable) -->
+                        <tr class="tipo-resumen-row" data-tipo="{{ tipo.nombre }}" style="cursor: pointer; background: rgba({{ tipo.color | replace('#', '') }}, 0.05); transition: all 0.2s ease;">
+                            <td class="text-center">
+                                <i class="bi bi-chevron-right expand-icon" style="transition: transform 0.3s ease; color: {{ tipo.color }};"></i>
+                            </td>
+                            <td>
+                                <div class="d-flex align-items-center">
+                                    <span class="badge me-2" style="background: {{ tipo.gradient }}; color: white; font-size: 0.7rem; padding: 5px 10px;">
+                                        <i class="bi {{ tipo.icono }} me-1"></i>{{ tipo.nombre }}
+                                    </span>
+                                </div>
+                            </td>
+                            <td class="text-center">
+                                <strong style="color: {{ tipo.color }}; font-size: 0.95rem;">{{ tipo.total_skus }}</strong>
+                            </td>
+                            <td class="text-end">
+                                <strong style="color: #17a2b8; font-size: 0.95rem;">{{ "{:,.0f}".format(tipo.total_existencia) }}</strong>
+                            </td>
+                            <td class="text-center" style="padding-right: 20px !important;">
+                                <strong style="color: #D4AF37; font-size: 0.95rem;">{{ "{:,.0f}".format(tipo.total_venta) }}</strong>
+                            </td>
+                        </tr>
+
+                        <!-- Filas de Detalle (Inicialmente Ocultas) - Una sola fila por producto -->
+                        {% for producto in inventario_agrupado.productos_por_tipo[tipo.nombre] %}
+                        <tr class="tipo-detalle-row-1 tipo-detalle-{{ tipo.nombre }}" data-tipo="{{ tipo.nombre }}" style="display: none; border-left-color: {{ tipo.color }};">
+                            <td></td>
+                            <td style="overflow: hidden;">
+                                <div class="d-flex align-items-center ps-3">
+                                    <span class="icono-categoria-tipo" style="background: {{ tipo.gradient }}; color: white;">
+                                        <i class="bi bi-tag-fill" style="font-size: 0.6rem;"></i>
+                                    </span>
+                                    <div class="d-flex flex-column" style="flex: 1; min-width: 0;">
+                                        <span class="badge mb-1" style="background: {{ tipo.gradient }}; opacity: 0.85; color: white; font-size: 0.65rem; padding: 3px 8px; width: fit-content; font-weight: 600; box-shadow: 0 2px 4px rgba(0,0,0,0.15);">
+                                            {{ producto.sku }}
+                                        </span>
+                                        <span style="font-size: 0.75rem; color: #495057; line-height: 1.2; overflow: hidden; text-overflow: ellipsis; white-space: nowrap;">
+                                            {{ producto.descripcion }}
+                                        </span>
+                                    </div>
+                                </div>
+                            </td>
+                            <td class="text-center" style="overflow: hidden;">
+                                <span style="font-size: 0.7rem; color: #495057; font-weight: 600;">
+                                    {{ producto.categoria }}
+                                </span>
+                            </td>
+                            <td class="text-end" style="position: relative; cursor: help;">
+                                <div class="existencia-con-tooltip"
+                                     data-bs-toggle="tooltip"
+                                     data-bs-html="true"
+                                     data-bs-placement="left"
+                                     title="<div style='text-align: left;'><strong style='color: #17a2b8;'><i class='bi bi-building'></i> Distribución por almacén:</strong><br>{% for almacen in producto.almacenes %}<span style='display: block; margin-top: 5px; padding: 3px 6px; background: linear-gradient(135deg, rgba(23,162,184,0.15), rgba(23,162,184,0.25)); border-left: 3px solid #17a2b8; border-radius: 3px; color: #0c5460; font-size: 0.85rem;'><strong>{{ almacen.almacen }}</strong>: {{ '{:,.0f}'.format(almacen.cantidad_libre_de_usar) }}</span>{% endfor %}</div>">
+                                    <strong style="color: #17a2b8; font-size: 0.9rem;">{{ "{:,.0f}".format(producto.Existencia) }}</strong>
+                                    <i class="bi bi-info-circle-fill ms-1" style="font-size: 0.7rem; color: #17a2b8; opacity: 0.6;"></i>
+                                </div>
+                            </td>
+                            <td class="text-center" style="padding-right: 20px !important;">
+                                <strong style="color: #D4AF37; font-size: 0.9rem;">{{ "{:,.0f}".format(producto.Venta_Mes_Actual) }}</strong>
+                            </td>
+                        </tr>
+                        {% endfor %}
+                        {% endfor %}
+                    </tbody>
+                </table>
+            </div>
+            {% else %}
+            <div class="no-data-message">
+                <i class="bi bi-inbox"></i>
+                <h4>No hay datos de inventario disponibles</h4>
+                <p class="text-muted">No se encontró inventario para los SKUs BF seleccionados</p>
+            </div>
+            {% endif %}
+        </div>
+
+        <!-- Tabla de SKUs -->
+        <div class="card-custom">
+            <div class="card-header-custom d-flex justify-content-between align-items-center">
+                <span><i class="bi bi-table me-2"></i>Detalle por SKU</span>
+                <div class="d-flex align-items-center gap-2">
+                    <span class="badge" style="background: linear-gradient(135deg, #D4AF37, #B8941F); color: white; font-size: 0.75rem; padding: 0.4rem 0.8rem;">
+                        {{ skus_data|length }} producto{{ 's' if skus_data|length != 1 else '' }}
+                    </span>
+                </div>
+            </div>
+
+            {% if skus_data and skus_data|length > 0 %}
+            <div class="table-responsive">
+                <table class="table table-custom">
+                    <thead>
+                        <tr>
+                            <th>Producto</th>
+                            <th>Categoría</th>
+                            <th class="text-center">Tipo</th>
+                            <th class="text-center">Cantidad</th>
+                            <th class="text-end">Ventas</th>
+                            <th class="text-end">Costo de Venta</th>
+                            <th class="text-end">Gastos Directos</th>
+                            <th class="text-end">Ingreso Real</th>
+                            <th class="text-end">ROI</th>
+                        </tr>
+                    </thead>
+                    <tbody>
+                        {% for sku in skus_data %}
+                        <tr {% if sku.tipo_fila == 'combo' %}style="background-color: #f8f9fa;"{% endif %}>
+                            <td style="max-width: 280px;{% if sku.tipo_fila == 'combo' %} padding-left: 2rem;{% endif %}">
+                                <div class="d-flex flex-column">
+                                    {% if sku.tipo_fila == 'individual' %}
+                                    <span class="badge mb-1" style="background: linear-gradient(135deg, #2C2C2C, #1a1a1a); color: white; font-size: 0.7rem; padding: 4px 8px; width: fit-content; font-weight: 600;">
+                                        {{ sku.sku }}
+                                    </span>
+                                    {% endif %}
+                                    <span style="font-size: {% if sku.tipo_fila == 'combo' %}0.75rem{% else %}0.8rem{% endif %}; color: {% if sku.tipo_fila == 'combo' %}#6c757d{% else %}#495057{% endif %}; line-height: 1.3;{% if sku.tipo_fila == 'combo' %} font-style: italic;{% endif %}">
+                                        {% if sku.tipo_fila == 'combo' %}<i class="bi bi-box-seam me-1"></i>{% endif %}{{ sku.descripcion }}
+                                    </span>
+                                </div>
+                            </td>
+                            <td>
+                                {% if sku.tipo_fila == 'individual' %}
+                                <span class="badge" style="background: linear-gradient(135deg, #6c757d, #5a6268); color: white; font-size: 0.7rem; padding: 5px 8px;">
+                                    {{ sku.categoria }}
+                                </span>
+                                {% endif %}
+                            </td>
+                            <td class="text-center">
+                                {% if sku.tipo_fila == 'individual' %}
+                                    {% if sku.Es_Relevante %}
+                                    <span class="badge me-1" style="background: linear-gradient(135deg, #6f42c1, #5a32a3); color: white; font-size: 0.7rem; padding: 5px 8px;">
+                                        <i class="bi bi-star-fill me-1" style="font-size: 0.65rem;"></i>Relevante
+                                    </span>
+                                    {% endif %}
+                                    {% if sku.Es_Nuevo %}
+                                    <span class="badge me-1" style="background: linear-gradient(135deg, #0dcaf0, #0aa2c0); color: white; font-size: 0.7rem; padding: 5px 8px;">
+                                        <i class="bi bi-sparkles me-1" style="font-size: 0.65rem;"></i>Nuevo
+                                    </span>
+                                    {% endif %}
+                                    {% if sku.Es_Remate %}
+                                    <span class="badge" style="background: linear-gradient(135deg, #fd7e14, #dc6502); color: white; font-size: 0.7rem; padding: 5px 8px;">
+                                        <i class="bi bi-tag-fill me-1" style="font-size: 0.65rem;"></i>Remate
+                                    </span>
+                                    {% endif %}
+                                    {% if sku.Cantidad_Vendida_Individual == 0 and sku.Cantidad_Vendida_Combo > 0 %}
+                                    <span class="badge ms-1" style="background: linear-gradient(135deg, #6c757d, #5a6268); color: white; font-size: 0.65rem; padding: 4px 7px;"
+                                          data-bs-toggle="tooltip"
+                                          data-bs-placement="top"
+                                          title="Vendido únicamente en combos. Los datos de costos individuales no están disponibles.">
+                                        <i class="bi bi-box-seam me-1" style="font-size: 0.6rem;"></i>Vendido en Combo
+                                    </span>
+                                    {% endif %}
+                                {% else %}
+                                    <span class="badge" style="background: linear-gradient(135deg, #17a2b8, #138496); color: white; font-size: 0.65rem; padding: 4px 7px;">
+                                        <i class="bi bi-box-seam me-1" style="font-size: 0.6rem;"></i>Combo
+                                    </span>
+                                {% endif %}
+                            </td>
+                            <td class="text-center">
+                                <strong style="{% if sku.tipo_fila == 'combo' %}font-size: 0.9rem; color: #6c757d;{% endif %}">{{ "{:,.0f}".format(sku.Cantidad_Vendida) }}</strong>
+                            </td>
+                            <td class="text-end" style="color: {% if sku.tipo_fila == 'combo' %}#9ca3af{% else %}#D4AF37{% endif %}; font-weight: 600;">
+                                {% if sku.tipo_fila == 'individual' and sku.Cantidad_Vendida_Individual == 0 and sku.Cantidad_Vendida_Combo > 0 %}
+                                    <span style="color: #9ca3af; font-style: italic; font-size: 0.85rem;"
+                                          data-bs-toggle="tooltip"
+                                          title="Datos no disponibles: producto vendido únicamente dentro de combos">N/D</span>
+                                {% else %}
+                                    ${{ "{:,.0f}".format(sku.Ventas_Reales) }}
+                                {% endif %}
+                            </td>
+                            <td class="text-end">
+                                {% if sku.tipo_fila == 'individual' and sku.Cantidad_Vendida_Individual == 0 and sku.Cantidad_Vendida_Combo > 0 %}
+                                    <span style="color: #9ca3af; font-style: italic; font-size: 0.85rem;"
+                                          data-bs-toggle="tooltip"
+                                          title="Datos no disponibles: producto vendido únicamente dentro de combos">N/D</span>
+                                {% else %}
+                                    <span style="color: {% if sku.tipo_fila == 'combo' %}#9ca3af{% else %}#dc3545{% endif %}; font-weight: 600;">
+                                        ${{ "{:,.0f}".format(sku.Costo_Venta) }}
+                                    </span>
+                                {% endif %}
+                            </td>
+                            <td class="text-end">
+                                {% if sku.tipo_fila == 'individual' and sku.Cantidad_Vendida_Individual == 0 and sku.Cantidad_Vendida_Combo > 0 %}
+                                    <span style="color: #9ca3af; font-style: italic; font-size: 0.85rem;"
+                                          data-bs-toggle="tooltip"
+                                          title="Datos no disponibles: producto vendido únicamente dentro de combos">N/D</span>
+                                {% else %}
+                                    <span style="color: {% if sku.tipo_fila == 'combo' %}#9ca3af{% else %}#fd7e14{% endif %}; font-weight: 600;">
+                                        ${{ "{:,.0f}".format(sku.Gastos_Directos) }}
+                                    </span>
+                                {% endif %}
+                            </td>
+                            <td class="text-end">
+                                {% if sku.tipo_fila == 'individual' and sku.Cantidad_Vendida_Individual == 0 and sku.Cantidad_Vendida_Combo > 0 %}
+                                    <span style="color: #9ca3af; font-style: italic; font-size: 0.85rem;"
+                                          data-bs-toggle="tooltip"
+                                          title="Datos no disponibles: producto vendido únicamente dentro de combos">N/D</span>
+                                {% else %}
+                                    <span style="color: {% if sku.tipo_fila == 'combo' %}#9ca3af{% else %}#28a745{% endif %}; font-weight: 600;">
+                                        ${{ "{:,.0f}".format(sku.Ingreso_Real) }}
+                                    </span>
+                                {% endif %}
+                            </td>
+                            <td class="text-end">
+                                {% if sku.tipo_fila == 'individual' and sku.Cantidad_Vendida_Individual == 0 and sku.Cantidad_Vendida_Combo > 0 %}
+                                    <span style="color: #9ca3af; font-style: italic; font-size: 0.85rem;"
+                                          data-bs-toggle="tooltip"
+                                          title="Datos no disponibles: producto vendido únicamente dentro de combos">N/D</span>
+                                {% else %}
+                                    <span style="color: {% if sku.tipo_fila == 'combo' %}#9ca3af{% else %}#17a2b8{% endif %}; font-weight: 600;">
+                                        {{ "{:.1f}".format(sku.ROI) }}%
+                                    </span>
+                                {% endif %}
+                            </td>
+                        </tr>
+                        {% endfor %}
+
+                        <!-- Fila de Totales -->
+                        <tr class="fila-totales">
+                            <td colspan="3">
+                                <div class="d-flex align-items-center">
+                                    <i class="bi bi-calculator-fill me-2" style="color: #D4AF37; font-size: 1.1rem;"></i>
+                                    <strong style="color: #2C2C2C; font-size: 1rem;">TOTALES</strong>
+                                </div>
+                            </td>
+                            <td class="text-center">
+                                <strong style="color: #2C2C2C;">{{ "{:,.0f}".format(skus_data|sum(attribute='Cantidad_Vendida')) }}</strong>
+                            </td>
+                            <td class="text-end">
+                                <strong style="color: #D4AF37;">${{ "{:,.0f}".format(skus_data|sum(attribute='Ventas_Reales')) }}</strong>
+                            </td>
+                            <td class="text-end">
+                                <div class="d-flex flex-column align-items-end">
+                                    <strong style="color: #dc3545;">${{ "{:,.0f}".format(skus_data|sum(attribute='Costo_Venta')) }}</strong>
+                                    <span class="badge mt-1" style="background: rgba(220, 53, 69, 0.15); color: #dc3545; font-size: 0.65rem; padding: 2px 6px;">
+                                        {{ "{:.1f}".format((skus_data|sum(attribute='Costo_Venta') / skus_data|sum(attribute='Ventas_Reales') * 100) if skus_data|sum(attribute='Ventas_Reales') > 0 else 0) }}%
+                                    </span>
+                                </div>
+                            </td>
+                            <td class="text-end">
+                                <div class="d-flex flex-column align-items-end">
+                                    <strong style="color: #fd7e14;">${{ "{:,.0f}".format(skus_data|sum(attribute='Gastos_Directos')) }}</strong>
+                                    <span class="badge mt-1" style="background: rgba(253, 126, 20, 0.15); color: #fd7e14; font-size: 0.65rem; padding: 2px 6px;">
+                                        {{ "{:.1f}".format((skus_data|sum(attribute='Gastos_Directos') / skus_data|sum(attribute='Ventas_Reales') * 100) if skus_data|sum(attribute='Ventas_Reales') > 0 else 0) }}%
+                                    </span>
+                                </div>
+                            </td>
+                            <td class="text-end">
+                                <div class="d-flex flex-column align-items-end">
+                                    <strong style="color: #28a745;">${{ "{:,.0f}".format(skus_data|sum(attribute='Ingreso_Real')) }}</strong>
+                                    <span class="badge mt-1" style="background: rgba(40, 167, 69, 0.15); color: #28a745; font-size: 0.65rem; padding: 2px 6px;">
+                                        {{ "{:.1f}".format((skus_data|sum(attribute='Ingreso_Real') / skus_data|sum(attribute='Ventas_Reales') * 100) if skus_data|sum(attribute='Ventas_Reales') > 0 else 0) }}%
+                                    </span>
+                                </div>
+                            </td>
+                            <td class="text-end">
+                                <strong style="color: #17a2b8;">
+                                    {{ "{:.1f}".format((skus_data|sum(attribute='Ingreso_Real') / skus_data|sum(attribute='Costo_Venta') * 100) if skus_data|sum(attribute='Costo_Venta') > 0 else 0) }}%
+                                </strong>
+                            </td>
+                        </tr>
+                    </tbody>
+                </table>
+            </div>
+            {% else %}
+            <div class="no-data-message">
+                <i class="bi bi-inbox"></i>
+                <h4>No hay datos disponibles</h4>
+                <p class="text-muted">No se encontraron SKUs BF para el período y filtros seleccionados</p>
+            </div>
+            {% endif %}
+        </div>
+    </div>
+
+    <!-- Bootstrap JS -->
+    <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/js/bootstrap.bundle.min.js"></script>
+    <!-- Flatpickr JS -->
+    <script src="https://cdn.jsdelivr.net/npm/flatpickr@4.6.13/dist/flatpickr.min.js"></script>
+    <!-- Flatpickr Spanish Locale -->
+    <script src="https://cdn.jsdelivr.net/npm/flatpickr@4.6.13/dist/l10n/es.js"></script>
+
+    <!-- JavaScript para tabla colapsable mejorada -->
+    <script>
+        document.addEventListener('DOMContentLoaded', function() {
+            // Inicializar Flatpickr para el rango personalizado (permite seleccionar un solo día o un rango)
+            const rangoPicker = flatpickr("#rango_personalizado", {
+                mode: "range",
+                dateFormat: "Y-m-d",
+                altInput: false,
+                locale: {
+                    ...flatpickr.l10ns.es,
+                    rangeSeparator: " a "  // Usar " a " como separador en español
+                },
+                maxDate: "today",
+                // Permitir que al hacer clic una sola vez se seleccione un solo día
+                onClose: function(selectedDates, dateStr, instance) {
+                    // Si solo seleccionó una fecha, duplicarla para crear un rango de un solo día
+                    if (selectedDates.length === 1) {
+                        const singleDate = selectedDates[0];
+                        const year = singleDate.getFullYear();
+                        const month = String(singleDate.getMonth() + 1).padStart(2, '0');
+                        const day = String(singleDate.getDate()).padStart(2, '0');
+                        const formattedDate = `${year}-${month}-${day}`;
+                        // Establecer el valor como un solo día (sin separador)
+                        instance.input.value = formattedDate;
+                        console.log("Flatpickr - Solo un día seleccionado:", formattedDate);
+                    }
+                },
+                onChange: function(selectedDates, dateStr, instance) {
+                    console.log("Flatpickr onChange - dateStr:", dateStr);
+                    console.log("Flatpickr onChange - selectedDates:", selectedDates);
+                    console.log("Flatpickr - valor del input:", document.getElementById("rango_personalizado").value);
+                }
+            });
+
+            // Función para mostrar/ocultar campo de rango personalizado
+            function toggleRangoPersonalizado() {
+                const presetValue = document.getElementById("preset_bf").value;
+                const rangoGroup = document.getElementById("rango_personalizado_group");
+
+                if (presetValue === "personalizado") {
+                    rangoGroup.style.display = "block";
+                } else {
+                    rangoGroup.style.display = "none";
+                    // NO limpiar el valor aquí para que se preserve después del submit
+                }
+            }
+
+            // Event listener para el cambio de preset
+            document.getElementById("preset_bf").addEventListener("change", toggleRangoPersonalizado);
+
+            // Inicializar el estado correcto al cargar
+            toggleRangoPersonalizado();
+
+            // Validar formulario antes de enviar y mostrar loading
+            document.getElementById("filtros-form-bf").addEventListener("submit", function(e) {
+                const preset = document.getElementById("preset_bf").value;
+                const rangoPersonalizado = document.getElementById("rango_personalizado").value;
+
+                console.log("=== SUBMIT FORM DEBUG ===");
+                console.log("Preset:", preset);
+                console.log("Rango personalizado:", rangoPersonalizado);
+                console.log("Rango length:", rangoPersonalizado ? rangoPersonalizado.length : 0);
+                console.log("Rango bytes:", rangoPersonalizado ? new TextEncoder().encode(rangoPersonalizado) : null);
+
+                if (preset === "personalizado" && (!rangoPersonalizado || rangoPersonalizado.trim() === "")) {
+                    e.preventDefault();
+                    alert("Por favor selecciona un rango de fechas personalizado usando el calendario.");
+                    return false;
+                }
+
+                // Modificar el botón para mostrar spinner
+                const btnActualizar = document.getElementById("btnActualizarBF");
+                if (btnActualizar) {
+                    const originalHTML = btnActualizar.innerHTML;
+                    btnActualizar.innerHTML = '<span class="spinner-border spinner-border-sm me-2" role="status" aria-hidden="true"></span>Actualizando...';
+                    btnActualizar.disabled = true;
+                    btnActualizar.style.opacity = '0.8';
+                }
+
+                // Agregar efecto de fade al contenido
+                const contentContainer = document.getElementById("bf-content-container");
+                if (contentContainer) {
+                    contentContainer.style.transition = 'opacity 0.3s ease';
+                    contentContainer.style.opacity = '0.3';
+                    contentContainer.style.pointerEvents = 'none';
+                }
+
+                // Mostrar animación de carga global
+                if (typeof showGlobalLoading === 'function') {
+                    showGlobalLoading('Actualizando datos de Black Friday...', 'Calculando cumplimiento de SKUs');
+                }
+            });
+
+            // Inicializar tooltips de Bootstrap
+            var tooltipTriggerList = [].slice.call(document.querySelectorAll('[data-bs-toggle="tooltip"]'));
+            var tooltipList = tooltipTriggerList.map(function (tooltipTriggerEl) {
+                return new bootstrap.Tooltip(tooltipTriggerEl, {
+                    html: true,
+                    trigger: 'hover focus',
+                    delay: { show: 200, hide: 100 }
+                });
+            });
+
+            // Mapa de colores hex a RGB para fondos
+            const coloresRGB = {
+                'Relevante': '111, 66, 193',
+                'Nuevo': '13, 202, 240',
+                'Remate': '253, 126, 20'
+            };
+
+            // Obtener todas las filas de resumen
+            const filasResumen = document.querySelectorAll('.tipo-resumen-row');
+
+            filasResumen.forEach(function(fila) {
+                const tipoNombre = fila.getAttribute('data-tipo');
+                const rgbColor = coloresRGB[tipoNombre] || '0, 0, 0';
+
+                // Establecer el background correcto inicialmente
+                fila.style.background = `rgba(${rgbColor}, 0.05)`;
+
+                fila.addEventListener('click', function() {
+                    const filasDetalle = document.querySelectorAll('.tipo-detalle-' + tipoNombre);
+                    const icono = this.querySelector('.expand-icon');
+
+                    // Check si están visibles
+                    const estaExpandido = filasDetalle.length > 0 && filasDetalle[0].style.display !== 'none';
+
+                    // Toggle: mostrar u ocultar todas las filas de detalle
+                    filasDetalle.forEach(function(filaDetalle) {
+                        if (estaExpandido) {
+                            // Colapsar
+                            filaDetalle.style.display = 'none';
+                        } else {
+                            // Expandir
+                            filaDetalle.style.display = '';
+                        }
+                    });
+
+                    // Rotar icono con transición suave
+                    if (estaExpandido) {
+                        icono.classList.remove('bi-chevron-down');
+                        icono.classList.add('bi-chevron-right');
+                        this.style.background = `rgba(${rgbColor}, 0.05)`;
+                    } else {
+                        icono.classList.remove('bi-chevron-right');
+                        icono.classList.add('bi-chevron-down');
+                        this.style.background = `rgba(${rgbColor}, 0.08)`;
+                    }
+                });
+
+                // Efecto hover mejorado
+                fila.addEventListener('mouseenter', function() {
+                    const filasDetalle = document.querySelectorAll('.tipo-detalle-' + tipoNombre);
+                    const estaExpandido = filasDetalle.length > 0 && filasDetalle[0].style.display !== 'none';
+
+                    this.style.background = `rgba(${rgbColor}, ${estaExpandido ? 0.12 : 0.1})`;
+                });
+
+                fila.addEventListener('mouseleave', function() {
+                    const filasDetalle = document.querySelectorAll('.tipo-detalle-' + tipoNombre);
+                    const estaExpandido = filasDetalle.length > 0 && filasDetalle[0].style.display !== 'none';
+
+                    this.style.background = `rgba(${rgbColor}, ${estaExpandido ? 0.08 : 0.05})`;
+                });
+            });
+        });
+
+        // Función de exportación completa a Excel (2 hojas)
+        function exportarCompleto() {
+            // Mostrar animación de carga en el botón
+            const btnExportar = document.getElementById('btnExportarBF');
+            if (btnExportar) {
+                const originalHTML = btnExportar.innerHTML;
+                btnExportar.innerHTML = '<span class="spinner-border spinner-border-sm me-2" role="status" aria-hidden="true"></span>Exportando...';
+                btnExportar.disabled = true;
+                btnExportar.style.opacity = '0.7';
+
+                // Restaurar el botón después de 3 segundos
+                setTimeout(() => {
+                    btnExportar.innerHTML = originalHTML;
+                    btnExportar.disabled = false;
+                    btnExportar.style.opacity = '1';
+                }, 3000);
+            }
+
+            // Mostrar overlay de carga global
+            if (typeof showGlobalLoading === 'function') {
+                showGlobalLoading('Exportando a Excel...', 'Generando archivo con datos filtrados');
+
+                // Ocultar overlay después de 3 segundos
+                setTimeout(() => {
+                    if (typeof hideGlobalLoading === 'function') {
+                        hideGlobalLoading();
+                    }
+                }, 3000);
+            }
+
+            const form = document.createElement('form');
+            form.method = 'POST';
+            form.action = '/cumplimiento-bf-exportar';
+            form.style.display = 'none';
+
+            // Capturar todos los filtros y parámetros actuales
+            const preset = document.getElementById('preset_bf').value;
+            const rangoPersonalizado = document.getElementById('rango_personalizado').value;
+            const filtroTipo = document.querySelector('select[name="filtro_tipo"]').value;
+            const filtroCanal = document.querySelector('select[name="filtro_canal"]').value;
+            const filtroCategoria = document.querySelector('select[name="filtro_categoria"]').value;
+            const periodoTexto = "{{ periodo_texto }}";
+
+            console.log('=== EXPORTAR CON FILTROS ===');
+            console.log('Periodo:', preset);
+            console.log('Rango personalizado:', rangoPersonalizado);
+            console.log('Tipo:', filtroTipo);
+            console.log('Canal:', filtroCanal);
+            console.log('Categoría:', filtroCategoria);
+
+            // Agregar todos los campos al formulario (necesarios para ambas hojas)
+            const campos = {
+                'preset': preset,
+                'rango_personalizado': rangoPersonalizado,
+                'filtro_tipo': filtroTipo,
+                'filtro_canal': filtroCanal,
+                'filtro_categoria': filtroCategoria,
+                'periodo_texto': periodoTexto,
+                'mes_filtro': "{{ mes_seleccionado }}"
+            };
+
+            for (const [key, value] of Object.entries(campos)) {
+                const input = document.createElement('input');
+                input.type = 'hidden';
+                input.name = key;
+                input.value = value;
+                form.appendChild(input);
+            }
+
+            document.body.appendChild(form);
+            form.submit();
+            document.body.removeChild(form);
+        }
+    </script>
+</body>
+</html>

@@ -1,0 +1,701 @@
+{% extends "layout.html" %}
+
+{% block content %}
+<div class="container mt-4">
+    <h2 class="mb-4" data-aos="fade-down" style="color: #2C2C2C; font-weight: 700;">
+        <i class="bi bi-bullseye me-3" style="color: #D4AF37;"></i>Cumplimiento de Metas por Canal
+    </h2>
+
+    <form method="POST" class="row g-3 align-items-end mb-4" data-aos="fade-up" data-aos-delay="100">
+        
+        <div class="col-md-4">
+            <label for="preset_main" class="form-label" style="color: #2C2C2C; font-weight: 600;"><strong>Período a analizar:</strong></label>
+            <select name="preset_main" id="preset_main" class="form-select" style="border: 2px solid #f8f9fa; transition: all 0.3s ease;">
+                <option value="hoy" {% if selected_preset_main == "hoy" %}selected{% endif %}>Hoy</option>
+                <option value="7" {% if selected_preset_main == "7" %}selected{% endif %}>Últimos 7 días</option>
+                <option value="15" {% if selected_preset_main == "15" %}selected{% endif %}>Últimos 15 días</option>
+                <option value="mes_actual" {% if selected_preset_main == "mes_actual" %}selected{% endif %}>Mes actual hasta hoy</option>
+                <option value="mes_completo" {% if selected_preset_main == "mes_completo" %}selected{% endif %}>Mes completo (anterior)</option>
+                <option value="personalizado" {% if selected_preset_main == "personalizado" %}selected{% endif %}>Fecha personalizada</option>
+            </select>
+        </div>
+
+        <div class="col-md-4" id="main_range_group" {% if selected_preset_main != "personalizado" %}style="display:none;"{% endif %}>
+            <label for="main_range" class="form-label" style="color: #2C2C2C; font-weight: 600;">Rango personalizado:</label>
+            <input type="text" id="main_range" name="main_range" class="form-control" 
+                   value="{{ selected_main_range }}" placeholder="Selecciona un rango" readonly
+                   style="border: 2px solid #f8f9fa; transition: all 0.3s ease;">
+        </div>
+
+        <div class="col-md-4">
+            <button type="submit" class="btn btn-warning w-100" 
+                    style="background-color: #D4AF37; border-color: #D4AF37; color: #2C2C2C; font-weight: 600; transition: all 0.3s ease;">
+                <i class="bi bi-bullseye me-2"></i>Analizar Cumplimiento
+            </button>
+        </div>
+    </form>
+
+    {% if error %}
+    <div class="alert alert-danger" role="alert" data-aos="shake">
+        <i class="bi bi-exclamation-triangle-fill me-2"></i>{{ error }}
+    </div>
+    {% endif %}
+
+    {% if cumplimiento_data %}
+    <!-- RESUMEN GENERAL -->
+    <div class="row g-4 mb-4" data-aos="fade-up" data-aos-delay="200">
+        <div class="col-md-3">
+            <div class="card h-100" style="border: 1px solid rgba(212, 175, 55, 0.2); border-radius: 12px;">
+                <div class="card-body text-center">
+                    <div class="icon-circle mb-3 mx-auto" 
+                         style="width: 60px; height: 60px; background: linear-gradient(135deg, #D4AF37, #B8941F); 
+                                border-radius: 50%; display: flex; align-items: center; justify-content: center;">
+                        <i class="bi bi-calendar-check text-white" style="font-size: 1.5rem;"></i>
+                    </div>
+                    <h6 class="card-title" style="color: #2C2C2C; font-weight: 600;">Período</h6>
+                    <p class="card-text" style="color: #6c757d; font-size: 0.9rem;">{{ periodo_texto }}</p>
+                </div>
+            </div>
+        </div>
+        
+        <div class="col-md-3">
+            <div class="card h-100" style="border: 1px solid rgba(212, 175, 55, 0.2); border-radius: 12px;">
+                <div class="card-body text-center">
+                    <div class="icon-circle mb-3 mx-auto" 
+                         style="width: 60px; height: 60px; background: linear-gradient(135deg, #28a745, #20c997); 
+                                border-radius: 50%; display: flex; align-items: center; justify-content: center;">
+                        <i class="bi bi-currency-dollar text-white" style="font-size: 1.5rem;"></i>
+                    </div>
+                    <h6 class="card-title" style="color: #2C2C2C; font-weight: 600;">Ventas Totales</h6>
+                    <p class="card-text fw-bold" style="color: #28a745; font-size: 1.1rem;">
+                        ${{ "{:,.0f}".format(resumen_general.ventas_totales) }}
+                    </p>
+                </div>
+            </div>
+        </div>
+        
+        <div class="col-md-3">
+            <div class="card h-100" style="border: 1px solid rgba(212, 175, 55, 0.2); border-radius: 12px;">
+                <div class="card-body text-center">
+                    <div class="icon-circle mb-3 mx-auto" 
+                         style="width: 60px; height: 60px; background: linear-gradient(135deg, #17a2b8, #6f42c1); 
+                                border-radius: 50%; display: flex; align-items: center; justify-content: center;">
+                        <i class="bi bi-bullseye text-white" style="font-size: 1.5rem;"></i>
+                    </div>
+                    <h6 class="card-title" style="color: #2C2C2C; font-weight: 600;">Meta Total</h6>
+                    <p class="card-text fw-bold" style="color: #17a2b8; font-size: 1.1rem;">
+                        ${{ "{:,.0f}".format(resumen_general.meta_total) }}
+                    </p>
+                </div>
+            </div>
+        </div>
+        
+        <div class="col-md-3">
+            <div class="card h-100" style="border: 1px solid rgba(212, 175, 55, 0.2); border-radius: 12px;">
+                <div class="card-body text-center">
+                    <div class="icon-circle mb-3 mx-auto" 
+                         style="width: 60px; height: 60px; background: linear-gradient(135deg, 
+                                {% if resumen_general.cumplimiento_global >= 100 %}#28a745{% elif resumen_general.cumplimiento_global >= 50 %}#ffc107{% else %}#dc3545{% endif %}, 
+                                {% if resumen_general.cumplimiento_global >= 100 %}#20c997{% elif resumen_general.cumplimiento_global >= 50 %}#ffca2c{% else %}#e55353{% endif %}); 
+                                border-radius: 50%; display: flex; align-items: center; justify-content: center;">
+                        <i class="bi bi-percent text-white" style="font-size: 1.5rem;"></i>
+                    </div>
+                    <h6 class="card-title" style="color: #2C2C2C; font-weight: 600;">Cumplimiento Global</h6>
+                    <p class="card-text fw-bold" style="font-size: 1.2rem; color: 
+                       {% if resumen_general.cumplimiento_global >= 100 %}#28a745{% elif resumen_general.cumplimiento_global >= 50 %}#ffc107{% else %}#dc3545{% endif %};">
+                        {{ "{:.1f}".format(resumen_general.cumplimiento_global) }}%
+                    </p>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- GRÁFICOS MEJORADOS POR CANAL -->
+    <div class="row g-4 mb-4" data-aos="fade-up" data-aos-delay="300">
+        {% for canal in cumplimiento_data %}
+        <div class="col-xl-4 col-lg-6 col-md-6">
+            <div class="card h-100 shadow-sm" style="border: none; border-radius: 16px; overflow: hidden; 
+                                                    background: linear-gradient(145deg, #ffffff, #f8f9fa);">
+                <div class="card-header border-0 pb-2" style="background: linear-gradient(135deg, rgba(212, 175, 55, 0.08), rgba(212, 175, 55, 0.04));">
+                    <div class="d-flex align-items-center justify-content-between">
+                        <h6 class="mb-0 fw-bold" style="color: #2C2C2C; font-size: 1.1rem;">
+                            <i class="bi bi-broadcast me-2" style="color: #D4AF37;"></i>{{ canal.canal }}
+                        </h6>
+                        <div class="canal-status-indicator" style="width: 12px; height: 12px; border-radius: 50%; 
+                                                                   background: {% if canal.cumplimiento >= 100 %}#28a745{% elif canal.cumplimiento >= 80 %}#ffc107{% else %}#dc3545{% endif %};
+                                                                   box-shadow: 0 0 8px {% if canal.cumplimiento >= 100 %}rgba(40, 167, 69, 0.4){% elif canal.cumplimiento >= 80 %}rgba(255, 193, 7, 0.4){% else %}rgba(220, 53, 69, 0.4){% endif %};"></div>
+                    </div>
+                </div>
+                <div class="card-body text-center p-4">
+                    <!-- CÍRCULO DE PROGRESO MODERNO -->
+                    <div class="modern-progress-container mb-4" style="position: relative; width: 160px; height: 160px; margin: 0 auto;">
+                        <!-- Círculo de fondo -->
+                        <div class="progress-ring" style="position: absolute; top: 0; left: 0; width: 160px; height: 160px;">
+                            <svg width="160" height="160" style="transform: rotate(-90deg);">
+                                <!-- Fondo del círculo -->
+                                <circle cx="80" cy="80" r="70" fill="none" stroke="#e9ecef" stroke-width="8"></circle>
+                                <!-- Círculo de progreso -->
+                                <circle cx="80" cy="80" r="70" fill="none" 
+                                        stroke="{% if canal.cumplimiento >= 100 %}#28a745{% elif canal.cumplimiento >= 50 %}#ffc107{% else %}#dc3545{% endif %}" 
+                                        stroke-width="8" 
+                                        stroke-linecap="round"
+                                        stroke-dasharray="{{ 2 * 3.14159 * 70 }}"
+                                        stroke-dashoffset="{{ 2 * 3.14159 * 70 * (1 - (canal.cumplimiento if canal.cumplimiento <= 100 else 100) / 100) }}"
+                                        style="transition: stroke-dashoffset 1.5s ease-in-out, stroke 0.3s ease;
+                                               filter: drop-shadow(0 0 8px {% if canal.cumplimiento >= 100 %}rgba(40, 167, 69, 0.3){% elif canal.cumplimiento >= 50 %}rgba(255, 193, 7, 0.3){% else %}rgba(220, 53, 69, 0.3){% endif %});"></circle>
+                            </svg>
+                        </div>
+                        
+                        <!-- Contenido central -->
+                        <div class="progress-content" style="position: absolute; top: 50%; left: 50%; transform: translate(-50%, -50%); text-align: center;">
+                            <div class="percentage-value" style="font-size: 2rem; font-weight: 800; color: #2C2C2C; line-height: 1;">
+                                {{ "{:.0f}".format(canal.cumplimiento) }}%
+                            </div>
+                            <div class="progress-label" style="font-size: 0.85rem; color: #6c757d; font-weight: 500; margin-top: 4px;">
+                                Cumplimiento
+                            </div>
+                        </div>
+                        
+                        <!-- Indicador de meta -->
+                        {% if canal.cumplimiento >= 100 %}
+                        <div class="achievement-icon" style="position: absolute; top: -5px; right: -5px; 
+                                                            background: linear-gradient(135deg, #28a745, #20c997); 
+                                                            border-radius: 50%; width: 32px; height: 32px; 
+                                                            display: flex; align-items: center; justify-content: center;
+                                                            color: white; font-size: 0.9rem; 
+                                                            box-shadow: 0 4px 12px rgba(40, 167, 69, 0.3);
+                                                            animation: pulse 2s infinite;">
+                            <i class="bi bi-check2"></i>
+                        </div>
+                        {% endif %}
+                    </div>
+                    
+                    <!-- MÉTRICAS MEJORADAS -->
+                    <div class="metrics-grid" style="display: grid; grid-template-columns: 1fr 1fr; gap: 1rem; margin-bottom: 1rem;">
+                        <div class="metric-card" style="background: linear-gradient(135deg, rgba(40, 167, 69, 0.1), rgba(40, 167, 69, 0.05)); 
+                                                        border-radius: 12px; padding: 1rem; text-align: center; 
+                                                        border: 1px solid rgba(40, 167, 69, 0.1);">
+                            <div class="metric-icon mb-2" style="color: #28a745; font-size: 1.2rem;">
+                                <i class="bi bi-graph-up-arrow"></i>
+                            </div>
+                            <div class="metric-value" style="font-size: 1.1rem; font-weight: 700; color: #28a745; line-height: 1;">
+                                ${{ "{:,.0f}".format(canal.ventas_reales) }}
+                            </div>
+                            <div class="metric-label" style="font-size: 0.8rem; color: #6c757d; margin-top: 2px;">
+                                Ventas Reales
+                            </div>
+                        </div>
+                        
+                        <div class="metric-card" style="background: linear-gradient(135deg, rgba(23, 162, 184, 0.1), rgba(23, 162, 184, 0.05)); 
+                                                        border-radius: 12px; padding: 1rem; text-align: center; 
+                                                        border: 1px solid rgba(23, 162, 184, 0.1);">
+                            <div class="metric-icon mb-2" style="color: #17a2b8; font-size: 1.2rem;">
+                                <i class="bi bi-bullseye"></i>
+                            </div>
+                            <div class="metric-value" style="font-size: 1.1rem; font-weight: 700; color: #17a2b8; line-height: 1;">
+                                ${{ "{:,.0f}".format(canal.meta_periodo) }}
+                            </div>
+                            <div class="metric-label" style="font-size: 0.8rem; color: #6c757d; margin-top: 2px;">
+                                Meta Período
+                            </div>
+                        </div>
+                    </div>
+                    
+                    <!-- DIFERENCIA Y STATUS -->
+                    <div class="difference-status">
+                        <div class="difference-amount mb-2" style="font-size: 1rem; font-weight: 600; 
+                                                                  color: {% if canal.diferencia >= 0 %}#28a745{% else %}#dc3545{% endif %};">
+                            {% if canal.diferencia >= 0 %}+{% endif %}${{ "{:,.0f}".format(canal.diferencia) }}
+                            <small style="font-size: 0.8rem; color: #6c757d; font-weight: 400;">diferencia</small>
+                        </div>
+                        
+                        {% if canal.cumplimiento >= 100 %}
+                        <span class="badge px-3 py-2" style="background: linear-gradient(135deg, #28a745, #20c997); 
+                                                            border: none; font-size: 0.85rem; border-radius: 20px;
+                                                            box-shadow: 0 4px 12px rgba(40, 167, 69, 0.2);">
+                            <i class="bi bi-trophy-fill me-1"></i>Meta Superada
+                        </span>
+                        {% elif canal.cumplimiento >= 50 %}
+                        <span class="badge px-3 py-2" style="background: linear-gradient(135deg, #ffc107, #ffca2c); 
+                                                            border: none; font-size: 0.85rem; border-radius: 20px;
+                                                            color: #2C2C2C; box-shadow: 0 4px 12px rgba(255, 193, 7, 0.2);">
+                            <i class="bi bi-clock-fill me-1"></i>En Progreso
+                        </span>
+                        {% else %}
+                        <span class="badge px-3 py-2" style="background: linear-gradient(135deg, #dc3545, #e55353); 
+                                                            border: none; font-size: 0.85rem; border-radius: 20px;
+                                                            box-shadow: 0 4px 12px rgba(220, 53, 69, 0.2);">
+                            <i class="bi bi-exclamation-diamond-fill me-1"></i>Requiere Acción
+                        </span>
+                        {% endif %}
+                    </div>
+                </div>
+            </div>
+        </div>
+        {% endfor %}
+    </div>
+
+    <!-- TABLA DETALLADA -->
+    <div class="card" data-aos="fade-up" data-aos-delay="400" style="border: 1px solid rgba(212, 175, 55, 0.2); border-radius: 12px;">
+        <div class="card-header" style="background: linear-gradient(135deg, rgba(212, 175, 55, 0.1), rgba(212, 175, 55, 0.05)); 
+                                           border-bottom: 1px solid rgba(212, 175, 55, 0.2);">
+            <h5 class="mb-0" style="color: #2C2C2C; font-weight: 700;">
+                <i class="bi bi-table me-2" style="color: #D4AF37;"></i>Detalle por Canal
+            </h5>
+        </div>
+        <div class="card-body p-0">
+            <div class="table-responsive">
+                <table class="table table-hover mb-0">
+                    <thead style="background-color: #f8f9fa;">
+                        <tr>
+                            <th class="border-0 py-3 px-4" style="color: #2C2C2C; font-weight: 600;">Canal</th>
+                            <th class="border-0 py-3 px-4 text-end" style="color: #2C2C2C; font-weight: 600;">Meta Período</th>
+                            <th class="border-0 py-3 px-4 text-end" style="color: #2C2C2C; font-weight: 600;">Ventas Reales</th>
+                            <th class="border-0 py-3 px-4 text-end" style="color: #2C2C2C; font-weight: 600;">Diferencia</th>
+                            <th class="border-0 py-3 px-4 text-center" style="color: #2C2C2C; font-weight: 600;">Cumplimiento</th>
+                            <th class="border-0 py-3 px-4 text-center" style="color: #2C2C2C; font-weight: 600;">Status</th>
+                        </tr>
+                    </thead>
+                    <tbody>
+                        {% for canal in cumplimiento_data %}
+                        <tr class="table-row-enhanced" style="transition: all 0.3s cubic-bezier(0.25, 0.8, 0.25, 1); border-bottom: 1px solid rgba(0,0,0,0.05);" 
+                            onmouseenter="this.style.backgroundColor='rgba(212, 175, 55, 0.04)'; this.style.transform='scale(1.002)'; this.style.boxShadow='0 2px 8px rgba(0,0,0,0.06)'" 
+                            onmouseleave="this.style.backgroundColor=''; this.style.transform=''; this.style.boxShadow=''>
+                            <td class="py-4 px-4">
+                                <div class="d-flex align-items-center">
+                                    <div class="channel-avatar me-3" 
+                                         style="width: 48px; height: 48px; 
+                                                background: linear-gradient(135deg, 
+                                                    {% if canal.cumplimiento >= 100 %}#28a745, #20c997{% elif canal.cumplimiento >= 50 %}#ffc107, #ffca2c{% else %}#dc3545, #e55353{% endif %}); 
+                                                border-radius: 16px; display: flex; align-items: center; justify-content: center;
+                                                box-shadow: 0 4px 12px rgba(0,0,0,0.1); position: relative;">
+                                        <i class="bi bi-broadcast text-white" style="font-size: 1.1rem;"></i>
+                                        {% if canal.cumplimiento >= 100 %}
+                                        <div style="position: absolute; top: -2px; right: -2px; width: 16px; height: 16px; 
+                                                    background: #fff; border-radius: 50%; display: flex; align-items: center; justify-content: center;">
+                                            <i class="bi bi-check2" style="font-size: 0.7rem; color: #28a745;"></i>
+                                        </div>
+                                        {% endif %}
+                                    </div>
+                                    <div>
+                                        <div class="fw-bold" style="color: #2C2C2C; font-size: 1.05rem;">{{ canal.canal }}</div>
+                                        <div class="model-tag" style="display: inline-block; background: rgba(108, 117, 125, 0.1); 
+                                                                      color: #6c757d; font-size: 0.75rem; padding: 2px 8px; 
+                                                                      border-radius: 12px; margin-top: 2px;">
+                                            <i class="bi bi-cpu me-1"></i>{{ canal.modelo_usado }}
+                                        </div>
+                                    </div>
+                                </div>
+                            </td>
+                            <td class="py-4 px-4 text-end">
+                                <div class="metric-value" style="font-size: 1.1rem; font-weight: 700; color: #17a2b8;">
+                                    ${{ "{:,.0f}".format(canal.meta_periodo) }}
+                                </div>
+                                <div style="font-size: 0.75rem; color: #6c757d;">Meta establecida</div>
+                            </td>
+                            <td class="py-4 px-4 text-end">
+                                <div class="metric-value" style="font-size: 1.1rem; font-weight: 700; color: #28a745;">
+                                    ${{ "{:,.0f}".format(canal.ventas_reales) }}
+                                </div>
+                                <div style="font-size: 0.75rem; color: #6c757d;">Ventas logradas</div>
+                            </td>
+                            <td class="py-4 px-4 text-end">
+                                <div class="metric-value" style="font-size: 1.1rem; font-weight: 700; 
+                                                                 color: {% if canal.diferencia >= 0 %}#28a745{% else %}#dc3545{% endif %};">
+                                    {% if canal.diferencia >= 0 %}+{% endif %}${{ "{:,.0f}".format(canal.diferencia) }}
+                                </div>
+                                <div style="font-size: 0.75rem; color: #6c757d;">
+                                    {% if canal.diferencia >= 0 %}Excedente{% else %}Faltante{% endif %}
+                                </div>
+                            </td>
+                            <td class="py-4 px-4 text-center">
+                                <div class="modern-progress-mini" style="position: relative; display: inline-block;">
+                                    <div class="circular-progress-mini" 
+                                         style="width: 60px; height: 60px; border-radius: 50%; 
+                                                background: conic-gradient(
+                                                    {% if canal.cumplimiento >= 100 %}#28a745{% elif canal.cumplimiento >= 50 %}#ffc107{% else %}#dc3545{% endif %} {{ (canal.cumplimiento if canal.cumplimiento <= 100 else 100) * 3.6 }}deg,
+                                                    #e9ecef {{ (canal.cumplimiento if canal.cumplimiento <= 100 else 100) * 3.6 }}deg
+                                                );
+                                                display: flex; align-items: center; justify-content: center;
+                                                box-shadow: 0 4px 12px rgba(0,0,0,0.1);
+                                                transition: all 0.3s ease;">
+                                        <div style="width: 44px; height: 44px; background: white; border-radius: 50%; 
+                                                    display: flex; align-items: center; justify-content: center; 
+                                                    font-size: 0.8rem; font-weight: 700; color: #2C2C2C;
+                                                    flex-direction: column;">
+                                            <span>{{ "{:.0f}".format(canal.cumplimiento) }}%</span>
+                                        </div>
+                                    </div>
+                                </div>
+                            </td>
+                            <td class="py-4 px-4 text-center">
+                                {% if canal.cumplimiento >= 100 %}
+                                <span class="badge px-3 py-2" style="background: linear-gradient(135deg, #28a745, #20c997); 
+                                                                    border: none; font-size: 0.85rem; border-radius: 20px;
+                                                                    box-shadow: 0 4px 12px rgba(40, 167, 69, 0.2);">
+                                    <i class="bi bi-trophy-fill me-1"></i>Superada
+                                </span>
+                                {% elif canal.cumplimiento >= 50 %}
+                                <span class="badge px-3 py-2" style="background: linear-gradient(135deg, #ffc107, #ffca2c); 
+                                                                    border: none; font-size: 0.85rem; border-radius: 20px;
+                                                                    color: #2C2C2C; box-shadow: 0 4px 12px rgba(255, 193, 7, 0.2);">
+                                    <i class="bi bi-hourglass-split me-1"></i>En Progreso
+                                </span>
+                                {% else %}
+                                <span class="badge px-3 py-2" style="background: linear-gradient(135deg, #dc3545, #e55353); 
+                                                                    border: none; font-size: 0.85rem; border-radius: 20px;
+                                                                    box-shadow: 0 4px 12px rgba(220, 53, 69, 0.2);">
+                                    <i class="bi bi-exclamation-diamond-fill me-1"></i>Crítico
+                                </span>
+                                {% endif %}
+                            </td>
+                        </tr>
+                        {% endfor %}
+                    </tbody>
+                </table>
+            </div>
+        </div>
+    </div>
+    {% endif %}
+</div>
+
+<style>
+    /* Estilos personalizados para paleta Loomber */
+    .form-control:focus, .form-select:focus {
+        border-color: #D4AF37 !important;
+        box-shadow: 0 0 0 0.2rem rgba(212, 175, 55, 0.25) !important;
+    }
+    
+    .btn-warning:hover {
+        background-color: #B8941F !important;
+        border-color: #B8941F !important;
+        transform: translateY(-2px);
+        box-shadow: 0 4px 12px rgba(212, 175, 55, 0.3);
+    }
+    
+    /* Efectos suavizados para las cards */
+    .card:hover {
+        transform: translateY(-2px) scale(1.005);
+        box-shadow: 0 6px 20px rgba(212, 175, 55, 0.08), 0 4px 12px rgba(0, 0, 0, 0.06);
+        transition: all 0.3s ease;
+    }
+    
+    /* Animación para círculos de progreso */
+    .progress-ring circle {
+        transition: stroke-dashoffset 2s cubic-bezier(0.25, 0.8, 0.25, 1);
+    }
+    
+    /* Hover effects para métricas */
+    .metric-card:hover {
+        transform: translateY(-1px);
+        box-shadow: 0 3px 12px rgba(0, 0, 0, 0.06);
+        transition: all 0.2s ease;
+    }
+    
+    /* Personalización de progress circles en tabla */
+    .progress-circle {
+        transition: transform 0.3s ease;
+    }
+    
+    .progress-circle:hover {
+        transform: scale(1.15);
+    }
+    
+    /* Animación de pulso para logros */
+    @keyframes pulse {
+        0% {
+            transform: scale(1);
+            box-shadow: 0 4px 12px rgba(40, 167, 69, 0.3);
+        }
+        50% {
+            transform: scale(1.05);
+            box-shadow: 0 6px 16px rgba(40, 167, 69, 0.4);
+        }
+        100% {
+            transform: scale(1);
+            box-shadow: 0 4px 12px rgba(40, 167, 69, 0.3);
+        }
+    }
+    
+    /* Animación de entrada para valores */
+    .percentage-value {
+        animation: countUp 1.5s ease-out;
+    }
+    
+    @keyframes countUp {
+        from {
+            transform: scale(0.8);
+            opacity: 0;
+        }
+        to {
+            transform: scale(1);
+            opacity: 1;
+        }
+    }
+    
+    /* Efecto glassmorphism para las cards */
+    .card {
+        backdrop-filter: blur(10px);
+        border: 1px solid rgba(255, 255, 255, 0.2);
+    }
+    
+    /* Hover effects para badges */
+    .badge {
+        transition: all 0.3s ease;
+    }
+    
+    .badge:hover {
+        transform: scale(1.05);
+    }
+    
+    /* Estilos para tabla moderna */
+    .modern-table {
+        border-collapse: separate;
+        border-spacing: 0;
+    }
+    
+    .table-row-enhanced:hover .circular-progress-mini {
+        transform: scale(1.03);
+        box-shadow: 0 3px 12px rgba(0,0,0,0.08);
+    }
+    
+    .channel-avatar {
+        transition: all 0.2s ease;
+    }
+    
+    .table-row-enhanced:hover .channel-avatar {
+        transform: scale(1.02);
+    }
+    
+    /* Efectos para valores métricos */
+    .metric-value {
+        transition: all 0.2s ease;
+    }
+    
+    .table-row-enhanced:hover .metric-value {
+        transform: scale(1.01);
+    }
+    
+    /* Mejoras para el indicador de estado */
+    .canal-status-indicator {
+        animation: statusPulse 2s infinite;
+    }
+    
+    @keyframes statusPulse {
+        0%, 100% {
+            opacity: 1;
+        }
+        50% {
+            opacity: 0.7;
+            transform: scale(1.1);
+        }
+    }
+    
+    /* Gradientes animados para las métricas */
+    .metric-card {
+        position: relative;
+        overflow: hidden;
+    }
+    
+    .metric-card::before {
+        content: '';
+        position: absolute;
+        top: 0;
+        left: -100%;
+        width: 100%;
+        height: 100%;
+        background: linear-gradient(90deg, transparent, rgba(255, 255, 255, 0.3), transparent);
+        transition: left 0.5s;
+    }
+    
+    .metric-card:hover::before {
+        left: 100%;
+    }
+</style>
+
+<script>
+    let mainPicker;
+    
+    // Inicializar cuando la página esté lista
+    document.addEventListener('DOMContentLoaded', function() {
+        // Inicializar Flatpickr
+        mainPicker = flatpickr("#main_range", {
+            mode: "range",
+            dateFormat: "Y-m-d",
+            altInput: true,
+            altFormat: "d/m/Y",
+            allowSingleDateSelection: true,
+        });
+
+        // Función para mostrar/ocultar campos
+        function toggleMainRange() {
+            const show = document.getElementById("preset_main").value === "personalizado";
+            const element = document.getElementById("main_range_group");
+            
+            if (show) {
+                element.style.display = "block";
+                element.style.opacity = "0";
+                element.style.transform = "translateY(-10px)";
+                
+                setTimeout(() => {
+                    element.style.transition = "all 0.3s ease";
+                    element.style.opacity = "1";
+                    element.style.transform = "translateY(0)";
+                }, 10);
+            } else {
+                element.style.transition = "all 0.3s ease";
+                element.style.opacity = "0";
+                element.style.transform = "translateY(-10px)";
+                
+                setTimeout(() => {
+                    element.style.display = "none";
+                    document.getElementById("main_range").value = "";
+                }, 300);
+            }
+        }
+
+        // Event listener
+        document.getElementById("preset_main").addEventListener("change", toggleMainRange);
+        
+        // Inicializar estado
+        toggleMainRange();
+
+        {% if cumplimiento_data %}
+        // Animar círculos de progreso con delay escalonado
+        setTimeout(() => {
+            animateProgressCircles();
+        }, 300);
+        {% endif %}
+        
+        // Agregar efectos de hover mejorados
+        enhanceHoverEffects();
+    });
+
+    // Función para animar círculos de progreso
+    function animateProgressCircles() {
+        const progressRings = document.querySelectorAll('.progress-ring circle:last-child');
+        
+        progressRings.forEach((circle, index) => {
+            setTimeout(() => {
+                // Agregar clase para activar animación
+                circle.style.transition = 'stroke-dashoffset 2s cubic-bezier(0.25, 0.8, 0.25, 1)';
+                
+                // Animar contador de porcentaje
+                const percentageElement = circle.closest('.modern-progress-container').querySelector('.percentage-value');
+                if (percentageElement) {
+                    animateCounter(percentageElement);
+                }
+            }, index * 200); // Delay escalonado de 200ms entre cada círculo
+        });
+    }
+    
+    // Función para animar contadores
+    function animateCounter(element) {
+        const finalValue = parseInt(element.textContent);
+        const duration = 1500;
+        const startTime = Date.now();
+        
+        function updateCounter() {
+            const elapsed = Date.now() - startTime;
+            const progress = Math.min(elapsed / duration, 1);
+            
+            // Easing function (ease-out)
+            const easedProgress = 1 - Math.pow(1 - progress, 3);
+            const currentValue = Math.round(finalValue * easedProgress);
+            
+            element.textContent = currentValue + '%';
+            
+            if (progress < 1) {
+                requestAnimationFrame(updateCounter);
+            }
+        }
+        
+        updateCounter();
+    }
+    
+    // Función para mejorar efectos hover
+    function enhanceHoverEffects() {
+        // Efectos simples para las cards (sin paralax)
+        document.querySelectorAll('.card').forEach(card => {
+            // Solo hover básico sin animaciones complejas
+        });
+        
+        // Efecto de ondas en métricas
+        document.querySelectorAll('.metric-card').forEach(metric => {
+            metric.addEventListener('click', function(e) {
+                const ripple = document.createElement('span');
+                const rect = metric.getBoundingClientRect();
+                const size = Math.max(rect.width, rect.height);
+                const x = e.clientX - rect.left - size / 2;
+                const y = e.clientY - rect.top - size / 2;
+                
+                ripple.style.cssText = `
+                    position: absolute;
+                    border-radius: 50%;
+                    background: rgba(255, 255, 255, 0.6);
+                    transform: scale(0);
+                    animation: ripple 0.6s linear;
+                    width: ${size}px;
+                    height: ${size}px;
+                    left: ${x}px;
+                    top: ${y}px;
+                    pointer-events: none;
+                `;
+                
+                metric.appendChild(ripple);
+                
+                setTimeout(() => {
+                    ripple.remove();
+                }, 600);
+            });
+        });
+    }
+    
+    // Agregar animación de ripple
+    const style = document.createElement('style');
+    style.textContent = `
+        @keyframes ripple {
+            to {
+                transform: scale(2);
+                opacity: 0;
+            }
+        }
+    `;
+    document.head.appendChild(style);
+    
+    // Función para exportar datos de tabla (placeholder)
+    function exportTableData() {
+        // Mostrar notificación de funcionalidad
+        const notification = document.createElement('div');
+        notification.style.cssText = `
+            position: fixed;
+            top: 20px;
+            right: 20px;
+            background: linear-gradient(135deg, #D4AF37, #B8941F);
+            color: white;
+            padding: 12px 20px;
+            border-radius: 8px;
+            box-shadow: 0 4px 12px rgba(0,0,0,0.2);
+            z-index: 9999;
+            font-weight: 600;
+            opacity: 0;
+            transform: translateX(100%);
+            transition: all 0.3s ease;
+        `;
+        notification.innerHTML = '<i class="bi bi-info-circle me-2"></i>Funcionalidad de exportación disponible próximamente';
+        
+        document.body.appendChild(notification);
+        
+        setTimeout(() => {
+            notification.style.opacity = '1';
+            notification.style.transform = 'translateX(0)';
+        }, 100);
+        
+        setTimeout(() => {
+            notification.style.opacity = '0';
+            notification.style.transform = 'translateX(100%)';
+            setTimeout(() => notification.remove(), 300);
+        }, 3000);
+    }
+</script>
+{% endblock %}

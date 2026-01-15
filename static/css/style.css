@@ -1,0 +1,93 @@
+body {
+    font-family: Arial;
+    padding: 20px;
+}
+.summary {
+    display: flex;
+    flex-wrap: wrap;
+    gap: 10px;
+    margin-top: 20px;
+}
+.card {
+    border: 1px solid #ccc;
+    border-radius: 8px;
+    padding: 10px;
+    width: 180px;
+    text-align: center;
+}
+
+/* Estilos para tooltips */
+.tooltip-container {
+    position: relative;
+    display: inline-block;
+    vertical-align: middle;
+    margin-left: 8px;
+}
+
+.help-button {
+    background: #D4AF37;
+    color: white;
+    border: none;
+    border-radius: 50%;
+    width: 16px;
+    height: 16px;
+    font-size: 10px;
+    font-weight: bold;
+    cursor: pointer;
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+    transition: all 0.2s ease;
+    vertical-align: middle;
+}
+
+.help-button:hover {
+    background: #B8941F;
+    transform: scale(1.1);
+}
+
+.custom-tooltip {
+    visibility: hidden;
+    background-color: #333;
+    color: #fff;
+    text-align: left;
+    border-radius: 6px;
+    padding: 10px 14px;
+    position: absolute;
+    z-index: 9999;
+    top: -10px;
+    left: 25px;
+    width: 280px;
+    font-size: 12px;
+    line-height: 1.5;
+    opacity: 0;
+    transition: opacity 0.3s;
+    box-shadow: 0 4px 12px rgba(0,0,0,0.3);
+    white-space: normal;
+}
+
+.custom-tooltip::before {
+    content: "";
+    position: absolute;
+    top: 15px;
+    left: -5px;
+    border-width: 5px;
+    border-style: solid;
+    border-color: transparent #333 transparent transparent;
+}
+
+.tooltip-container:hover .custom-tooltip {
+    visibility: visible;
+    opacity: 1;
+}
+
+/* Asegurar que las tablas mantengan su diseño */
+.table th {
+    white-space: nowrap;
+    vertical-align: middle;
+}
+
+.table th .tooltip-container {
+    display: inline-block;
+    margin-left: 5px;
+}

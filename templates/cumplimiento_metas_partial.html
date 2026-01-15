@@ -1,0 +1,693 @@
+{# MACROS PARA COLORES SEGÚN TIPO DE META #}
+{% macro color_segun_meta(valor, tipo_meta, costo_porcentaje=0) -%}
+  {%- if tipo_meta == "costo" -%}
+    {%- set costo_val = (costo_porcentaje | float) if costo_porcentaje else 0 -%}
+    {%- if costo_val < 48 -%}#28a745{%- elif costo_val <= 54 -%}#ffc107{%- else -%}#dc3545{%- endif -%}
+  {%- elif tipo_meta == "ingreso_real" -%}
+    {%- set val = (valor | float) if valor else 0 -%}
+    {%- if val < 10 -%}#dc3545{%- elif val <= 15 -%}#ffc107{%- else -%}#28a745{%- endif -%}
+  {%- else -%}
+    {%- set val = (valor | float) if valor else 0 -%}
+    {%- if val >= 100 -%}#28a745{%- elif val >= 50 -%}#ffc107{%- else -%}#dc3545{%- endif -%}
+  {%- endif -%}
+{%- endmacro %}
+
+{% macro color_fondo_segun_meta(valor, tipo_meta, opacidad='0.08', costo_porcentaje=0) -%}
+  {%- if tipo_meta == "costo" -%}
+    {%- set costo_val = (costo_porcentaje | float) if costo_porcentaje else 0 -%}
+    {%- if costo_val < 48 -%}rgba(40, 167, 69, {{ opacidad }}){%- elif costo_val <= 54 -%}rgba(255, 193, 7, {{ opacidad }}){%- else -%}rgba(220, 53, 69, {{ opacidad }}){%- endif -%}
+  {%- elif tipo_meta == "ingreso_real" -%}
+    {%- set val = (valor | float) if valor else 0 -%}
+    {%- if val < 10 -%}rgba(220, 53, 69, {{ opacidad }}){%- elif val <= 15 -%}rgba(255, 193, 7, {{ opacidad }}){%- else -%}rgba(40, 167, 69, {{ opacidad }}){%- endif -%}
+  {%- else -%}
+    {%- set val = (valor | float) if valor else 0 -%}
+    {%- if val >= 100 -%}rgba(40, 167, 69, {{ opacidad }}){%- elif val >= 50 -%}rgba(255, 193, 7, {{ opacidad }}){%- else -%}rgba(220, 53, 69, {{ opacidad }}){%- endif -%}
+  {%- endif -%}
+{%- endmacro %}
+
+{% macro color_diferencia(diferencia, tipo_meta) -%}
+  {%- if tipo_meta == "costo" -%}
+    {%- set diff_val = (diferencia | float) if diferencia else 0 -%}
+    {%- if diff_val <= 0 -%}#28a745{%- else -%}#dc3545{%- endif -%}
+  {%- elif tipo_meta == "ingreso_real" -%}
+    {%- set diff_val = (diferencia | float) if diferencia else 0 -%}
+    {%- if diff_val >= 0 -%}#28a745{%- else -%}#dc3545{%- endif -%}
+  {%- else -%}
+    {%- set diff_val = (diferencia | float) if diferencia else 0 -%}
+    {%- if diff_val >= 0 -%}#28a745{%- else -%}#dc3545{%- endif -%}
+  {%- endif -%}
+{%- endmacro %}
+
+{% macro status_badge(valor, tipo_meta) -%}
+  {%- set val = (valor | float) if valor else 0 -%}
+  {%- if tipo_meta == "costo" -%}
+    {%- if val < 48 -%}
+      <span class="badge px-3 py-2" style="background: linear-gradient(135deg, #28a745, #20c997); border: none; font-size: 0.85rem; border-radius: 20px; box-shadow: 0 4px 12px rgba(40, 167, 69, 0.2);">
+        <i class="bi bi-check-circle-fill me-1"></i>Excelente (Bajo Costo)
+      </span>
+    {%- elif val >= 48 and val <= 54 -%}
+      <span class="badge px-3 py-2" style="background: linear-gradient(135deg, #ffc107, #ffca2c); border: none; font-size: 0.85rem; border-radius: 20px; color: #2C2C2C; box-shadow: 0 4px 12px rgba(255, 193, 7, 0.2);">
+        <i class="bi bi-target me-1"></i>En Rango Objetivo
+      </span>
+    {%- else -%}
+      <span class="badge px-3 py-2" style="background: linear-gradient(135deg, #dc3545, #e55353); border: none; font-size: 0.85rem; border-radius: 20px; box-shadow: 0 4px 12px rgba(220, 53, 69, 0.2);">
+        <i class="bi bi-exclamation-triangle-fill me-1"></i>Costo Elevado (Alto Riesgo)
+      </span>
+    {%- endif -%}
+  {%- elif tipo_meta == "ingreso_real" -%}
+    {%- if val < 10 -%}
+      <span class="badge px-3 py-2" style="background: linear-gradient(135deg, #dc3545, #e55353); border: none; font-size: 0.85rem; border-radius: 20px; box-shadow: 0 4px 12px rgba(220, 53, 69, 0.2);">
+        <i class="bi bi-exclamation-triangle-fill me-1"></i>Ingreso Bajo (Alto Riesgo)
+      </span>
+    {%- elif val <= 15 -%}
+      <span class="badge px-3 py-2" style="background: linear-gradient(135deg, #ffc107, #ffca2c); border: none; font-size: 0.85rem; border-radius: 20px; color: #2C2C2C; box-shadow: 0 4px 12px rgba(255, 193, 7, 0.2);">
+        <i class="bi bi-target me-1"></i>En Rango Objetivo
+      </span>
+    {%- else -%}
+      <span class="badge px-3 py-2" style="background: linear-gradient(135deg, #28a745, #20c997); border: none; font-size: 0.85rem; border-radius: 20px; box-shadow: 0 4px 12px rgba(40, 167, 69, 0.2);">
+        <i class="bi bi-check-circle-fill me-1"></i>Excelente (Alto Ingreso)
+      </span>
+    {%- endif -%}
+  {%- else -%}
+    {%- if val >= 100 -%}
+      <span class="badge px-3 py-2" style="background: linear-gradient(135deg, #28a745, #20c997); border: none; font-size: 0.85rem; border-radius: 20px; box-shadow: 0 4px 12px rgba(40, 167, 69, 0.2);">
+        <i class="bi bi-trophy-fill me-1"></i>Meta Superada
+      </span>
+    {%- elif val >= 50 -%}
+      <span class="badge px-3 py-2" style="background: linear-gradient(135deg, #ffc107, #ffca2c); border: none; font-size: 0.85rem; border-radius: 20px; color: #2C2C2C; box-shadow: 0 4px 12px rgba(255, 193, 7, 0.2);">
+        <i class="bi bi-clock-fill me-1"></i>En Progreso
+      </span>
+    {%- else -%}
+      <span class="badge px-3 py-2" style="background: linear-gradient(135deg, #dc3545, #e55353); border: none; font-size: 0.85rem; border-radius: 20px; box-shadow:0 4px 12px rgba(220, 53, 69, 0.2);">
+        <i class="bi bi-exclamation-triangle-fill me-1"></i>Bajo Rendimiento
+      </span>
+    {%- endif -%}
+  {%- endif -%}
+{%- endmacro %}
+
+{% macro achievement_icon(valor, tipo_meta) -%}
+  {%- set val = (valor | float) if valor else 0 -%}
+  {%- if tipo_meta == "costo" -%}
+    {%- if val < 30 -%}
+      <div class="achievement-icon" style="position: absolute; top: -5px; right: 10px; 
+                                          background: linear-gradient(135deg, #28a745, #20c997); 
+                                          border-radius: 50%; width: 28px; height: 28px; 
+                                          display: flex; align-items: center; justify-content: center;
+                                          color: white; font-size: 0.8rem; 
+                                          box-shadow: 0 4px 12px rgba(40, 167, 69, 0.3);
+                                          animation: pulse 2s infinite;">
+        <i class="bi bi-check2"></i>
+      </div>
+    {%- endif -%}
+  {%- else -%}
+    {%- if val >= 100 -%}
+      <div class="achievement-icon" style="position: absolute; top: -5px; right: 10px; 
+                                          background: linear-gradient(135deg, #28a745, #20c997); 
+                                          border-radius: 50%; width: 28px; height: 28px; 
+                                          display: flex; align-items: center; justify-content: center;
+                                          color: white; font-size: 0.8rem; 
+                                          box-shadow: 0 4px 12px rgba(40, 167, 69, 0.3);
+                                          animation: pulse 2s infinite;">
+        <i class="bi bi-check2"></i>
+      </div>
+    {%- endif -%}
+  {%- endif -%}
+{%- endmacro %}
+
+{% macro indicador_rango_objetivo() -%}
+{%- endmacro %}
+
+
+<!-- RESUMEN GENERAL - DISEÑO HÍBRIDO: MODERNO + ÍCONOS CIRCULARES -->
+<div class="row g-4 mb-4" id="metricsContainer" data-aos="fade-up" data-aos-delay="200" style="overflow: visible;">
+    
+    <!-- Tarjeta Dinámica: Período / Ventas del Período / Ingreso Real del Período -->
+    <div class="col" data-aos="fade-up" data-aos-delay="700">
+        <div class="p-4 shadow-sm border rounded-3 bg-white position-relative text-center"
+             style="height: 170px; transition: all 0.3s ease; cursor: pointer; border: 1px solid rgba(212, 175, 55, 0.2);"
+             onmouseenter="animateMetricCard(this)"
+             onmouseleave="resetMetricCard(this)">
+
+            <!-- Efecto de fondo sutil -->
+            <div class="position-absolute top-0 start-0 w-100 h-100 opacity-5"
+                 style="background: linear-gradient(135deg, rgba(212, 175, 55, 0.08) 0%, transparent 100%);"></div>
+
+            <!-- Ícono dinámico según tipo de meta -->
+            <div class="icon-circle mb-3 mx-auto position-relative"
+                 style="width: 60px; height: 60px; background: linear-gradient(135deg, #D4AF37, #B8941F);
+                        border-radius: 50%; display: flex; align-items: center; justify-content: center;">
+                <i class="bi tarjeta-periodo-icono {% if resumen_general.tipo_meta == 'ventas' %}bi-currency-dollar{% elif resumen_general.tipo_meta == 'ingreso_real_nominal' %}bi-cash-coin{% else %}bi-calendar-check{% endif %} text-white" style="font-size: 1.5rem;"></i>
+            </div>
+
+            <!-- Título dinámico según tipo de meta -->
+            <h6 class="mb-2 position-relative tarjeta-periodo-titulo" style="color: #2C2C2C; font-weight: 600;">
+                {% if resumen_general.tipo_meta == 'ventas' %}
+                    Ventas del Período
+                {% elif resumen_general.tipo_meta == 'ingreso_real_nominal' %}
+                    Ingreso Real del Período
+                {% else %}
+                    Período
+                {% endif %}
+            </h6>
+
+            <!-- Contenido dinámico según tipo de meta -->
+            <p class="position-relative tarjeta-periodo-contenido" style="color: {% if resumen_general.tipo_meta == 'costo' %}#6c757d{% else %}#D4AF37{% endif %}; font-size: {% if resumen_general.tipo_meta == 'costo' %}0.9rem{% else %}1.1rem{% endif %}; margin-bottom: 8px; font-weight: {% if resumen_general.tipo_meta == 'costo' %}400{% else %}700{% endif %};">
+                {% if resumen_general.tipo_meta == 'ventas' %}
+                    <span class="animated-number"
+                          data-value="{{ resumen_general.ventas_periodo_total }}"
+                          data-type="currency">
+                        ${{ "{:,.0f}".format(resumen_general.ventas_periodo_total) }}
+                    </span>
+                {% elif resumen_general.tipo_meta == 'ingreso_real_nominal' %}
+                    <span class="animated-number"
+                          data-value="{{ resumen_general.ingreso_real_periodo_total }}"
+                          data-type="currency">
+                        ${{ "{:,.0f}".format(resumen_general.ingreso_real_periodo_total) }}
+                    </span>
+                {% else %}
+                    {{ periodo_texto }}
+                {% endif %}
+            </p>
+
+            <!-- Barra de progreso sutil en la parte inferior -->
+            <div class="position-absolute bottom-0 start-0 w-100" style="height: 3px; background: rgba(212, 175, 55, 0.1);">
+                <div class="h-100 transition-all"
+                     style="background: linear-gradient(90deg, #D4AF37, #F4E4A6);
+                            width: 0%;
+                            transition: width 1.5s ease 1.8s;"></div>
+            </div>
+        </div>
+    </div>
+    
+    <!-- Meta Período -->
+    <div class="col" data-aos="fade-up" data-aos-delay="800">
+        <div class="p-4 shadow-sm border rounded-3 bg-white position-relative text-center" 
+             style="height: 170px; transition: all 0.3s ease; cursor: pointer; border: 1px solid rgba(212, 175, 55, 0.2);"
+             onmouseenter="animateMetricCard(this)"
+             onmouseleave="resetMetricCard(this)">
+            
+            <!-- Efecto de fondo sutil -->
+            <div class="position-absolute top-0 start-0 w-100 h-100 opacity-5" 
+                 style="background: linear-gradient(135deg, rgba(23, 162, 184, 0.08) 0%, transparent 100%);"></div>
+            
+            <div class="icon-circle mb-3 mx-auto position-relative" 
+                 style="width: 60px; height: 60px; background: linear-gradient(135deg, #17a2b8, #6f42c1); 
+                        border-radius: 50%; display: flex; align-items: center; justify-content: center;">
+                <i class="bi bi-bullseye text-white" style="font-size: 1.5rem;"></i>
+            </div>
+            
+            <h6 class="mb-2 position-relative" style="color: #2C2C2C; font-weight: 600;">
+                {% if resumen_general.tipo_meta == "costo" %}
+                    Rango Objetivo
+                {% elif resumen_general.tipo_meta == "ingreso_real" %}
+                    Rango Objetivo
+                {% else %}
+                    Meta Período
+                {% endif %}
+            </h6>
+            <p class="mb-2 fw-bold position-relative" style="color: #17a2b8; font-size: 1.1rem;">
+                {% if resumen_general.tipo_meta == "costo" %}
+                    48% - 54%
+                {% elif resumen_general.tipo_meta == "ingreso_real" %}
+                    TBD - TBD
+                {% else %}
+                    <span class="animated-number" 
+                          data-value="{{ resumen_general.meta_total }}"
+                          data-type="currency">
+                        ${{ "{:,.0f}".format(resumen_general.meta_total) }}
+                    </span>
+                {% endif %}
+            </p>
+            
+            {% if resumen_general.tipo_meta == "costo" %}
+                {{ indicador_rango_objetivo() }}
+            {% elif resumen_general.tipo_meta == "ingreso_real" %}
+                {{ indicador_rango_objetivo() }}
+            {% endif %}
+            
+            <!-- Barra de progreso sutil en la parte inferior -->
+            <div class="position-absolute bottom-0 start-0 w-100" style="height: 3px; background: rgba(212, 175, 55, 0.1);">
+                <div class="h-100 transition-all" 
+                     style="background: linear-gradient(90deg, #17a2b8, #6f42c1); 
+                            width: 0%; 
+                            transition: width 1.5s ease 2.0s;"></div>
+            </div>
+        </div>
+    </div>
+    
+    <!-- Meta Total del Mes -->
+    <div class="col" data-aos="fade-up" data-aos-delay="900">
+        <div class="p-3 shadow-sm border rounded-3 bg-white position-relative text-center d-flex flex-column justify-content-center" 
+             style="height: 170px; transition: all 0.3s ease; cursor: pointer; border: 1px solid rgba(212, 175, 55, 0.2);"
+             onmouseenter="animateMetricCard(this)"
+             onmouseleave="resetMetricCard(this)">
+            
+            <!-- Efecto de fondo sutil -->
+            <div class="position-absolute top-0 start-0 w-100 h-100 opacity-5" 
+                 style="background: linear-gradient(135deg, rgba(111, 66, 193, 0.08) 0%, transparent 100%);"></div>
+            
+            <div class="icon-circle mb-2 mx-auto position-relative" 
+                 style="width: 50px; height: 50px; background: linear-gradient(135deg, #6f42c1, #e83e8c); 
+                        border-radius: 50%; display: flex; align-items: center; justify-content: center;">
+                <i class="bi bi-calendar-month text-white" style="font-size: 1.2rem;"></i>
+            </div>
+            
+            <h6 class="mb-1 position-relative" style="color: #2C2C2C; font-weight: 600; font-size: 0.9rem;">Meta Total del Mes</h6>
+            <p class="mb-1 fw-bold position-relative" style="color: #6f42c1; font-size: 1rem;">
+                <span class="animated-number" 
+                      data-value="{{ resumen_general.meta_total_mes }}"
+                      data-type="currency">
+                    ${{ "{:,.0f}".format(resumen_general.meta_total_mes) }}
+                </span>
+            </p>
+            <small class="text-center position-relative d-block">
+                <span class="badge" style="font-size: 0.7rem; color: #2C2C2C; font-weight: 600; 
+                                          background-color: {{ color_fondo_segun_meta(resumen_general.cumplimiento_vs_meta_mes, resumen_general.tipo_meta, '0.15') }}; 
+                                          border: 1px solid {{ color_fondo_segun_meta(resumen_general.cumplimiento_vs_meta_mes, resumen_general.tipo_meta, '0.3') }}; 
+                                          border-radius: 12px; padding: 4px 8px;">
+                    {{ "{:.1f}".format(resumen_general.cumplimiento_vs_meta_mes) }}% del período
+                </span>
+            </small>
+            
+            <!-- Barra de progreso sutil en la parte inferior -->
+            <div class="position-absolute bottom-0 start-0 w-100" style="height: 3px; background: rgba(212, 175, 55, 0.1);">
+                <div class="h-100 transition-all" 
+                     style="background: linear-gradient(90deg, #6f42c1, #e83e8c); 
+                            width: 0%; 
+                            transition: width 1.5s ease 2.2s;"></div>
+            </div>
+        </div>
+    </div>
+    
+    <!-- Cumplimiento Global -->
+    <div class="col" data-aos="fade-up" data-aos-delay="1000">
+        <div class="p-3 shadow-sm border rounded-3 bg-white position-relative text-center d-flex flex-column justify-content-center" 
+             style="height: 170px; transition: all 0.3s ease; cursor: pointer; border: 1px solid rgba(212, 175, 55, 0.2);"
+             onmouseenter="animateMetricCard(this)"
+             onmouseleave="resetMetricCard(this)">
+            
+            <!-- Efecto de fondo sutil con color dinámico -->
+            <div class="position-absolute top-0 start-0 w-100 h-100 opacity-5" 
+                 style="background: linear-gradient(135deg, {{ color_fondo_segun_meta(resumen_general.cumplimiento_global, resumen_general.tipo_meta) }} 0%, transparent 100%);"></div>
+            
+            <div class="icon-circle mb-2 mx-auto position-relative" 
+                 style="width: 50px; height: 50px; background: linear-gradient(135deg, 
+                        {{ color_segun_meta(resumen_general.cumplimiento_global, resumen_general.tipo_meta) }}, 
+                        {{ color_segun_meta(resumen_general.cumplimiento_global, resumen_general.tipo_meta) }}); 
+                        border-radius: 50%; display: flex; align-items: center; justify-content: center;">
+                <i class="bi bi-percent text-white" style="font-size: 1.2rem;"></i>
+            </div>
+            
+            <h6 class="mb-1 position-relative" style="color: #2C2C2C; font-weight: 600; font-size: 0.9rem;">
+                {% if resumen_general.tipo_meta == "costo" %}
+                    Costo de Período
+                {% elif resumen_general.tipo_meta == "ingreso_real" %}
+                    Ingreso Real de Período
+                {% else %}
+                    Cumplimiento de Período
+                {% endif %}
+            </h6>
+            <p class="mb-1 fw-bold position-relative" style="font-size: 1.1rem; color: {{ color_segun_meta(resumen_general.cumplimiento_global, resumen_general.tipo_meta) }};">
+                <span class="animated-number" 
+                      data-value="{{ resumen_general.cumplimiento_global }}"
+                      data-type="percentage">
+                    {{ "{:.1f}".format(resumen_general.cumplimiento_global) }}%
+                </span>
+            </p>
+            <small class="text-muted text-center position-relative d-block" style="font-size: 0.7rem;">
+                Del período seleccionado
+            </small>
+            
+            <!-- Barra de progreso sutil en la parte inferior con color dinámico -->
+            <div class="position-absolute bottom-0 start-0 w-100" style="height: 3px; background: rgba(212, 175, 55, 0.1);">
+                <div class="h-100 transition-all" 
+                     style="background: linear-gradient(90deg, {{ color_segun_meta(resumen_general.cumplimiento_global, resumen_general.tipo_meta) }}, {{ color_segun_meta(resumen_general.cumplimiento_global, resumen_general.tipo_meta) }}); 
+                            width: 0%; 
+                            transition: width 1.5s ease 2.4s;"></div>
+            </div>
+        </div>
+    </div>
+</div>
+
+<!-- GRÁFICOS MEJORADOS POR CANAL -->
+<div class="row g-4 mb-4" id="canales-container" data-aos="fade-up" data-aos-delay="300" 
+     style="display: grid; grid-template-columns: repeat(auto-fit, minmax(350px, 1fr)); gap: 1.5rem;">
+    {% for canal in cumplimiento_data %}
+    <div class="canal-card" data-canal="{{ canal.canal }}" style="min-height: 400px;">
+        <div class="card h-100 shadow-sm" style="border: none; border-radius: 16px; overflow: hidden; 
+                                                background: linear-gradient(145deg, #ffffff, #f8f9fa);">
+            <div class="card-header border-0 pb-2" style="background: linear-gradient(135deg, rgba(212, 175, 55, 0.08), rgba(212, 175, 55, 0.04));">
+                <div class="d-flex align-items-center justify-content-between">
+                    <h6 class="mb-0 fw-bold canal-title" style="color: #2C2C2C; font-size: 1.1rem;">
+                        <i class="bi bi-broadcast me-2" style="color: #D4AF37;"></i>{{ canal.canal }}
+                    </h6>
+                    <div class="canal-status-indicator" style="width: 12px; height: 12px; border-radius: 50%; 
+                                                               background: {% if canal.tipo_meta == "costo" %}{{ color_segun_meta(canal.cumplimiento, canal.tipo_meta, canal.costo_venta_porcentaje) }}{% elif canal.tipo_meta == "ingreso_real" %}{{ color_segun_meta(canal.ingreso_real_porcentaje, canal.tipo_meta) }}{% else %}{{ color_segun_meta(canal.cumplimiento, canal.tipo_meta) }}{% endif %};
+                                                               box-shadow: 0 0 8px {% if canal.tipo_meta == "costo" %}{{ color_fondo_segun_meta(canal.cumplimiento, canal.tipo_meta, '0.4', canal.costo_venta_porcentaje) }}{% elif canal.tipo_meta == "ingreso_real" %}{{ color_fondo_segun_meta(canal.ingreso_real_porcentaje, canal.tipo_meta, '0.4') }}{% else %}{{ color_fondo_segun_meta(canal.cumplimiento, canal.tipo_meta, '0.4') }}{% endif %};"></div>
+                </div>
+            </div>
+            <div class="card-body text-center p-4">
+                <!-- DEBUG: Verificar tipo_meta -->
+                <!-- DEBUG: canal.tipo_meta = {{ canal.tipo_meta }} -->
+                <!-- DEBUG: canal.gauge_config existe = {{ canal.gauge_config is not none }} -->
+                
+                <!-- ESPACIO PARA GRÁFICO PERSONALIZADO -->
+                
+                <!-- DEBUG VISUAL -->
+                {% if canal.tipo_meta == "costo" %}
+                <div style="background: #e7f3ff; border: 1px solid #0066cc; padding: 10px; margin-bottom: 10px; border-radius: 5px; font-size: 12px;">
+                    <strong>DEBUG COSTO:</strong> tipo_meta = {{ canal.tipo_meta }}, gauge_config = {{ "SÍ" if canal.gauge_config else "NO" }}
+                    <br><strong>Canal:</strong> {{ canal.canal }} - <strong>Costo:</strong> {{ canal.costo_venta_porcentaje }}%
+                </div>
+                {% endif %}
+                
+                {% if canal.tipo_meta == "costo" %}
+                <div class="gauge-container mb-4" style="position: relative; width: 320px; height: 200px; margin: 0 auto;">
+                    {% if canal.gauge_config %}
+                        <div id="{{ canal.gauge_config.div_id }}" style="width: 100%; height: 200px;"></div>
+                        <!-- Fallback si JS falla -->
+                        <div id="fallback-{{ canal.gauge_config.div_id }}" style="display: none; height: 100%; background: #fff3cd; border: 1px solid #ffeaa7; border-radius: 8px; padding: 20px; text-align: center;">
+                            <i class="bi bi-exclamation-triangle" style="font-size: 2rem; color: #856404;"></i><br>
+                            <strong>Cargando gráfico...</strong><br>
+                            <small>{{ canal.canal }} - {{ canal.costo_venta_porcentaje }}%</small>
+                        </div>
+                        
+                        <script>
+                            // SCRIPT SIMPLE PARA GAUGE
+                            console.log('=== INICIANDO SCRIPT GAUGE ===');
+                            
+                            const config_{{ canal.gauge_config.div_id.replace('-', '_') }} = {{ canal.gauge_config | tojson }};
+                            const divId_{{ canal.gauge_config.div_id.replace('-', '_') }} = '{{ canal.gauge_config.div_id }}';
+                            
+                            console.log('=== DEBUG GAUGE CONFIG ===');
+                            console.log('Config:', config_{{ canal.gauge_config.div_id.replace('-', '_') }});
+                            console.log('Div ID:', divId_{{ canal.gauge_config.div_id.replace('-', '_') }});
+                            console.log('Plotly disponible:', typeof Plotly !== 'undefined');
+                            console.log('Document ready:', document.readyState);
+                            
+                            // FUNCIÓN SIMPLE
+                            function render_{{ canal.gauge_config.div_id.replace('-', '_') }}() {
+                                console.log('Ejecutando función render para:', divId_{{ canal.gauge_config.div_id.replace('-', '_') }});
+                                
+                                try {
+                                    const config = config_{{ canal.gauge_config.div_id.replace('-', '_') }};
+                                    const divId = divId_{{ canal.gauge_config.div_id.replace('-', '_') }};
+                                    
+                                    console.log('Intentando renderizar gauge para:', divId);
+                                        
+                                        // Verificar si el div existe
+                                        const divElement = document.getElementById(divId);
+                                        if (!divElement) {
+                                            console.error('Div no encontrado:', divId);
+                                            return;
+                                        }
+                                        console.log('Div encontrado:', divElement);
+                                        
+                                        if (typeof Plotly !== 'undefined') {
+                                            // Limpiar contenedor previo si existe
+                                            try {
+                                                Plotly.purge(divId);
+                                            } catch (purgeError) {
+                                                console.warn('Error purgando (normal en primera carga):', purgeError);
+                                            }
+                                            
+                                            // Crear nuevo gráfico
+                                            console.log('Creando gráfico Plotly...');
+                                            Plotly.newPlot(divId, config.data, config.layout, config.config)
+                                                .then(() => {
+                                                    console.log('Gráfico creado exitosamente:', divId);
+                                                })
+                                                .catch((plotError) => {
+                                                    console.error('Error creando gráfico:', plotError);
+                                                });
+                                        } else {
+                                            console.error('Plotly no disponible');
+                                            // Mostrar mensaje de error en el div
+                                            divElement.innerHTML = '<div style="display: flex; align-items: center; justify-content: center; height: 100%; background: #fff3cd; border: 1px solid #ffeaa7; border-radius: 8px; color: #856404;"><div class="text-center"><i class="bi bi-exclamation-triangle"></i><br>Plotly no disponible</div></div>';
+                                        }
+                                    } catch (error) {
+                                        console.error('Error general renderizando gauge:', error);
+                                    }
+                                }
+                                
+                                // Intentar renderizar con múltiples estrategias
+                                let attempts = 0;
+                                const maxAttempts = 5;
+                                
+                                function tryRender() {
+                                    attempts++;
+                                    console.log(`Intento ${attempts} de renderizado`);
+                                    
+                                    if (typeof Plotly !== 'undefined' && document.getElementById(config.div_id)) {
+                                        renderGauge();
+                                    } else if (attempts < maxAttempts) {
+                                        console.log('Reintentando en 200ms...');
+                                        setTimeout(tryRender, 200);
+                                    } else {
+                                        console.error('No se pudo renderizar después de', maxAttempts, 'intentos');
+                                        const divElement = document.getElementById(config.div_id);
+                                        if (divElement) {
+                                            divElement.innerHTML = '<div style="display: flex; align-items: center; justify-content: center; height: 100%; background: #f8d7da; border: 1px solid #f5c6cb; border-radius: 8px; color: #721c24;"><div class="text-center"><i class="bi bi-x-circle"></i><br>Error cargando gráfico</div></div>';
+                                        }
+                                    }
+                                }
+                                
+                                // Iniciar proceso de renderizado con múltiples estrategias
+                                // Estrategia 1: Inmediato
+                                tryRender();
+                                
+                                // Estrategia 2: Después del DOM
+                                if (document.readyState === 'loading') {
+                                    document.addEventListener('DOMContentLoaded', tryRender);
+                                }
+                                
+                                // Estrategia 3: Con delay
+                                setTimeout(tryRender, 300);
+                                
+                                // Estrategia 4: Último recurso (mostrar fallback)
+                                setTimeout(function() {
+                                    const divElement = document.getElementById(config.div_id);
+                                    const fallbackElement = document.getElementById('fallback-' + config.div_id);
+                                    if (divElement && divElement.innerHTML.trim() === '' && fallbackElement) {
+                                        console.warn('Mostrando fallback para:', config.div_id);
+                                        fallbackElement.style.display = 'block';
+                                    }
+                                }, 2000);
+                            })();
+                        </script>
+                    {% else %}
+                        <div class="d-flex align-items-center justify-content-center h-100" style="background: #f8f9fa; border-radius: 12px; border: 2px dashed #dee2e6;">
+                            <div class="text-center" style="color: #6c757d;">
+                                <i class="bi bi-graph-down" style="font-size: 2rem; margin-bottom: 8px;"></i>
+                                <div style="font-size: 0.9rem; font-weight: 500;">Gráfico de Costos</div>
+                                <div style="font-size: 0.8rem;">Error al cargar</div>
+                            </div>
+                        </div>
+                    {% endif %}
+                </div>
+                {% elif canal.tipo_meta == "ingreso_real" %}
+                <div class="barometer-container mb-4" style="position: relative; width: 320px; height: 170px; margin: 0 auto; display: flex; align-items: center; justify-content: center; background: #f0f8ff; border-radius: 12px; border: 2px dashed #0066cc;">
+                    <div class="text-center" style="color: #0066cc;">
+                        <i class="bi bi-cash-coin" style="font-size: 2rem; margin-bottom: 8px;"></i>
+                        <div style="font-size: 0.9rem; font-weight: 500;">Gráfico Ingreso Real</div>
+                        <div style="font-size: 0.8rem;">Espacio disponible</div>
+                    </div>
+                </div>
+                {% else %}
+                <div class="barometer-container mb-4" style="position: relative; width: 320px; height: 170px; margin: 0 auto;">
+                    <svg width="320" height="170" viewBox="0 0 320 170">
+                        <!-- Fondo para el texto "META" - Primera capa -->
+                        <rect x="275" y="35" 
+                              width="30" height="16" 
+                              rx="3" ry="3"
+                              fill="rgba(255, 255, 255, 0.9)" 
+                              stroke="rgba(44, 44, 44, 0.2)" 
+                              stroke-width="1"/>
+                        
+                        <!-- Texto "META" - Primera capa con color dinámico -->
+                        <text x="290" y="47" 
+                              font-family="Arial, sans-serif" 
+                              font-size="9" 
+                              font-weight="600" 
+                              fill="{% if canal.cumplimiento > 100 %}#1e7e34{% else %}#2C2C2C{% endif %}" 
+                              text-anchor="middle"
+                              opacity="1">META</text>
+                        
+                        <!-- Arco de fondo -->
+                        <path d="M 20 150 A 140 140 0 0 1 300 150" 
+                              fill="none" 
+                              stroke="#e9ecef" 
+                              stroke-width="16" 
+                              stroke-linecap="round"/>
+                        
+                        <!-- Gradientes para el arco de progreso según tipo de meta -->
+                        <defs>
+                            <!-- GRADIENTE NORMAL PARA METAS DE VENTAS -->
+                            <linearGradient id="barometer-gradient-{{ loop.index }}" x1="0%" y1="0%" x2="100%" y2="0%">
+                                <!-- Zona crítica: 0-20% del arco (0-25% cumplimiento) -->
+                                <stop offset="0%" style="stop-color:#dc3545;stop-opacity:1" />
+                                <stop offset="20%" style="stop-color:#e8722b;stop-opacity:1" />
+                                <stop offset="21%" style="stop-color:#ffc107;stop-opacity:1" />
+                                
+                                <!-- Zona parcial: 20-60% del arco (25-75% cumplimiento) -->
+                                <stop offset="60%" style="stop-color:#7cb342;stop-opacity:1" />
+                                <stop offset="61%" style="stop-color:#28a745;stop-opacity:1" />
+                                
+                                <!-- Zona exitosa: 60-80% del arco (75-100% cumplimiento) -->
+                                <stop offset="80%" style="stop-color:#28a745;stop-opacity:1" />
+                                <stop offset="81%" style="stop-color:#28a745;stop-opacity:1" />
+                                
+                                <!-- Zona sobrecumplimiento: 80-100% del arco (>100% cumplimiento) -->
+                                <stop offset="100%" style="stop-color:#1e7e34;stop-opacity:1" />
+                            </linearGradient>
+                        </defs>
+                        
+                        <!-- Arco de progreso -->
+                        <path d="M 20 150 A 140 140 0 0 1 300 150" 
+                              fill="none" 
+                              stroke="url(#barometer-gradient-{{ loop.index }})" 
+                              stroke-width="16" 
+                              stroke-linecap="round"
+                              stroke-dasharray="439.8"
+                              stroke-dashoffset="{{ 439.8 * (1 - (canal.cumplimiento if canal.cumplimiento <= 100 else (100 + (canal.cumplimiento - 100) * 0.25)) * 0.8 / 100) }}"
+                              style="transition: stroke-dashoffset 2s ease-in-out;
+                                     filter: drop-shadow(0 0 8px rgba(212, 175, 55, 0.3));"/>
+                        
+                        <!-- Línea de meta siempre visible -->
+                        <g transform="translate(160,150)">
+                            <g transform="rotate(144)">
+                                <line x1="0" y1="0" x2="-150" y2="0" 
+                                      stroke="#2C2C2C" 
+                                      stroke-width="2" 
+                                      stroke-linecap="round"
+                                      opacity="0.8"/>
+                                <!-- Pequeño círculo en el extremo de la línea -->
+                                <circle cx="-150" cy="0" r="3" 
+                                        fill="#2C2C2C" 
+                                        opacity="0.8"/>
+                            </g>
+                        </g>
+                        
+                        <!-- Aguja indicadora -->
+                        <g transform="translate(160,150)">
+                            <g transform="rotate({{ (canal.cumplimiento if canal.cumplimiento <= 100 else (100 + (canal.cumplimiento - 100) * 0.25)) * 180 * 0.8 / 100 }})"
+                               style="transition: transform 2s ease-in-out;">
+                                <!-- Sombra de la aguja -->
+                                <line x1="0" y1="0" x2="-140" y2="0" 
+                                      stroke="rgba(0,0,0,0.2)" 
+                                      stroke-width="3" 
+                                      stroke-linecap="round"
+                                      transform="translate(1,1)"/>
+                                <!-- Aguja principal -->
+                                <line x1="0" y1="0" x2="-140" y2="0" 
+                                      stroke="{% if canal.tipo_meta == "costo" %}{{ color_segun_meta(canal.cumplimiento, canal.tipo_meta, canal.costo_venta_porcentaje) }}{% elif canal.tipo_meta == "ingreso_real" %}{{ color_segun_meta(canal.ingreso_real_porcentaje, canal.tipo_meta) }}{% else %}{{ color_segun_meta(canal.cumplimiento, canal.tipo_meta) }}{% endif %}" 
+                                      stroke-width="3" 
+                                      stroke-linecap="round"/>
+                            </g>
+                            <!-- Centro de la aguja -->
+                            <circle cx="0" cy="0" r="8" 
+                                    fill="{% if canal.tipo_meta == "costo" %}{{ color_segun_meta(canal.cumplimiento, canal.tipo_meta, canal.costo_venta_porcentaje) }}{% elif canal.tipo_meta == "ingreso_real" %}{{ color_segun_meta(canal.ingreso_real_porcentaje, canal.tipo_meta) }}{% else %}{{ color_segun_meta(canal.cumplimiento, canal.tipo_meta) }}{% endif %}"
+                                    stroke="white" 
+                                    stroke-width="2"
+                                    style="filter: drop-shadow(0 2px 4px rgba(0,0,0,0.2));"/>
+                        </g>
+                    </svg>
+                    
+                    <!-- Contenido central -->
+                    <div class="barometer-content" style="position: absolute; bottom: -10px; left: 50%; transform: translateX(-50%); text-align: center;">
+                        <div class="percentage-value" style="font-size: 1.4rem; font-weight: 800; color: #2C2C2C; line-height: 1;">
+                            {{ "{:.0f}".format(canal.cumplimiento) }}%
+                        </div>
+                    </div>
+                    
+                    <!-- Indicador de meta -->
+                    {{ achievement_icon(canal.cumplimiento, canal.tipo_meta) }}
+                </div>
+                {% endif %}
+                
+                <!-- MÉTRICAS MEJORADAS -->
+                <div class="metrics-grid" style="display: grid; grid-template-columns: 1fr 1fr; gap: 1rem; margin-bottom: 1rem;">
+                    <div class="metric-card" style="background: linear-gradient(135deg, rgba(40, 167, 69, 0.1), rgba(40, 167, 69, 0.05)); 
+                                                    border-radius: 12px; padding: 1rem; text-align: center; 
+                                                    border: 1px solid rgba(40, 167, 69, 0.1);">
+                        <div class="metric-icon mb-2" style="color: #28a745; font-size: 1.2rem;">
+                            <i class="bi bi-graph-up-arrow"></i>
+                        </div>
+                        <div class="metric-value" style="font-size: 1.1rem; font-weight: 700; color: #28a745; line-height: 1;">
+                            {% if canal.tipo_meta == "costo" %}
+                                {{ "%.1f" | format(canal.costo_venta_porcentaje) }}%
+                            {% elif canal.tipo_meta == "ingreso_real" %}
+                                {{ "%.1f" | format(canal.ingreso_real_porcentaje) }}%
+                            {% else %}
+                                ${{ "{:,.0f}".format(canal.ventas_reales) }}
+                            {% endif %}
+                        </div>
+                        <div class="metric-label" style="font-size: 0.8rem; color: #6c757d; margin-top: 2px;">
+                            {% if canal.tipo_meta == "costo" %}
+                                Costo Actual
+                            {% elif canal.tipo_meta == "ingreso_real" %}
+                                Ingreso Real Actual
+                            {% else %}
+                                Ventas Reales
+                            {% endif %}
+                        </div>
+                    </div>
+                    
+                    <div class="metric-card" style="background: linear-gradient(135deg, rgba(23, 162, 184, 0.1), rgba(23, 162, 184, 0.05)); 
+                                                    border-radius: 12px; padding: 1rem; text-align: center; 
+                                                    border: 1px solid rgba(23, 162, 184, 0.1);">
+                        <div class="metric-icon mb-2" style="color: #17a2b8; font-size: 1.2rem;">
+                            <i class="bi bi-bullseye"></i>
+                        </div>
+                        <div class="metric-value" style="font-size: 1.1rem; font-weight: 700; color: #17a2b8; line-height: 1;">
+                            {% if canal.tipo_meta == "costo" %}
+                                48% - 54%
+                            {% elif canal.tipo_meta == "ingreso_real" %}
+                                TBD - TBD
+                            {% else %}
+                                ${{ "{:,.0f}".format(canal.meta_periodo) }}
+                            {% endif %}
+                        </div>
+                        <div class="metric-label" style="font-size: 0.8rem; color: #6c757d; margin-top: 2px;">
+                            {% if canal.tipo_meta == "costo" %}
+                                Rango Objetivo
+                            {% elif canal.tipo_meta == "ingreso_real" %}
+                                Rango Objetivo
+                            {% else %}
+                                Meta Período
+                            {% endif %}
+                        </div>
+                    </div>
+                </div>
+                
+                <!-- DIFERENCIA Y STATUS -->
+                <div class="difference-status">
+                    <div class="difference-amount mb-2" style="font-size: 1rem; font-weight: 600; 
+                                                              color: {{ color_diferencia(canal.diferencia, canal.tipo_meta) }};">
+                        {% if canal.tipo_meta == "costo" %}
+                            {% set diff_val = (canal.diferencia | float) if canal.diferencia else 0 %}
+                            {% if diff_val >= 0 %}+{% endif %}{{ "{:.1f}".format(diff_val) }}%
+                        {% elif canal.tipo_meta == "ingreso_real" %}
+                            {% set diff_val = (canal.diferencia | float) if canal.diferencia else 0 %}
+                            {% if diff_val >= 0 %}+{% endif %}{{ "{:.1f}".format(diff_val) }}%
+                        {% else %}
+                            {% set diff_val = (canal.diferencia | float) if canal.diferencia else 0 %}
+                            {% if diff_val >= 0 %}+{% endif %} ${{ "{:,.0f}".format(diff_val) }}
+                        {% endif %}
+                        <small style="font-size: 0.8rem; color: #6c757d; font-weight: 400;">diferencia</small>
+                    </div>
+                    
+                    {% if canal.tipo_meta == "costo" %}
+                        {{ status_badge(canal.costo_venta_porcentaje, canal.tipo_meta) }}
+                    {% elif canal.tipo_meta == "ingreso_real" %}
+                        {{ status_badge(canal.ingreso_real_porcentaje, canal.tipo_meta) }}
+                    {% else %}
+                        {{ status_badge(canal.cumplimiento, canal.tipo_meta) }}
+                    {% endif %}
+                </div>
+                
+            </div>
+        </div>
+    </div>
+    {% endfor %}
+</div>

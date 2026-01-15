@@ -1,0 +1,44 @@
+<!-- Componente: Filtros de Matriz de Posicionamiento -->
+<div class="filtros-container mb-2" data-aos="fade-down">
+    <div class="d-flex align-items-end gap-3" style="max-width: 800px;">
+        <!-- Filtro de Mes -->
+        <div style="flex: 1;">
+            <label for="filtroMes" class="form-label fw-bold mb-2" style="color: #2C2C2C; font-size: 0.85rem;">
+                <i class="bi bi-calendar3 me-1" style="color: #17a2b8;"></i>Período
+            </label>
+            <select id="filtroMes" class="form-select" style="border-radius: 10px; border: 2px solid #e9ecef; height: 42px;">
+                {% for mes in meses_disponibles %}
+                <option value="{{ mes.valor }}" {% if mes.valor == mes_actual_str %}selected{% endif %}>
+                    {{ mes.nombre }} {{ mes.año }}
+                </option>
+                {% endfor %}
+            </select>
+        </div>
+
+        <!-- Filtro de Marca -->
+        <div style="flex: 1;">
+            <label for="filtroMarca" class="form-label fw-bold mb-2" style="color: #2C2C2C; font-size: 0.85rem;">
+                <i class="bi bi-tag-fill me-1" style="color: #17a2b8;"></i>Marca
+            </label>
+            <select id="filtroMarca" class="form-select" style="border-radius: 10px; border: 2px solid #e9ecef; height: 42px;">
+                <option value="Ambos" selected>Ambos</option>
+                <option value="Loomber">Loomber</option>
+                <option value="Otros">Otros</option>
+            </select>
+        </div>
+
+        <!-- Botón de Actualizar -->
+        <div>
+            <button id="btnActualizar" class="btn btn-primary" style="border-radius: 10px; background: linear-gradient(135deg, #17a2b8, #138496); border: none; font-weight: 600; height: 42px; padding: 0 20px; white-space: nowrap;">
+                <i class="bi bi-arrow-clockwise me-2"></i>Actualizar
+            </button>
+        </div>
+
+        <!-- Indicador de carga -->
+        <div id="loadingIndicator" style="display: none;">
+            <div class="spinner-border text-primary" role="status" style="width: 28px; height: 28px;">
+                <span class="visually-hidden">Cargando...</span>
+            </div>
+        </div>
+    </div>
+</div>

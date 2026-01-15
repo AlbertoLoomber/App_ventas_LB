@@ -1,0 +1,1269 @@
+{% extends "layout.html" %}
+
+{% block content %}
+<style>
+/* ESTILOS MEJORADOS PARA RADAR COMERCIAL */
+
+/* Contenedor principal - sin padding adicional, Bootstrap lo maneja */
+
+/* TABLA PRINCIPAL MEJORADA */
+.table-container {
+    background: white;
+    border-radius: 12px;
+    overflow: hidden;
+    box-shadow: 0 2px 12px rgba(0,0,0,0.08);
+}
+
+/* Scroll vertical para la tabla de radar (primera tabla) */
+.table-container.radar-scroll {
+    max-height: 650px;
+    overflow-y: auto;
+    overflow-x: auto;
+}
+
+/* Scrollbar personalizado para mejor diseño */
+.table-container.radar-scroll::-webkit-scrollbar {
+    width: 8px;
+    height: 8px;
+}
+
+.table-container.radar-scroll::-webkit-scrollbar-track {
+    background: #f1f3f5;
+    border-radius: 10px;
+}
+
+.table-container.radar-scroll::-webkit-scrollbar-thumb {
+    background: #D4AF37;
+    border-radius: 10px;
+}
+
+.table-container.radar-scroll::-webkit-scrollbar-thumb:hover {
+    background: #c9a02e;
+}
+
+.radar-table {
+    width: 100%;
+    margin: 0;
+    border-collapse: separate;
+    border-spacing: 0;
+}
+
+/* Headers principales */
+.radar-table thead tr:first-child th {
+    background-color: #ffffff;
+    color: #2C2C2C;
+    padding: 20px 12px;
+    font-weight: 700;
+    font-size: 0.85rem;
+    text-transform: uppercase;
+    letter-spacing: 0.5px;
+    border: 1px solid #dee2e6;
+    position: sticky;
+    top: 0;
+    z-index: 10;
+}
+
+/* Columna de producto - sin color y FIJA (sticky) */
+.radar-table thead tr:first-child th.th-producto {
+    background-color: #ffffff;
+    background-image: none;
+    position: sticky;
+    left: 0;
+    z-index: 100;
+    box-shadow: 2px 0 5px rgba(0, 0, 0, 0.1);
+}
+
+/* Headers con colores por canal - overlays sutiles */
+.radar-table thead tr:first-child th:nth-child(2) {
+    /* Mercado Libre - amarillo suave */
+    background-color: #ffffff;
+    background-image: linear-gradient(rgba(255, 235, 59, 0.08), rgba(255, 235, 59, 0.08));
+}
+
+.radar-table thead tr:first-child th:nth-child(3) {
+    /* CrediTienda - azul suave */
+    background-color: #ffffff;
+    background-image: linear-gradient(rgba(33, 150, 243, 0.08), rgba(33, 150, 243, 0.08));
+}
+
+.radar-table thead tr:first-child th:nth-child(4) {
+    /* Walmart - verde suave */
+    background-color: #ffffff;
+    background-image: linear-gradient(rgba(76, 175, 80, 0.08), rgba(76, 175, 80, 0.08));
+}
+
+.radar-table thead tr:first-child th:nth-child(5) {
+    /* Shein - naranja suave */
+    background-color: #ffffff;
+    background-image: linear-gradient(rgba(255, 152, 0, 0.08), rgba(255, 152, 0, 0.08));
+}
+
+.radar-table thead tr:first-child th:nth-child(6) {
+    /* TikTok Shop - rosa/magenta suave */
+    background-color: #ffffff;
+    background-image: linear-gradient(rgba(233, 30, 99, 0.08), rgba(233, 30, 99, 0.08));
+}
+
+.radar-table thead tr:first-child th:nth-child(7) {
+    /* Liverpool - rojo suave */
+    background-color: #ffffff;
+    background-image: linear-gradient(rgba(244, 67, 54, 0.08), rgba(244, 67, 54, 0.08));
+}
+
+.radar-table thead tr:first-child th:nth-child(8) {
+    /* Yuhu - morado suave */
+    background-color: #ffffff;
+    background-image: linear-gradient(rgba(156, 39, 176, 0.08), rgba(156, 39, 176, 0.08));
+}
+
+/* Sub-headers simplificados */
+.radar-table thead tr:nth-child(2) th {
+    padding: 12px 8px;
+    font-size: 0.75rem;
+    font-weight: 600;
+    border-bottom: 2px solid #dee2e6;
+    border-left: 1px solid #dee2e6;
+    border-right: 1px solid #dee2e6;
+    position: sticky;
+    top: 60px;
+    z-index: 9;
+    background: #ffffff !important;
+    color: #495057 !important;
+}
+
+.th-producto {
+    text-align: left !important;
+    position: sticky;
+    left: 0;
+    z-index: 100;
+}
+
+/* Filas del body */
+.radar-table tbody tr {
+    border-bottom: 1px solid #f1f3f5;
+}
+
+.radar-table tbody td {
+    padding: 16px 12px;
+    vertical-align: middle;
+    font-size: 0.85rem;
+}
+
+/* Columna de producto - FIJA (sticky) */
+.product-cell {
+    max-width: 280px;
+    min-width: 220px;
+    padding: 12px !important;
+    position: sticky;
+    left: 0;
+    background-color: #ffffff;
+    z-index: 50;
+    box-shadow: 2px 0 5px rgba(0, 0, 0, 0.1);
+}
+
+.product-sku {
+    display: inline-block;
+    background: #D4AF37;
+    color: #2C2C2C;
+    padding: 5px 12px;
+    border-radius: 4px;
+    font-size: 0.75rem;
+    font-weight: 700;
+    margin-bottom: 8px;
+    letter-spacing: 0.5px;
+}
+
+.product-name {
+    color: #2c3e50;
+    font-size: 0.85rem;
+    line-height: 1.5;
+    font-weight: 500;
+}
+
+/* Celdas de métricas */
+.metric-price {
+    font-weight: 700;
+    color: #2c3e50;
+    font-size: 0.9rem;
+}
+
+/* Badges de IR - UN SOLO COLOR para todos */
+.badge-ir {
+    padding: 6px 12px;
+    border-radius: 4px;
+    font-size: 0.75rem;
+    font-weight: 600;
+    min-width: 60px;
+    display: inline-block;
+    text-align: center;
+    background: #17a2b8 !important;
+    color: white !important;
+}
+
+/* Badge de conversión - solo para ML */
+.badge-conv {
+    background: #6c757d;
+    color: white;
+    padding: 6px 12px;
+    border-radius: 4px;
+    font-size: 0.75rem;
+    font-weight: 600;
+    min-width: 60px;
+    display: inline-block;
+    text-align: center;
+}
+
+/* Badge de días - estilo neutral */
+.badge-dias {
+    background: #f8f9fa;
+    color: #495057;
+    border: 1px solid #dee2e6;
+    padding: 5px 10px;
+    border-radius: 4px;
+    font-size: 0.7rem;
+    font-weight: 600;
+    display: inline-block;
+    text-align: center;
+}
+
+/* Badge de inventario - TEXTO SIMPLE sin fondo (Opción 4) */
+.badge-inventario {
+    background: transparent;
+    color: #212529;
+    padding: 2px 0;
+    border-radius: 0;
+    font-size: 0.8rem;
+    font-weight: 500;
+    display: block;
+    text-align: center;
+}
+
+/* Badge de ventas - Badge compacto con fondo verde (Opción 4) */
+.badge-ventas {
+    background: #d4edda;
+    color: #155724;
+    padding: 4px 10px;
+    border-radius: 4px;
+    font-size: 0.72rem;
+    font-weight: 600;
+    display: inline-block;
+    text-align: center;
+    border: 1px solid #c3e6cb;
+}
+
+/* Celda combinada - más compacta (Opción 4) */
+.celda-combinada {
+    padding: 10px 8px !important;
+    vertical-align: middle;
+}
+
+/* Dato de asignación - texto simple sin fondo (Opción 4) */
+.dato-asignacion {
+    padding: 0 0 6px 0;
+    margin-bottom: 0;
+}
+
+/* Dato de ventas - badge destacado (Opción 4) */
+.dato-ventas {
+    padding: 0;
+    text-align: center;
+}
+
+/* Canales adicionales - ocultos por defecto */
+.canal-adicional {
+    display: none;
+    transition: all 0.3s ease;
+}
+
+.canal-adicional.show {
+    display: table-cell;
+}
+
+/* Columnas alineadas */
+.text-center {
+    text-align: center !important;
+}
+
+/* Responsive */
+@media (max-width: 1400px) {
+    .radar-table { font-size: 0.8rem; }
+}
+
+/* Sin datos */
+.no-data {
+    color: #adb5bd;
+    font-size: 0.85rem;
+}
+
+/* Animación de entrada */
+@keyframes fadeInUp {
+    from {
+        opacity: 0;
+        transform: translateY(20px);
+    }
+    to {
+        opacity: 1;
+        transform: translateY(0);
+    }
+}
+
+.fade-in {
+    animation: fadeInUp 0.5s ease-out;
+}
+
+/* ESTILOS PARA BOTONES DE FILTRO */
+.filter-btn {
+    transition: all 0.3s ease;
+    box-shadow: 0 2px 4px rgba(0,0,0,0.1);
+}
+
+.filter-btn:hover {
+    transform: translateY(-2px);
+    box-shadow: 0 4px 8px rgba(0,0,0,0.15);
+}
+
+.filter-btn.active {
+    transform: scale(1.05);
+    box-shadow: 0 4px 12px rgba(0,0,0,0.2);
+}
+
+/* Animación para filas de productos al filtrar */
+.producto-row {
+    transition: opacity 0.3s ease, transform 0.3s ease;
+}
+
+.producto-row.hidden {
+    opacity: 0;
+    transform: scale(0.98);
+    display: none;
+}
+
+/* ESTILOS PARA TABLA DE COMPETENCIA HORIZONTAL */
+.competencia-table-horizontal {
+    width: 100%;
+    margin: 0;
+    border-collapse: separate;
+    border-spacing: 0;
+}
+
+/* Tabla de competencia - sin scroll, sin restricciones */
+.table-container.competencia-container {
+    overflow: hidden;
+    max-height: none;
+}
+
+.table-container.competencia-container > div {
+    overflow: visible !important;
+}
+
+/* Headers principales - agrupados por proveedor */
+.competencia-table-horizontal thead tr:first-child th {
+    background-color: #ffffff;
+    color: #2C2C2C;
+    padding: 20px 12px;
+    font-weight: 700;
+    font-size: 0.9rem;
+    text-transform: uppercase;
+    letter-spacing: 0.5px;
+    border: 1px solid #dee2e6;
+    position: sticky;
+    top: 0;
+    z-index: 10;
+}
+
+/* Header de Loomber con overlay dorado suave */
+.competencia-table-horizontal thead tr:first-child th:first-child {
+    background-color: #ffffff;
+    background-image: linear-gradient(rgba(212, 175, 55, 0.12), rgba(212, 175, 55, 0.12));
+}
+
+/* Headers de competidores con overlay gris muy suave */
+.competencia-table-horizontal thead tr:first-child th:not(:first-child) {
+    background-color: #ffffff;
+    background-image: linear-gradient(rgba(108, 117, 125, 0.05), rgba(108, 117, 125, 0.05));
+}
+
+/* Sub-headers con labels de columnas */
+.competencia-table-horizontal thead tr.sub-header th {
+    background: #ffffff;
+    color: #495057;
+    padding: 12px 8px;
+    font-size: 0.75rem;
+    font-weight: 600;
+    border-bottom: 2px solid #dee2e6;
+    border-left: 1px solid #dee2e6;
+    border-right: 1px solid #dee2e6;
+    position: sticky;
+    top: 60px;
+    z-index: 9;
+}
+
+.competencia-table-horizontal thead tr.sub-header small {
+    font-size: 0.7rem;
+    color: #6c757d;
+    font-weight: 500;
+}
+
+/* Filas del body */
+.competencia-table-horizontal tbody tr {
+    transition: all 0.2s ease;
+    border-bottom: 1px solid #f1f3f5;
+}
+
+.competencia-table-horizontal tbody tr:hover {
+    background: #f8f9fa;
+    transform: scale(1.005);
+    box-shadow: 0 2px 8px rgba(0,0,0,0.08);
+}
+
+.competencia-table-horizontal tbody td {
+    padding: 16px 12px;
+    vertical-align: middle;
+    font-size: 0.85rem;
+}
+
+/* Columna SKU de Loomber */
+.loomber-sku {
+    text-align: left;
+    background: linear-gradient(135deg, #fff9e6 0%, #ffffff 100%);
+    padding: 12px !important;
+    max-width: 250px;
+    min-width: 180px;
+    width: auto;
+}
+
+.sku-link {
+    text-decoration: none;
+}
+
+.sku-link:hover .sku-badge {
+    background: #c9a02e;
+    transform: scale(1.05);
+    box-shadow: 0 2px 8px rgba(212, 175, 55, 0.3);
+}
+
+.sku-badge {
+    background: #D4AF37;
+    color: #2C2C2C;
+    padding: 5px 12px;
+    border-radius: 4px;
+    font-size: 0.75rem;
+    font-weight: 700;
+    letter-spacing: 0.5px;
+    transition: all 0.2s ease;
+    cursor: pointer;
+    display: inline-block;
+    margin-bottom: 6px;
+}
+
+.producto-descripcion {
+    color: #2c3e50;
+    font-size: 0.7rem;
+    line-height: 1.3;
+    font-weight: 500;
+    margin-bottom: 4px;
+    word-wrap: break-word;
+    overflow-wrap: break-word;
+}
+
+.posicion-badge {
+    font-size: 0.7rem;
+    color: #6c757d;
+    font-weight: 600;
+    margin-top: 2px;
+}
+
+/* Columna nombre de competidor */
+.competidor-nombre {
+    text-align: center;
+}
+
+.proveedor-link {
+    color: #2c3e50;
+    text-decoration: none;
+    font-weight: 600;
+    font-size: 0.85rem;
+}
+
+.proveedor-link:hover {
+    color: #D4AF37;
+    text-decoration: underline;
+}
+
+.proveedor-link i {
+    font-size: 0.7rem;
+    opacity: 0.6;
+}
+
+/* Valor de precio */
+.precio-value {
+    font-weight: 700;
+    color: #2c3e50;
+    font-size: 0.95rem;
+}
+</style>
+
+<div class="container mt-4">
+    <!-- Header -->
+    <h2 class="mb-4" style="color: #2C2C2C; font-weight: 700;">
+        <i class="bi bi-radar me-3" style="color: #D4AF37;"></i>Radar Comercial
+    </h2>
+
+    {% if error %}
+    <div class="alert alert-danger">
+        <i class="bi bi-exclamation-triangle me-2"></i>{{ error }}
+    </div>
+    {% endif %}
+
+    <!-- Botones de filtro por categoría -->
+    {% if productos %}
+    <!-- Indicador de carga para datos semanales -->
+    <div id="loading-semanal" style="display: none; position: fixed; top: 50%; left: 50%; transform: translate(-50%, -50%); z-index: 9999; background: rgba(255, 255, 255, 0.95); padding: 30px 50px; border-radius: 15px; box-shadow: 0 10px 40px rgba(0,0,0,0.2);">
+        <div class="text-center">
+            <div class="spinner-border text-primary" role="status" style="width: 3rem; height: 3rem; border-width: 0.3em;">
+                <span class="visually-hidden">Cargando...</span>
+            </div>
+            <p class="mt-3 mb-0 fw-semibold" style="color: #2C2C2C; font-size: 1.1rem;">
+                <i class="bi bi-clock-history me-2"></i>Cargando datos semanales...
+            </p>
+        </div>
+    </div>
+    <div id="overlay-semanal" style="display: none; position: fixed; top: 0; left: 0; width: 100%; height: 100%; background: rgba(0, 0, 0, 0.3); z-index: 9998;"></div>
+
+    <!-- Fila 1: Selector de Semana -->
+    <div class="d-flex justify-content-center align-items-center mb-2 gap-2">
+        <span class="me-2 fw-semibold" style="color: #495057;">
+            <i class="bi bi-calendar-week me-1"></i>Datos Semanales:
+        </span>
+        <div class="btn-group" role="group">
+            <button type="button" class="btn btn-outline-primary btn-sm semana-btn active" data-semana="1"
+                    style="border-radius: 6px 0 0 6px; padding: 6px 14px; font-weight: 600;"
+                    onclick="cambiarSemana(1)">
+                Semana 1
+            </button>
+            <button type="button" class="btn btn-outline-primary btn-sm semana-btn" data-semana="2"
+                    style="padding: 6px 14px; font-weight: 600;"
+                    onclick="cambiarSemana(2)">
+                Semana 2
+            </button>
+            <button type="button" class="btn btn-outline-primary btn-sm semana-btn" data-semana="3"
+                    style="padding: 6px 14px; font-weight: 600;"
+                    onclick="cambiarSemana(3)">
+                Semana 3
+            </button>
+            <button type="button" class="btn btn-outline-primary btn-sm semana-btn" data-semana="4"
+                    style="border-radius: 0 6px 6px 0; padding: 6px 14px; font-weight: 600;"
+                    onclick="cambiarSemana(4)">
+                Semana 4
+            </button>
+        </div>
+    </div>
+
+    <!-- Fila 2: Canales y Filtros -->
+    <div class="d-flex justify-content-between align-items-center mb-3 gap-2">
+        <!-- Botón para mostrar/ocultar canales adicionales -->
+        <button type="button" id="btn-toggle-canales" class="btn btn-outline-secondary btn-sm"
+                style="border-radius: 8px; padding: 8px 16px; font-weight: 600; transition: all 0.3s ease;"
+                onclick="toggleCanalesAdicionales()">
+            <i class="bi bi-eye me-2"></i>Mostrar Todos los Canales
+        </button>
+
+        <!-- Botones de filtro de productos -->
+        <div class="d-flex gap-2">
+            <button type="button" id="filter-todos" class="btn btn-warning btn-sm filter-btn active"
+                    style="border-radius: 8px; padding: 8px 16px; font-weight: 600; transition: all 0.3s ease;"
+                    onclick="filtrarProductos('todos')">
+                <i class="bi bi-grid-3x3-gap-fill me-2"></i>Todos
+            </button>
+
+            <button type="button" id="filter-plegables" class="btn btn-outline-info btn-sm filter-btn"
+                    style="border-radius: 8px; padding: 8px 16px; font-weight: 600; transition: all 0.3s ease;"
+                    onclick="filtrarProductos('plegables')">
+                <i class="bi bi-box me-2"></i>Plegables
+            </button>
+
+            <button type="button" id="filter-sofas" class="btn btn-outline-success btn-sm filter-btn"
+                    style="border-radius: 8px; padding: 8px 16px; font-weight: 600; transition: all 0.3s ease;"
+                    onclick="filtrarProductos('sofas')">
+                <i class="bi bi-couch me-2"></i>Sofás
+            </button>
+
+            <button type="button" id="filter-toldos" class="btn btn-outline-primary btn-sm filter-btn"
+                    style="border-radius: 8px; padding: 8px 16px; font-weight: 600; transition: all 0.3s ease;"
+                    onclick="filtrarProductos('toldos')">
+                <i class="bi bi-shield-fill-check me-2"></i>Toldos
+            </button>
+        </div>
+    </div>
+    {% endif %}
+
+    <!-- Tabla -->
+    {% if productos %}
+    <div class="table-container radar-scroll fade-in">
+        <table class="radar-table">
+                <thead>
+                    <tr>
+                        <th rowspan="2" class="th-producto">
+                            <i class="bi bi-box-seam me-2"></i>PRODUCTO
+                        </th>
+                        <th colspan="3" class="text-center">
+                            <i class="bi bi-shop me-1"></i>MERCADO LIBRE
+                        </th>
+                        <th colspan="3" class="text-center">
+                            <i class="bi bi-bag-check me-1"></i>CREDITIENDA
+                        </th>
+                        <th colspan="3" class="text-center">
+                            <i class="bi bi-cart4 me-1"></i>WALMART
+                        </th>
+                        <th colspan="3" class="text-center">
+                            <i class="bi bi-bag-heart me-1"></i>SHEIN
+                        </th>
+                        <th colspan="3" class="text-center canal-adicional">
+                            <i class="bi bi-badge-tm me-1"></i>TIKTOK SHOP
+                        </th>
+                        <th colspan="3" class="text-center canal-adicional">
+                            <i class="bi bi-building me-1"></i>LIVERPOOL
+                        </th>
+                        <th colspan="3" class="text-center canal-adicional">
+                            <i class="bi bi-basket me-1"></i>YUHU
+                        </th>
+                    </tr>
+                    <tr>
+                        <!-- ML -->
+                        <th class="text-center th-ml">Precio</th>
+                        <th class="text-center th-ml">IR %</th>
+                        <th class="text-center th-ml">Asig. / Ventas</th>
+                        <!-- CT -->
+                        <th class="text-center th-ct">Precio</th>
+                        <th class="text-center th-ct">IR %</th>
+                        <th class="text-center th-ct">Asig. / Ventas</th>
+                        <!-- WM -->
+                        <th class="text-center th-wm">Precio</th>
+                        <th class="text-center th-wm">IR %</th>
+                        <th class="text-center th-wm">Asig. / Ventas</th>
+                        <!-- SH -->
+                        <th class="text-center th-sh">Precio</th>
+                        <th class="text-center th-sh">IR %</th>
+                        <th class="text-center th-sh">Asig. / Ventas</th>
+                        <!-- TK -->
+                        <th class="text-center th-tk canal-adicional">Precio</th>
+                        <th class="text-center th-tk canal-adicional">IR %</th>
+                        <th class="text-center th-tk canal-adicional">Asig. / Ventas</th>
+                        <!-- LP -->
+                        <th class="text-center th-lp canal-adicional">Precio</th>
+                        <th class="text-center th-lp canal-adicional">IR %</th>
+                        <th class="text-center th-lp canal-adicional">Asig. / Ventas</th>
+                        <!-- YH -->
+                        <th class="text-center th-yh canal-adicional">Precio</th>
+                        <th class="text-center th-yh canal-adicional">IR %</th>
+                        <th class="text-center th-yh canal-adicional">Asig. / Ventas</th>
+                    </tr>
+                </thead>
+                <tbody>
+                {% for p in productos %}
+                    <tr class="producto-row" data-descripcion="{{ p.descripcion|lower }}">
+                        <!-- Producto -->
+                        <td class="product-cell">
+                            <div class="product-sku">{{ p.sku }}</div>
+                            <div class="product-name">{{ p.descripcion }}</div>
+                        </td>
+
+                        <!-- Mercado Libre -->
+                        <td class="text-center">
+                            {% if p.precio_ML %}
+                                <span class="metric-price">${{ "{:,.0f}".format(p.precio_ML) }}</span>
+                            {% else %}
+                                <span class="no-data">-</span>
+                            {% endif %}
+                        </td>
+                        <td class="text-center">
+                            {% if p.ir_ML is not none %}
+                                {% set clase_ir = 'excelente' if p.ir_ML >= 30 else ('bueno' if p.ir_ML >= 20 else ('regular' if p.ir_ML >= 10 else 'bajo')) %}
+                                <span class="badge-ir {{ clase_ir }}">{{ p.ir_ML_str }}</span>
+                            {% else %}
+                                <span class="no-data">-</span>
+                            {% endif %}
+                        </td>
+                        <td class="text-center celda-combinada" data-sku="{{ p.sku }}" data-canal="ML">
+                            <div class="dato-asignacion">
+                                <span class="badge-inventario" data-tipo="inv">--</span>
+                            </div>
+                            <div class="dato-ventas">
+                                <span class="badge-ventas" data-tipo="ventas">--</span>
+                            </div>
+                        </td>
+
+                        <!-- CrediTienda -->
+                        <td class="text-center">
+                            {% if p.precio_CT %}
+                                <span class="metric-price">${{ "{:,.0f}".format(p.precio_CT) }}</span>
+                            {% else %}
+                                <span class="no-data">-</span>
+                            {% endif %}
+                        </td>
+                        <td class="text-center">
+                            {% if p.ir_CT is not none %}
+                                {% set clase_ir = 'excelente' if p.ir_CT >= 30 else ('bueno' if p.ir_CT >= 20 else ('regular' if p.ir_CT >= 10 else 'bajo')) %}
+                                <span class="badge-ir {{ clase_ir }}">{{ p.ir_CT_str }}</span>
+                            {% else %}
+                                <span class="no-data">-</span>
+                            {% endif %}
+                        </td>
+                        <td class="text-center celda-combinada" data-sku="{{ p.sku }}" data-canal="CT">
+                            <div class="dato-asignacion">
+                                <span class="badge-inventario" data-tipo="inv">--</span>
+                            </div>
+                            <div class="dato-ventas">
+                                <span class="badge-ventas" data-tipo="ventas">--</span>
+                            </div>
+                        </td>
+
+                        <!-- Walmart -->
+                        <td class="text-center">
+                            {% if p.precio_WM %}
+                                <span class="metric-price">${{ "{:,.0f}".format(p.precio_WM) }}</span>
+                            {% else %}
+                                <span class="no-data">-</span>
+                            {% endif %}
+                        </td>
+                        <td class="text-center">
+                            {% if p.ir_WM is not none %}
+                                {% set clase_ir = 'excelente' if p.ir_WM >= 30 else ('bueno' if p.ir_WM >= 20 else ('regular' if p.ir_WM >= 10 else 'bajo')) %}
+                                <span class="badge-ir {{ clase_ir }}">{{ p.ir_WM_str }}</span>
+                            {% else %}
+                                <span class="no-data">-</span>
+                            {% endif %}
+                        </td>
+                        <td class="text-center celda-combinada" data-sku="{{ p.sku }}" data-canal="WM">
+                            <div class="dato-asignacion">
+                                <span class="badge-inventario" data-tipo="inv">--</span>
+                            </div>
+                            <div class="dato-ventas">
+                                <span class="badge-ventas" data-tipo="ventas">--</span>
+                            </div>
+                        </td>
+
+                        <!-- Shein -->
+                        <td class="text-center">
+                            {% if p.precio_SH %}
+                                <span class="metric-price">${{ "{:,.0f}".format(p.precio_SH) }}</span>
+                            {% else %}
+                                <span class="no-data">-</span>
+                            {% endif %}
+                        </td>
+                        <td class="text-center">
+                            {% if p.ir_SH is not none %}
+                                {% set clase_ir = 'excelente' if p.ir_SH >= 30 else ('bueno' if p.ir_SH >= 20 else ('regular' if p.ir_SH >= 10 else 'bajo')) %}
+                                <span class="badge-ir {{ clase_ir }}">{{ p.ir_SH_str }}</span>
+                            {% else %}
+                                <span class="no-data">-</span>
+                            {% endif %}
+                        </td>
+                        <td class="text-center celda-combinada" data-sku="{{ p.sku }}" data-canal="SH">
+                            <div class="dato-asignacion">
+                                <span class="badge-inventario" data-tipo="inv">--</span>
+                            </div>
+                            <div class="dato-ventas">
+                                <span class="badge-ventas" data-tipo="ventas">--</span>
+                            </div>
+                        </td>
+
+                        <!-- TikTok Shop -->
+                        <td class="text-center canal-adicional">
+                            {% if p.precio_TK %}
+                                <span class="metric-price">${{ "{:,.0f}".format(p.precio_TK) }}</span>
+                            {% else %}
+                                <span class="no-data">-</span>
+                            {% endif %}
+                        </td>
+                        <td class="text-center canal-adicional">
+                            {% if p.ir_TK is not none %}
+                                {% set clase_ir = 'excelente' if p.ir_TK >= 30 else ('bueno' if p.ir_TK >= 20 else ('regular' if p.ir_TK >= 10 else 'bajo')) %}
+                                <span class="badge-ir {{ clase_ir }}">{{ p.ir_TK_str }}</span>
+                            {% else %}
+                                <span class="no-data">-</span>
+                            {% endif %}
+                        </td>
+                        <td class="text-center celda-combinada canal-adicional" data-sku="{{ p.sku }}" data-canal="TK">
+                            <div class="dato-asignacion">
+                                <span class="badge-inventario" data-tipo="inv">--</span>
+                            </div>
+                            <div class="dato-ventas">
+                                <span class="badge-ventas" data-tipo="ventas">--</span>
+                            </div>
+                        </td>
+
+                        <!-- Liverpool -->
+                        <td class="text-center canal-adicional">
+                            {% if p.precio_LP %}
+                                <span class="metric-price">${{ "{:,.0f}".format(p.precio_LP) }}</span>
+                            {% else %}
+                                <span class="no-data">-</span>
+                            {% endif %}
+                        </td>
+                        <td class="text-center canal-adicional">
+                            {% if p.ir_LP is not none %}
+                                {% set clase_ir = 'excelente' if p.ir_LP >= 30 else ('bueno' if p.ir_LP >= 20 else ('regular' if p.ir_LP >= 10 else 'bajo')) %}
+                                <span class="badge-ir {{ clase_ir }}">{{ p.ir_LP_str }}</span>
+                            {% else %}
+                                <span class="no-data">-</span>
+                            {% endif %}
+                        </td>
+                        <td class="text-center celda-combinada canal-adicional" data-sku="{{ p.sku }}" data-canal="LP">
+                            <div class="dato-asignacion">
+                                <span class="badge-inventario" data-tipo="inv">--</span>
+                            </div>
+                            <div class="dato-ventas">
+                                <span class="badge-ventas" data-tipo="ventas">--</span>
+                            </div>
+                        </td>
+
+                        <!-- Yuhu -->
+                        <td class="text-center canal-adicional">
+                            {% if p.precio_YH %}
+                                <span class="metric-price">${{ "{:,.0f}".format(p.precio_YH) }}</span>
+                            {% else %}
+                                <span class="no-data">-</span>
+                            {% endif %}
+                        </td>
+                        <td class="text-center canal-adicional">
+                            {% if p.ir_YH is not none %}
+                                {% set clase_ir = 'excelente' if p.ir_YH >= 30 else ('bueno' if p.ir_YH >= 20 else ('regular' if p.ir_YH >= 10 else 'bajo')) %}
+                                <span class="badge-ir {{ clase_ir }}">{{ p.ir_YH_str }}</span>
+                            {% else %}
+                                <span class="no-data">-</span>
+                            {% endif %}
+                        </td>
+                        <td class="text-center celda-combinada canal-adicional" data-sku="{{ p.sku }}" data-canal="YH">
+                            <div class="dato-asignacion">
+                                <span class="badge-inventario" data-tipo="inv">--</span>
+                            </div>
+                            <div class="dato-ventas">
+                                <span class="badge-ventas" data-tipo="ventas">--</span>
+                            </div>
+                        </td>
+                    </tr>
+                {% endfor %}
+                </tbody>
+            </table>
+    </div>
+
+    <div class="mt-3 text-center text-muted">
+        <small>
+            <i class="bi bi-info-circle me-1"></i>
+            Mostrando {{ productos|length }} productos
+        </small>
+    </div>
+    {% else %}
+    <div class="alert alert-info">
+        <i class="bi bi-info-circle me-2"></i>
+        <strong>No hay productos para mostrar</strong>
+    </div>
+    {% endif %}
+
+    <!-- TABLA DE ANÁLISIS DE COMPETENCIA -->
+    {% if competencia %}
+    <div class="mt-5">
+        <h3 class="mb-4" style="color: #2C2C2C; font-weight: 700;">
+            <i class="bi bi-graph-up-arrow me-3" style="color: #D4AF37;"></i>Análisis de Competencia - Mercado Libre
+        </h3>
+
+        <div class="table-container competencia-container fade-in">
+            <div>
+                <table class="competencia-table-horizontal">
+                    <thead>
+                        <tr>
+                            <th class="text-center" colspan="2">
+                                <i class="bi bi-star-fill me-2" style="color: #D4AF37;"></i>LOOMBER
+                            </th>
+                            <th class="text-center" colspan="2">COMPETIDOR 1</th>
+                            <th class="text-center" colspan="2">COMPETIDOR 2</th>
+                            <th class="text-center" colspan="2">COMPETIDOR 3</th>
+                        </tr>
+                        <tr class="sub-header">
+                            <th class="text-center">SKU<br><small>(Posición)</small></th>
+                            <th class="text-center">Precio</th>
+                            <th class="text-center">Proveedor<br><small>(Posición)</small></th>
+                            <th class="text-center">Precio</th>
+                            <th class="text-center">Proveedor<br><small>(Posición)</small></th>
+                            <th class="text-center">Precio</th>
+                            <th class="text-center">Proveedor<br><small>(Posición)</small></th>
+                            <th class="text-center">Precio</th>
+                        </tr>
+                    </thead>
+                    <tbody>
+                        {% for fila in competencia %}
+                        <tr>
+                            <!-- LOOMBER -->
+                            <td class="loomber-sku">
+                                {% if fila.loomber_url %}
+                                <a href="{{ fila.loomber_url }}" target="_blank" class="sku-link">
+                                    <div class="sku-badge">{{ fila.sku }}</div>
+                                </a>
+                                {% else %}
+                                <div class="sku-badge">{{ fila.sku }}</div>
+                                {% endif %}
+                                <div class="producto-descripcion">{{ fila.producto }}</div>
+                                <div class="posicion-badge">{{ fila.loomber_posicion }}° lugar</div>
+                            </td>
+                            <td class="text-center">
+                                <span class="precio-value">${{ "{:,.0f}".format(fila.loomber_precio) }}</span>
+                            </td>
+
+                            <!-- COMPETIDOR 1 -->
+                            {% if fila.competidores|length > 0 %}
+                            {% set comp1 = fila.competidores[0] %}
+                            <td class="competidor-nombre">
+                                {% if comp1.url %}
+                                <a href="{{ comp1.url }}" target="_blank" class="proveedor-link">
+                                    {{ comp1.nombre }}
+                                    <i class="bi bi-box-arrow-up-right ms-1"></i>
+                                </a>
+                                {% else %}
+                                {{ comp1.nombre }}
+                                {% endif %}
+                                <div class="posicion-badge">{{ comp1.posicion }}° lugar</div>
+                            </td>
+                            <td class="text-center">
+                                <span class="precio-value">${{ "{:,.0f}".format(comp1.precio) }}</span>
+                            </td>
+                            {% else %}
+                            <td class="text-center"><span class="no-data">-</span></td>
+                            <td class="text-center"><span class="no-data">-</span></td>
+                            {% endif %}
+
+                            <!-- COMPETIDOR 2 -->
+                            {% if fila.competidores|length > 1 %}
+                            {% set comp2 = fila.competidores[1] %}
+                            <td class="competidor-nombre">
+                                {% if comp2.url %}
+                                <a href="{{ comp2.url }}" target="_blank" class="proveedor-link">
+                                    {{ comp2.nombre }}
+                                    <i class="bi bi-box-arrow-up-right ms-1"></i>
+                                </a>
+                                {% else %}
+                                {{ comp2.nombre }}
+                                {% endif %}
+                                <div class="posicion-badge">{{ comp2.posicion }}° lugar</div>
+                            </td>
+                            <td class="text-center">
+                                <span class="precio-value">${{ "{:,.0f}".format(comp2.precio) }}</span>
+                            </td>
+                            {% else %}
+                            <td class="text-center"><span class="no-data">-</span></td>
+                            <td class="text-center"><span class="no-data">-</span></td>
+                            {% endif %}
+
+                            <!-- COMPETIDOR 3 -->
+                            {% if fila.competidores|length > 2 %}
+                            {% set comp3 = fila.competidores[2] %}
+                            <td class="competidor-nombre">
+                                {% if comp3.url %}
+                                <a href="{{ comp3.url }}" target="_blank" class="proveedor-link">
+                                    {{ comp3.nombre }}
+                                    <i class="bi bi-box-arrow-up-right ms-1"></i>
+                                </a>
+                                {% else %}
+                                {{ comp3.nombre }}
+                                {% endif %}
+                                <div class="posicion-badge">{{ comp3.posicion }}° lugar</div>
+                            </td>
+                            <td class="text-center">
+                                <span class="precio-value">${{ "{:,.0f}".format(comp3.precio) }}</span>
+                            </td>
+                            {% else %}
+                            <td class="text-center"><span class="no-data">-</span></td>
+                            <td class="text-center"><span class="no-data">-</span></td>
+                            {% endif %}
+                        </tr>
+                        {% endfor %}
+                    </tbody>
+                </table>
+            </div>
+        </div>
+
+        <div class="mt-3 text-center text-muted">
+            <small>
+                <i class="bi bi-info-circle me-1"></i>
+                Mostrando comparación de precios con top 3 competidores por SKU
+            </small>
+        </div>
+    </div>
+    {% endif %}
+</div>
+
+<script>
+// ===== VARIABLES GLOBALES =====
+let semanaActual = 1;
+let datosSemanalesCache = {};
+
+// ===== CARGAR DATOS SEMANALES AL INICIO =====
+document.addEventListener('DOMContentLoaded', function() {
+    // Cargar datos de la semana 1 por defecto
+    cargarDatosSemana(1);
+});
+
+// ===== FUNCIÓN PARA CAMBIAR DE SEMANA =====
+function cambiarSemana(semana) {
+    semanaActual = semana;
+
+    // Actualizar botones
+    document.querySelectorAll('.semana-btn').forEach(btn => {
+        btn.classList.remove('active', 'btn-primary');
+        btn.classList.add('btn-outline-primary');
+    });
+
+    const btnActivo = document.querySelector(`.semana-btn[data-semana="${semana}"]`);
+    if (btnActivo) {
+        btnActivo.classList.remove('btn-outline-primary');
+        btnActivo.classList.add('active', 'btn-primary');
+    }
+
+    // Cargar datos de la semana
+    cargarDatosSemana(semana);
+}
+
+// ===== FUNCIÓN PARA MOSTRAR/OCULTAR LOADING SEMANAL =====
+function mostrarLoadingSemanal(mostrar) {
+    const loading = document.getElementById('loading-semanal');
+    const overlay = document.getElementById('overlay-semanal');
+
+    if (loading && overlay) {
+        loading.style.display = mostrar ? 'block' : 'none';
+        overlay.style.display = mostrar ? 'block' : 'none';
+    }
+}
+
+// ===== FUNCIÓN PARA CARGAR DATOS DE UNA SEMANA =====
+function cargarDatosSemana(semana) {
+    console.log(`Cargando datos para Semana ${semana}...`);
+
+    // Mostrar indicador de carga
+    mostrarLoadingSemanal(true);
+
+    // Mostrar loading en las celdas (ahora busca los spans dentro de las celdas combinadas)
+    document.querySelectorAll('[data-tipo="inv"], [data-tipo="ventas"]').forEach(span => {
+        span.textContent = '...';
+    });
+
+    // Hacer petición AJAX
+    console.log(`Haciendo petición a: /radar-comercial-datos-semanales?semana=${semana}`);
+    fetch(`/radar-comercial-datos-semanales?semana=${semana}`)
+        .then(response => {
+            console.log('Respuesta recibida:', response.status);
+            return response.json();
+        })
+        .then(data => {
+            console.log('Datos recibidos:', data);
+            if (data.success) {
+                console.log('Número de SKUs:', Object.keys(data.datos_semanales).length);
+                datosSemanalesCache[semana] = data.datos_semanales;
+                actualizarTablaConDatos(data.datos_semanales);
+                console.log(`Datos de Semana ${semana} cargados exitosamente`);
+            } else {
+                console.error('Error en respuesta:', data.error);
+                mostrarError();
+            }
+        })
+        .catch(error => {
+            console.error('Error al cargar datos semanales:', error);
+            mostrarError();
+        })
+        .finally(() => {
+            // Ocultar indicador de carga
+            mostrarLoadingSemanal(false);
+        });
+}
+
+// ===== FUNCIÓN PARA ACTUALIZAR TABLA CON DATOS =====
+function actualizarTablaConDatos(datos) {
+    console.log('Actualizando tabla con datos:', datos);
+    console.log('Número de SKUs a actualizar:', Object.keys(datos).length);
+
+    let celdasActualizadas = 0;
+
+    // Iterar sobre todos los SKUs
+    for (const sku in datos) {
+        const canalesData = datos[sku];
+        console.log(`Procesando SKU ${sku}:`, canalesData);
+
+        // Iterar sobre todos los canales
+        for (const canal in canalesData) {
+            const { inv, ventas } = canalesData[canal];
+            console.log(`  Canal ${canal}: inv=${inv}, ventas=${ventas}`);
+
+            // Buscar la celda combinada que contiene ambos valores
+            const celdaCombinada = document.querySelector(`[data-sku="${sku}"][data-canal="${canal}"].celda-combinada`);
+
+            if (celdaCombinada) {
+                // Actualizar span de inventario
+                const spanInv = celdaCombinada.querySelector('[data-tipo="inv"]');
+                if (spanInv) {
+                    spanInv.textContent = inv > 0 ? `${formatearNumero(inv)} unid` : '0 unid';
+                    celdasActualizadas++;
+                }
+
+                // Actualizar span de ventas
+                const spanVentas = celdaCombinada.querySelector('[data-tipo="ventas"]');
+                if (spanVentas) {
+                    spanVentas.textContent = ventas > 0 ? `${formatearNumero(ventas)} unid` : '0 unid';
+                    celdasActualizadas++;
+                }
+            } else {
+                console.warn(`No se encontró celda combinada para SKU ${sku}, Canal ${canal}`);
+            }
+        }
+    }
+
+    console.log(`Total de celdas actualizadas: ${celdasActualizadas}`);
+}
+
+// ===== FUNCIÓN PARA FORMATEAR NÚMEROS =====
+function formatearNumero(num) {
+    return Math.round(num).toLocaleString('es-MX');
+}
+
+// ===== FUNCIÓN PARA MOSTRAR ERROR =====
+function mostrarError() {
+    document.querySelectorAll('[data-tipo="inv"], [data-tipo="ventas"]').forEach(span => {
+        span.textContent = 'Error';
+    });
+}
+
+// ===== FUNCIÓN PARA MOSTRAR/OCULTAR CANALES ADICIONALES =====
+function toggleCanalesAdicionales() {
+    const canalesAdicionales = document.querySelectorAll('.canal-adicional');
+    const btn = document.getElementById('btn-toggle-canales');
+    const icon = btn.querySelector('i');
+
+    // Verificar si los canales están visibles
+    const estanVisibles = canalesAdicionales[0].classList.contains('show');
+
+    if (estanVisibles) {
+        // Ocultar canales adicionales
+        canalesAdicionales.forEach(canal => {
+            canal.classList.remove('show');
+        });
+        btn.innerHTML = '<i class="bi bi-eye me-2"></i>Mostrar Todos los Canales';
+        btn.classList.remove('btn-secondary');
+        btn.classList.add('btn-outline-secondary');
+    } else {
+        // Mostrar canales adicionales
+        canalesAdicionales.forEach(canal => {
+            canal.classList.add('show');
+        });
+        btn.innerHTML = '<i class="bi bi-eye-slash me-2"></i>Ocultar Canales Adicionales';
+        btn.classList.remove('btn-outline-secondary');
+        btn.classList.add('btn-secondary');
+    }
+}
+
+// ===== FUNCIÓN PARA FILTRAR PRODUCTOS POR CATEGORÍA =====
+function filtrarProductos(categoria) {
+    const todasFilas = document.querySelectorAll('.producto-row');
+    const todosButtons = document.querySelectorAll('.filter-btn');
+
+    // Remover clase 'active' de todos los botones
+    todosButtons.forEach(btn => {
+        btn.classList.remove('active');
+        btn.classList.remove('btn-warning', 'btn-info', 'btn-success', 'btn-primary');
+
+        // Restaurar estilos outline originales
+        if (btn.id === 'filter-todos') {
+            btn.classList.add('btn-outline-warning');
+        } else if (btn.id === 'filter-plegables') {
+            btn.classList.add('btn-outline-info');
+        } else if (btn.id === 'filter-sofas') {
+            btn.classList.add('btn-outline-success');
+        } else if (btn.id === 'filter-toldos') {
+            btn.classList.add('btn-outline-primary');
+        }
+    });
+
+    // Activar el botón seleccionado
+    const botonActivo = document.getElementById(`filter-${categoria}`);
+    if (botonActivo) {
+        botonActivo.classList.add('active');
+        botonActivo.classList.remove('btn-outline-warning', 'btn-outline-info', 'btn-outline-success', 'btn-outline-primary');
+
+        // Aplicar color sólido según el botón
+        if (categoria === 'todos') {
+            botonActivo.classList.add('btn-warning');
+        } else if (categoria === 'plegables') {
+            botonActivo.classList.add('btn-info');
+        } else if (categoria === 'sofas') {
+            botonActivo.classList.add('btn-success');
+        } else if (categoria === 'toldos') {
+            botonActivo.classList.add('btn-primary');
+        }
+    }
+
+    // Filtrar filas según la categoría
+    if (categoria === 'todos') {
+        // Mostrar todas las filas
+        todasFilas.forEach((fila, index) => {
+            fila.classList.remove('hidden');
+            setTimeout(() => {
+                fila.style.display = 'table-row';
+            }, index * 20); // Animación escalonada
+        });
+    } else {
+        // Filtrar con lógica de exclusión prioritaria
+        todasFilas.forEach(fila => {
+            const descripcion = fila.getAttribute('data-descripcion');
+            let mostrarFila = false;
+
+            if (categoria === 'plegables') {
+                // PLEGABLES: Debe contener "plegable" PERO NO "toldo" ni "sofá"
+                if (descripcion &&
+                    descripcion.includes('plegable') &&
+                    !descripcion.includes('toldo') &&
+                    !descripcion.includes('sofá')) {
+                    mostrarFila = true;
+                }
+            } else if (categoria === 'sofas') {
+                // SOFÁS: Debe contener "sofá" (puede o no tener otras palabras)
+                if (descripcion && descripcion.includes('sofá')) {
+                    mostrarFila = true;
+                }
+            } else if (categoria === 'toldos') {
+                // TOLDOS: Debe contener "toldo" (puede o no tener "plegable")
+                if (descripcion && descripcion.includes('toldo')) {
+                    mostrarFila = true;
+                }
+            }
+
+            // Aplicar visibilidad
+            if (mostrarFila) {
+                // Mostrar fila que coincide
+                fila.classList.remove('hidden');
+                fila.style.display = 'table-row';
+            } else {
+                // Ocultar fila que no coincide
+                fila.classList.add('hidden');
+                setTimeout(() => {
+                    if (fila.classList.contains('hidden')) {
+                        fila.style.display = 'none';
+                    }
+                }, 300); // Esperar animación CSS
+            }
+        });
+    }
+
+    // Actualizar contador de productos visibles
+    setTimeout(() => {
+        const filasVisibles = document.querySelectorAll('.producto-row:not(.hidden)').length;
+        const contador = document.querySelector('.mt-3.text-center.text-muted small');
+        if (contador) {
+            if (categoria === 'todos') {
+                contador.innerHTML = `<i class="bi bi-info-circle me-1"></i>Mostrando ${filasVisibles} productos`;
+            } else {
+                const nombreCategoria = categoria.charAt(0).toUpperCase() + categoria.slice(1);
+                contador.innerHTML = `<i class="bi bi-info-circle me-1"></i>Mostrando ${filasVisibles} productos de ${nombreCategoria}`;
+            }
+        }
+    }, 350);
+}
+</script>
+
+{% endblock %}

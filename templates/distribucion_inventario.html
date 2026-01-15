@@ -1,0 +1,1660 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Distribución de Inventario - Loomber Dashboard</title>
+
+    <!-- Bootstrap CSS -->
+    <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/css/bootstrap.min.css" rel="stylesheet">
+    <!-- Bootstrap Icons -->
+    <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/bootstrap-icons@1.10.5/font/bootstrap-icons.css">
+    <!-- DataTables CSS -->
+    <link rel="stylesheet" href="https://cdn.datatables.net/1.13.6/css/dataTables.bootstrap5.min.css">
+
+    <style>
+        body {
+            background: linear-gradient(135deg, #f5f7fa 0%, #e9ecef 100%);
+            font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+            padding-top: 65px;
+        }
+
+        .main-container {
+            max-width: 1900px;
+            margin: 0 auto;
+            padding: 0.9rem 2.5rem;
+        }
+
+        .page-header {
+            background: white;
+            border-radius: 10px;
+            padding: 0.9rem 1.2rem;
+            margin-bottom: 0.9rem;
+            box-shadow: 0 2px 6px rgba(0, 0, 0, 0.05);
+            border-left: 4px solid #3498db;
+        }
+
+        .page-header h1 {
+            color: #2C2C2C;
+            font-weight: 700;
+            margin: 0;
+            display: flex;
+            align-items: center;
+            gap: 0.6rem;
+            font-size: 1.4rem;
+        }
+
+        .page-header h1 i {
+            color: #3498db;
+            font-size: 1.4rem;
+        }
+
+        .page-header p {
+            font-size: 0.82rem;
+            margin-bottom: 0;
+            color: #6c757d;
+        }
+
+        .filter-container {
+            background: white;
+            border-radius: 10px;
+            padding: 1rem;
+            margin-bottom: 0.9rem;
+            box-shadow: 0 2px 6px rgba(0, 0, 0, 0.05);
+        }
+
+        .stats-grid {
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(250px, 1fr));
+            gap: 1rem;
+            margin-bottom: 0.9rem;
+        }
+
+        .stat-card {
+            background: white;
+            border-radius: 10px;
+            padding: 1.2rem;
+            box-shadow: 0 2px 6px rgba(0, 0, 0, 0.05);
+            border-left: 4px solid #3498db;
+            transition: transform 0.2s ease;
+        }
+
+        .stat-card:hover {
+            transform: translateY(-2px);
+            box-shadow: 0 4px 12px rgba(0, 0, 0, 0.1);
+        }
+
+        .stat-card h6 {
+            font-size: 0.85rem;
+            color: #6c757d;
+            margin-bottom: 0.5rem;
+            text-transform: uppercase;
+            font-weight: 600;
+        }
+
+        .stat-card .stat-value {
+            font-size: 1.8rem;
+            font-weight: 700;
+            color: #2C2C2C;
+        }
+
+        .table-container {
+            background: white;
+            border-radius: 10px;
+            padding: 1.5rem;
+            box-shadow: 0 2px 6px rgba(0, 0, 0, 0.05);
+        }
+
+        .table thead th {
+            background: linear-gradient(135deg, #3498db 0%, #2980b9 100%);
+            color: white;
+            border: none;
+            font-weight: 600;
+            font-size: 0.85rem;
+            padding: 0.75rem;
+            white-space: nowrap;
+        }
+
+        .table tbody td {
+            padding: 0.6rem;
+            font-size: 0.85rem;
+            vertical-align: middle;
+        }
+
+        .badge-canal {
+            padding: 0.4rem 0.7rem;
+            border-radius: 4px;
+            font-size: 0.75rem;
+            font-weight: 600;
+        }
+
+        .badge-limite {
+            background: #ffeaa7;
+            color: #d63031;
+        }
+
+        .badge-sin-limite {
+            background: #dfe6e9;
+            color: #2d3436;
+        }
+
+        .btn-mes {
+            background: #3498db;
+            color: white;
+            border: none;
+            padding: 0.5rem 1.5rem;
+            font-weight: 600;
+            border-radius: 6px;
+            transition: all 0.3s ease;
+        }
+
+        .btn-mes:hover {
+            background: #2980b9;
+            transform: translateY(-2px);
+            box-shadow: 0 4px 8px rgba(52, 152, 219, 0.3);
+            color: white;
+        }
+
+        .loading-overlay {
+            display: none;
+            position: fixed;
+            top: 0;
+            left: 0;
+            width: 100%;
+            height: 100%;
+            background: rgba(0, 0, 0, 0.5);
+            z-index: 9999;
+            justify-content: center;
+            align-items: center;
+        }
+
+        .loading-overlay.active {
+            display: flex;
+        }
+
+        .spinner-border {
+            width: 3rem;
+            height: 3rem;
+        }
+
+        .progress-bar-custom {
+            background: linear-gradient(90deg, #3498db 0%, #2ecc71 100%);
+            height: 20px;
+            border-radius: 10px;
+            transition: width 0.3s ease;
+        }
+
+        .alert-error {
+            background: #fee;
+            border-left: 4px solid #e74c3c;
+            color: #c0392b;
+        }
+    </style>
+</head>
+<body>
+
+    <!-- Overlay de carga -->
+    <div class="loading-overlay" id="loadingOverlay">
+        <div class="spinner-border text-primary" role="status">
+            <span class="visually-hidden">Cargando...</span>
+        </div>
+    </div>
+
+    <!-- Navbar -->
+    {% include 'navbar.html' %}
+
+    <div class="main-container">
+        <!-- Header -->
+        <div class="page-header">
+            <h1>
+                <i class="bi bi-boxes"></i>
+                Distribución de Inventario por Canal
+            </h1>
+            <p class="mt-2 mb-0">Asignación inteligente de inventario disponible entre canales de venta</p>
+        </div>
+
+        <!-- Mensaje de error -->
+        {% if error %}
+        <div class="alert alert-error alert-dismissible fade show" role="alert">
+            <i class="bi bi-exclamation-triangle-fill me-2"></i>
+            <strong>Error:</strong> {{ error }}
+            <button type="button" class="btn-close" data-bs-dismiss="alert"></button>
+        </div>
+        {% endif %}
+
+        <!-- Filtros -->
+        <div class="filter-container">
+            <div class="row align-items-end">
+                <div class="col-md-4">
+                    <label for="selectMes" class="form-label fw-bold">
+                        <i class="bi bi-calendar3"></i> Seleccionar Mes
+                    </label>
+                    <select class="form-select" id="selectMes" name="mes">
+                        {% for mes in meses_disponibles %}
+                        <option value="{{ mes.value }}" {% if mes.value == mes_seleccionado %}selected{% endif %}>
+                            {{ mes.label }}
+                        </option>
+                        {% endfor %}
+                    </select>
+                </div>
+                <div class="col-md-2">
+                    <button type="button" class="btn btn-mes w-100" id="btnActualizar">
+                        <i class="bi bi-arrow-clockwise me-1"></i> Actualizar
+                    </button>
+                </div>
+                <div class="col-md-2">
+                    <button type="button" class="btn w-100" id="btnAgregarSku" style="background: #27ae60; color: white; border: none; padding: 0.5rem 1.5rem; font-weight: 600; border-radius: 6px;">
+                        <i class="bi bi-plus-circle-fill me-1"></i> Agregar SKU
+                    </button>
+                </div>
+                <div class="col-md-2">
+                    <button type="button" class="btn w-100" id="btnCrearSnapshot" style="background: #e67e22; color: white; border: none; padding: 0.5rem 1.5rem; font-weight: 600; border-radius: 6px;">
+                        <i class="bi bi-camera-fill me-1"></i> Snapshot
+                    </button>
+                </div>
+                <div class="col-md-2 text-end">
+                    <a href="/distribucion-inventario-semanal" class="btn w-100" style="background: #9b59b6; color: white; border: none; padding: 0.5rem 1.5rem; font-weight: 600; border-radius: 6px;">
+                        <i class="bi bi-calendar3-week me-1"></i> Vista Semanal
+                    </a>
+                </div>
+            </div>
+        </div>
+
+        <!-- Resumen General -->
+        <div class="stats-grid">
+            <div class="stat-card">
+                <h6><i class="bi bi-box-seam"></i> Total SKUs</h6>
+                <div class="stat-value" id="statTotalSkus">{{ resumen_general.total_skus }}</div>
+            </div>
+            <div class="stat-card">
+                <h6><i class="bi bi-truck"></i> Disponible Total</h6>
+                <div class="stat-value" id="statDisponibleTotal">{{ "{:,.0f}".format(resumen_general.total_disponible) }}</div>
+            </div>
+            <div class="stat-card">
+                <h6><i class="bi bi-check-circle"></i> Total Asignado</h6>
+                <div class="stat-value" id="statTotalAsignado">{{ "{:,.0f}".format(resumen_general.total_asignado) }}</div>
+            </div>
+            <div class="stat-card">
+                <h6><i class="bi bi-diagram-3"></i> Canales Activos</h6>
+                <div class="stat-value" id="statCanalesActivos">{{ resumen_general.total_canales }}</div>
+            </div>
+        </div>
+
+        <!-- Tabla de Distribución Simplificada -->
+        <div class="table-container">
+            <h5 class="mb-3">
+                <i class="bi bi-table"></i> Distribución por Canal
+                <small class="text-muted ms-2">(Cantidad asignada por canal)</small>
+            </h5>
+
+            <div class="table-responsive">
+                <table id="tablaDistribucion" class="table table-hover table-sm table-striped">
+                    <thead>
+                        <tr>
+                            <th style="width: 100px;">SKU</th>
+                            <th style="width: 300px;">Descripción</th>
+                            <th style="width: 120px;">Disponible Total</th>
+                            <th style="width: 150px;">Canal</th>
+                            <th style="width: 100px; text-align: center;">Peso %</th>
+                            <th style="width: 150px; text-align: center; background: #e8f5e9;">
+                                <i class="bi bi-check-circle-fill text-success"></i> Asignado Final
+                            </th>
+                            <th style="width: 100px; text-align: center;">
+                                <i class="bi bi-gear-fill"></i> Acciones
+                            </th>
+                        </tr>
+                    </thead>
+                    <tbody id="tbodyDistribucion">
+                        {% set current_sku = namespace(value='') %}
+                        {% for row in datos_tabla %}
+                        <tr data-sku="{{ row.sku }}">
+                            <td>
+                                <strong>{{ row.sku }}</strong>
+                                {% if row.es_manual == 1 %}
+                                <span class="badge bg-warning text-dark ms-1" style="font-size: 0.65rem;" title="Distribución modificada manualmente">
+                                    <i class="bi bi-pencil-fill"></i> Manual
+                                </span>
+                                {% endif %}
+                            </td>
+                            <td class="text-truncate" style="max-width: 300px;" title="{{ row.descripcion }}">
+                                {{ row.descripcion }}
+                            </td>
+                            <td>
+                                {% if row.disponible_total_manual and row.disponible_total_manual > 0 %}
+                                    <strong>{{ "{:,.0f}".format(row.disponible_total_manual) }}</strong>
+                                    <span class="badge bg-info text-white ms-1" style="font-size: 0.6rem;" title="Total modificado manualmente">
+                                        <i class="bi bi-pencil-fill"></i>
+                                    </span>
+                                {% else %}
+                                    <strong>{{ "{:,.0f}".format(row.Disponible_Para_Vender) }}</strong>
+                                {% endif %}
+                            </td>
+                            <td>
+                                <span class="badge" style="background: #3498db; color: white;">{{ row.Channel }}</span>
+                            </td>
+                            <td class="text-center">{{ "{:.1%}".format(row.peso_combinado_normalizado) }}</td>
+                            <td class="text-center" style="background: #f0f9ff;">
+                                <strong style="color: #27ae60; font-size: 1.1rem;">
+                                    {{ "{:,.0f}".format(row.Disponible_Para_Vender_Canal_FINAL) }}
+                                </strong>
+                            </td>
+                            <td class="text-center">
+                                {% if current_sku.value != row.sku %}
+                                <button class="btn btn-sm btn-outline-primary btn-editar-sku"
+                                        data-sku="{{ row.sku }}"
+                                        title="Editar distribución manual">
+                                    <i class="bi bi-gear-fill"></i> Editar
+                                </button>
+                                {% set current_sku.value = row.sku %}
+                                {% endif %}
+                            </td>
+                        </tr>
+                        {% endfor %}
+                    </tbody>
+                </table>
+            </div>
+        </div>
+
+        <!-- Modal de Edición de Distribución -->
+        <div class="modal fade" id="modalEditarDistribucion" tabindex="-1">
+            <div class="modal-dialog modal-lg">
+                <div class="modal-content">
+                    <div class="modal-header" style="background: linear-gradient(135deg, #3498db 0%, #2980b9 100%); color: white;">
+                        <h5 class="modal-title">
+                            <i class="bi bi-gear-fill"></i> Editar Distribución Manual
+                        </h5>
+                        <button type="button" class="btn-close btn-close-white" data-bs-dismiss="modal"></button>
+                    </div>
+                    <div class="modal-body">
+                        <!-- Info del SKU -->
+                        <div class="alert alert-info" id="infoSKU">
+                            <strong>SKU:</strong> <span id="modalSKU"></span> - <span id="modalDescripcion"></span><br>
+                            <div class="row align-items-center mt-2">
+                                <div class="col-auto">
+                                    <strong>Disponible Total:</strong>
+                                </div>
+                                <div class="col-auto">
+                                    <input type="number"
+                                           class="form-control form-control-sm"
+                                           id="inputDisponibleTotal"
+                                           style="width: 150px;"
+                                           min="0"
+                                           step="1">
+                                </div>
+                                <div class="col-auto">
+                                    <small class="text-muted">
+                                        Original: <span id="disponibleOriginal"></span>
+                                    </small>
+                                </div>
+                            </div>
+                        </div>
+
+                        <!-- Indicador de balance -->
+                        <div class="alert" id="alertBalance" style="display: none;">
+                            <strong>Balance:</strong> <span id="textoBalance"></span>
+                        </div>
+
+                        <!-- Tabla de edición -->
+                        <div class="table-responsive">
+                            <table class="table table-sm table-bordered">
+                                <thead style="background: #f8f9fa;">
+                                    <tr>
+                                        <th>Canal</th>
+                                        <th style="width: 150px; text-align: right;">Automático</th>
+                                        <th style="width: 150px; text-align: right;">Manual</th>
+                                        <th style="width: 100px; text-align: right;">Diferencia</th>
+                                    </tr>
+                                </thead>
+                                <tbody id="tbodyEditarCanales">
+                                    <!-- Se llena dinámicamente -->
+                                </tbody>
+                                <tfoot style="background: #e9ecef; font-weight: bold;">
+                                    <tr>
+                                        <td>TOTAL</td>
+                                        <td class="text-end" id="totalAutomatico">0</td>
+                                        <td class="text-end" id="totalManual">0</td>
+                                        <td class="text-end" id="totalDiferencia">0</td>
+                                    </tr>
+                                </tfoot>
+                            </table>
+                        </div>
+
+                        <!-- Agregar Canal -->
+                        <div class="mb-3">
+                            <button type="button" class="btn btn-sm btn-outline-success" id="btnAgregarCanal">
+                                <i class="bi bi-plus-circle"></i> Agregar Canal
+                            </button>
+                        </div>
+
+                        <!-- Modal para agregar canal -->
+                        <div class="modal fade" id="modalAgregarCanal" tabindex="-1">
+                            <div class="modal-dialog modal-sm">
+                                <div class="modal-content">
+                                    <div class="modal-header">
+                                        <h6 class="modal-title">Agregar Nuevo Canal</h6>
+                                        <button type="button" class="btn-close" data-bs-dismiss="modal"></button>
+                                    </div>
+                                    <div class="modal-body">
+                                        <div class="mb-3">
+                                            <label class="form-label">Selecciona el Canal</label>
+                                            <select class="form-select" id="selectNuevoCanal">
+                                                <option value="">-- Selecciona un canal --</option>
+                                            </select>
+                                        </div>
+                                        <div class="mb-3">
+                                            <label class="form-label">Cantidad</label>
+                                            <input type="number" class="form-control" id="inputCantidadNuevoCanal" min="0" step="1" value="0">
+                                        </div>
+                                    </div>
+                                    <div class="modal-footer">
+                                        <button type="button" class="btn btn-secondary btn-sm" data-bs-dismiss="modal">Cancelar</button>
+                                        <button type="button" class="btn btn-success btn-sm" id="btnConfirmarAgregarCanal">Agregar</button>
+                                    </div>
+                                </div>
+                            </div>
+                        </div>
+
+                        <!-- Comentario opcional -->
+                        <div class="mb-3">
+                            <label for="comentarioDistribucion" class="form-label">Comentario (opcional)</label>
+                            <textarea class="form-control" id="comentarioDistribucion" rows="2"
+                                      placeholder="Describe por qué hiciste este cambio..."></textarea>
+                        </div>
+                    </div>
+                    <div class="modal-footer">
+                        <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">
+                            <i class="bi bi-x-circle"></i> Cancelar
+                        </button>
+                        <button type="button" class="btn btn-warning" id="btnRevertirAutomatica">
+                            <i class="bi bi-arrow-counterclockwise"></i> Revertir a Automático
+                        </button>
+                        <button type="button" class="btn btn-success" id="btnGuardarManual">
+                            <i class="bi bi-check-circle"></i> Guardar Cambios
+                        </button>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- Modal: Crear Snapshot Mensual -->
+    <div class="modal fade" id="modalCrearSnapshot" tabindex="-1">
+        <div class="modal-dialog modal-lg">
+            <div class="modal-content">
+                <div class="modal-header" style="background: linear-gradient(135deg, #e67e22 0%, #d35400 100%); color: white;">
+                    <h5 class="modal-title">
+                        <i class="bi bi-camera-fill"></i> Crear Snapshot Mensual
+                    </h5>
+                    <button type="button" class="btn-close btn-close-white" data-bs-dismiss="modal"></button>
+                </div>
+                <div class="modal-body">
+                    <div class="alert alert-info">
+                        <i class="bi bi-info-circle-fill me-2"></i>
+                        <strong>¿Qué es un snapshot?</strong><br>
+                        Un snapshot guarda una copia permanente de toda la distribución automática del mes seleccionado.
+                        Esto es importante porque la tabla automática solo guarda un mes a la vez. Cuando cambie a Enero,
+                        los datos de Diciembre se perderán si no creas un snapshot.
+                    </div>
+
+                    <div class="card mb-3">
+                        <div class="card-body">
+                            <div class="mb-3">
+                                <label for="snapshotSelectMes" class="form-label fw-bold">
+                                    <i class="bi bi-calendar3"></i> Selecciona el mes a guardar:
+                                </label>
+                                <select class="form-select" id="snapshotSelectMes">
+                                    {% for mes in meses_disponibles %}
+                                    <option value="{{ mes.value }}">{{ mes.label }}</option>
+                                    {% endfor %}
+                                </select>
+                                <div class="form-text">
+                                    ⚠️ Asegúrate de seleccionar el mes correcto. Verifica que los datos de la tabla principal correspondan a este mes.
+                                </div>
+                            </div>
+
+                            <div class="row text-center" id="snapshotEstadisticas" style="display: none;">
+                                <div class="col-md-3">
+                                    <div class="p-3 bg-light rounded">
+                                        <div class="fs-4 fw-bold text-primary" id="snapshotTotalSkus">0</div>
+                                        <div class="small text-muted">SKUs</div>
+                                    </div>
+                                </div>
+                                <div class="col-md-3">
+                                    <div class="p-3 bg-light rounded">
+                                        <div class="fs-4 fw-bold text-success" id="snapshotTotalRegistros">...</div>
+                                        <div class="small text-muted">Total Registros</div>
+                                        <div class="small text-muted" style="font-size: 0.7rem;">(SKU × Canal)</div>
+                                    </div>
+                                </div>
+                                <div class="col-md-3">
+                                    <div class="p-3 bg-light rounded">
+                                        <div class="fs-4 fw-bold text-info" id="snapshotTotalDisponible">0</div>
+                                        <div class="small text-muted">Total Disponible</div>
+                                    </div>
+                                </div>
+                                <div class="col-md-3">
+                                    <div class="p-3 bg-light rounded">
+                                        <div class="fs-4 fw-bold text-warning" id="snapshotTotalCanales">0</div>
+                                        <div class="small text-muted">Canales</div>
+                                    </div>
+                                </div>
+                            </div>
+
+                            <div class="alert alert-warning mt-3" id="snapshotExistente" style="display: none;">
+                                <i class="bi bi-exclamation-triangle-fill me-2"></i>
+                                Ya existe un snapshot para este mes con <strong id="snapshotExistenteTotal">0</strong> registros.
+                            </div>
+                        </div>
+                    </div>
+
+                    <div class="alert alert-danger">
+                        <i class="bi bi-exclamation-triangle-fill me-2"></i>
+                        <strong>Importante:</strong> Verifica que los datos mostrados correspondan al mes correcto antes de crear el snapshot.
+                        Una vez creado, el snapshot no se puede eliminar fácilmente.
+                    </div>
+                </div>
+                <div class="modal-footer">
+                    <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">
+                        <i class="bi bi-x-circle"></i> Cancelar
+                    </button>
+                    <button type="button" class="btn btn-success" id="btnConfirmarSnapshot" style="background: #e67e22; border-color: #e67e22;">
+                        <i class="bi bi-check-circle"></i> Confirmar y Crear Snapshot
+                    </button>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- Modal: Agregar SKU Nuevo -->
+    <div class="modal fade" id="modalAgregarSku" tabindex="-1">
+        <div class="modal-dialog modal-xl">
+            <div class="modal-content">
+                <div class="modal-header" style="background: linear-gradient(135deg, #27ae60 0%, #229954 100%); color: white;">
+                    <h5 class="modal-title">
+                        <i class="bi bi-plus-circle-fill"></i> Agregar Nuevo SKU
+                    </h5>
+                    <button type="button" class="btn-close btn-close-white" data-bs-dismiss="modal"></button>
+                </div>
+                <div class="modal-body">
+                    <div class="alert alert-info">
+                        <i class="bi bi-info-circle-fill me-2"></i>
+                        <strong>Información:</strong> Este SKU se agregará únicamente a la distribución manual.
+                        Podrás definir el disponible total del mes y su distribución entre canales.
+                    </div>
+
+                    <!-- Información básica del SKU -->
+                    <div class="card mb-3">
+                        <div class="card-header bg-light">
+                            <strong><i class="bi bi-box-seam"></i> Información del SKU</strong>
+                        </div>
+                        <div class="card-body">
+                            <div class="row">
+                                <div class="col-md-4">
+                                    <label for="inputNuevoSku" class="form-label">SKU <span class="text-danger">*</span></label>
+                                    <input type="text" class="form-control" id="inputNuevoSku" list="datalistSkus" placeholder="Escribe SKU o descripción...">
+                                    <datalist id="datalistSkus">
+                                        <!-- Se llena dinámicamente con JavaScript -->
+                                    </datalist>
+                                    <div class="form-text">Busca por SKU o descripción</div>
+                                </div>
+                                <div class="col-md-4">
+                                    <label for="inputNuevaDescripcion" class="form-label">Descripción</label>
+                                    <input type="text" class="form-control" id="inputNuevaDescripcion" readonly style="background-color: #f8f9fa;">
+                                    <div class="form-text">Se completa automáticamente</div>
+                                </div>
+                                <div class="col-md-4">
+                                    <label for="inputNuevoDisponibleTotal" class="form-label">Disponible Total Mes <span class="text-danger">*</span></label>
+                                    <input type="number" class="form-control" id="inputNuevoDisponibleTotal" min="0" step="1" value="0">
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+
+                    <!-- Distribución por canales -->
+                    <div class="card">
+                        <div class="card-header bg-light d-flex justify-content-between align-items-center">
+                            <strong><i class="bi bi-distribute-vertical"></i> Distribución por Canales</strong>
+                            <button type="button" class="btn btn-sm btn-primary" id="btnAgregarCanalNuevoSku">
+                                <i class="bi bi-plus-circle"></i> Agregar Canal
+                            </button>
+                        </div>
+                        <div class="card-body">
+                            <div class="table-responsive">
+                                <table class="table table-sm table-bordered">
+                                    <thead class="table-light">
+                                        <tr>
+                                            <th>Canal</th>
+                                            <th>Cupo Asignado</th>
+                                            <th>% del Total</th>
+                                            <th>Acciones</th>
+                                        </tr>
+                                    </thead>
+                                    <tbody id="tbodyCanalesNuevoSku">
+                                        <tr>
+                                            <td colspan="4" class="text-center text-muted">
+                                                <i class="bi bi-inbox"></i> No hay canales agregados. Haz clic en "Agregar Canal"
+                                            </td>
+                                        </tr>
+                                    </tbody>
+                                    <tfoot class="table-secondary">
+                                        <tr>
+                                            <td><strong>TOTAL</strong></td>
+                                            <td><strong id="totalAsignadoNuevoSku">0</strong></td>
+                                            <td><strong id="totalPorcentajeNuevoSku">0%</strong></td>
+                                            <td></td>
+                                        </tr>
+                                    </tfoot>
+                                </table>
+                            </div>
+                            <div class="alert alert-warning mt-2" id="alertTotalNuevoSku" style="display: none;">
+                                <i class="bi bi-exclamation-triangle-fill me-2"></i>
+                                <span id="mensajeTotalNuevoSku"></span>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+                <div class="modal-footer">
+                    <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">
+                        <i class="bi bi-x-circle"></i> Cancelar
+                    </button>
+                    <button type="button" class="btn btn-success" id="btnGuardarNuevoSku">
+                        <i class="bi bi-check-circle"></i> Guardar SKU
+                    </button>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- Modal: Agregar Canal para Nuevo SKU -->
+    <div class="modal fade" id="modalAgregarCanalNuevoSku" tabindex="-1">
+        <div class="modal-dialog modal-sm">
+            <div class="modal-content">
+                <div class="modal-header">
+                    <h6 class="modal-title">Agregar Canal</h6>
+                    <button type="button" class="btn-close" data-bs-dismiss="modal"></button>
+                </div>
+                <div class="modal-body">
+                    <div class="mb-3">
+                        <label class="form-label">Canal</label>
+                        <select class="form-select" id="selectCanalNuevoSku">
+                            <option value="">-- Selecciona un canal --</option>
+                        </select>
+                    </div>
+                    <div class="mb-3">
+                        <label class="form-label">Cupo Asignado</label>
+                        <input type="number" class="form-control" id="inputCupoNuevoSku" min="0" step="1" value="0">
+                    </div>
+                </div>
+                <div class="modal-footer">
+                    <button type="button" class="btn btn-secondary btn-sm" data-bs-dismiss="modal">Cancelar</button>
+                    <button type="button" class="btn btn-success btn-sm" id="btnConfirmarCanalNuevoSku">Agregar</button>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- jQuery -->
+    <script src="https://code.jquery.com/jquery-3.7.0.min.js"></script>
+    <!-- Bootstrap JS -->
+    <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/js/bootstrap.bundle.min.js"></script>
+    <!-- DataTables JS -->
+    <script src="https://cdn.datatables.net/1.13.6/js/jquery.dataTables.min.js"></script>
+    <script src="https://cdn.datatables.net/1.13.6/js/dataTables.bootstrap5.min.js"></script>
+
+    <script>
+        $(document).ready(function() {
+            // Inicializar DataTable
+            const tabla = $('#tablaDistribucion').DataTable({
+                pageLength: 25,
+                lengthMenu: [[10, 25, 50, 100, -1], [10, 25, 50, 100, "Todos"]],
+                order: [[0, 'asc'], [4, 'desc']], // Ordenar por SKU y luego por peso
+                language: {
+                    url: '//cdn.datatables.net/plug-ins/1.13.6/i18n/es-ES.json'
+                },
+                columnDefs: [
+                    { targets: [1], className: 'text-truncate' }
+                ]
+            });
+
+            // Botón actualizar
+            $('#btnActualizar').on('click', function() {
+                const $btn = $(this);
+
+                // Prevenir double-submit
+                if ($btn.prop('disabled')) {
+                    return;
+                }
+
+                const mesSeleccionado = $('#selectMes').val();
+
+                console.log('Actualizando datos para mes:', mesSeleccionado);
+
+                // Deshabilitar botón
+                $btn.prop('disabled', true);
+                const textoOriginal = $btn.html();
+                $btn.html('<i class="bi bi-hourglass-split"></i> Cargando...');
+
+                // Mostrar overlay de carga
+                $('#loadingOverlay').addClass('active');
+
+                // Petición AJAX
+                $.ajax({
+                    url: '/distribucion-inventario-datos',
+                    type: 'POST',
+                    data: {
+                        mes: mesSeleccionado
+                    },
+                    success: function(response) {
+                        if (response.success) {
+                            console.log('Datos recibidos:', response);
+
+                            // Actualizar resumen general
+                            $('#statTotalSkus').text(response.resumen_general.total_skus);
+                            $('#statDisponibleTotal').text(response.resumen_general.total_disponible.toLocaleString('es-MX', {maximumFractionDigits: 0}));
+                            $('#statTotalAsignado').text(response.resumen_general.total_asignado.toLocaleString('es-MX', {maximumFractionDigits: 0}));
+                            $('#statCanalesActivos').text(response.resumen_general.total_canales);
+
+                            // Actualizar tabla
+                            tabla.clear();
+
+                            let skusVistos = new Set();
+                            response.datos_tabla.forEach(function(row) {
+                                // Indicador manual
+                                let badgeManual = row.es_manual ? '<span class="badge bg-warning text-dark ms-1" style="font-size: 0.65rem;" title="Distribución modificada manualmente"><i class="bi bi-pencil-fill"></i> Manual</span>' : '';
+
+                                // Determinar si el disponible total fue modificado manualmente
+                                let disponibleTotal = row.Disponible_Para_Vender;
+                                let badgeTotalModificado = '';
+
+                                if (row.disponible_total_manual && row.disponible_total_manual > 0) {
+                                    disponibleTotal = row.disponible_total_manual;
+                                    badgeTotalModificado = '<span class="badge bg-info text-white ms-1" style="font-size: 0.6rem;" title="Total modificado manualmente"><i class="bi bi-pencil-fill"></i></span>';
+                                }
+
+                                // Botón editar (solo primera fila del SKU)
+                                let btnEditar = '';
+                                if (!skusVistos.has(row.sku)) {
+                                    btnEditar = `<button class="btn btn-sm btn-outline-primary btn-editar-sku" data-sku="${row.sku}" title="Editar distribución manual"><i class="bi bi-gear-fill"></i> Editar</button>`;
+                                    skusVistos.add(row.sku);
+                                }
+
+                                tabla.row.add([
+                                    `<strong>${row.sku}</strong>${badgeManual}`,
+                                    `<span class="text-truncate" style="max-width: 300px;" title="${row.descripcion}">${row.descripcion}</span>`,
+                                    `<strong>${disponibleTotal.toLocaleString('es-MX', {maximumFractionDigits: 0})}</strong>${badgeTotalModificado}`,
+                                    `<span class="badge" style="background: #3498db; color: white;">${row.Channel}</span>`,
+                                    (row.peso_combinado_normalizado * 100).toLocaleString('es-MX', {minimumFractionDigits: 1, maximumFractionDigits: 1}) + '%',
+                                    `<strong style="color: #27ae60; font-size: 1.1rem;">${row.Disponible_Para_Vender_Canal_FINAL.toLocaleString('es-MX', {maximumFractionDigits: 0})}</strong>`,
+                                    btnEditar
+                                ]);
+                            });
+
+                            tabla.draw();
+
+                            // Ocultar overlay
+                            $('#loadingOverlay').removeClass('active');
+
+                        } else {
+                            console.error('Error en respuesta:', response.error);
+                            $('#loadingOverlay').removeClass('active');
+                            alert('Error al cargar datos: ' + response.error);
+                        }
+                    },
+                    error: function(xhr, status, error) {
+                        console.error('Error AJAX:', error);
+                        $('#loadingOverlay').removeClass('active');
+                        alert('Error de conexión al servidor');
+                    },
+                    complete: function() {
+                        // Re-habilitar botón
+                        $btn.prop('disabled', false);
+                        $btn.html(textoOriginal);
+                    }
+                });
+            });
+
+            // ==================================================================
+            // FUNCIONALIDAD DE EDICIÓN MANUAL
+            // ==================================================================
+
+            let datosActualesEdicion = null;
+
+            // Abrir modal al hacer clic en botón Editar
+            $(document).on('click', '.btn-editar-sku', function() {
+                const sku = $(this).data('sku');
+                const mes = $('#selectMes').val();
+
+                console.log('Abriendo modal de edición para SKU:', sku);
+
+                // Cargar datos del SKU
+                $.ajax({
+                    url: '/distribucion-inventario-editar-sku',
+                    type: 'POST',
+                    data: { sku: sku, mes: mes },
+                    success: function(response) {
+                        if (response.success) {
+                            datosActualesEdicion = response;
+                            mostrarModalEdicion(response);
+                        } else {
+                            alert('Error: ' + response.message);
+                        }
+                    },
+                    error: function(xhr) {
+                        alert('Error al cargar datos del SKU');
+                    }
+                });
+            });
+
+            function mostrarModalEdicion(data) {
+                // Llenar info del SKU
+                $('#modalSKU').text(data.sku);
+                $('#modalDescripcion').text(data.descripcion);
+                $('#inputDisponibleTotal').val(data.disponible_total.toFixed(0));
+                $('#disponibleOriginal').text(data.disponible_total.toLocaleString('es-MX', {maximumFractionDigits: 0}));
+
+                // Llenar tabla de canales
+                $('#tbodyEditarCanales').empty();
+                let totalAuto = 0;
+                let totalManual = 0;
+
+                data.canales.forEach(function(canal) {
+                    totalAuto += canal.cupo_automatico;
+                    totalManual += canal.cupo_actual;
+
+                    let dif = canal.cupo_actual - canal.cupo_automatico;
+                    let colorDif = dif > 0 ? '#27ae60' : (dif < 0 ? '#e74c3c' : '#666');
+
+                    $('#tbodyEditarCanales').append(`
+                        <tr>
+                            <td>${canal.canal}</td>
+                            <td class="text-end">${canal.cupo_automatico.toLocaleString('es-MX', {maximumFractionDigits: 0})}</td>
+                            <td>
+                                <input type="number"
+                                       class="form-control form-control-sm text-end input-cupo-manual"
+                                       data-canal="${canal.canal}"
+                                       data-auto="${canal.cupo_automatico}"
+                                       value="${canal.cupo_actual.toFixed(0)}"
+                                       min="0"
+                                       step="1">
+                            </td>
+                            <td class="text-end diferencia-cell" style="color: ${colorDif};">
+                                ${dif > 0 ? '+' : ''}${dif.toLocaleString('es-MX', {maximumFractionDigits: 0})}
+                            </td>
+                        </tr>
+                    `);
+                });
+
+                actualizarTotales();
+
+                // Limpiar comentario
+                $('#comentarioDistribucion').val('');
+
+                // Mostrar/ocultar botón revertir
+                if (data.tiene_manual) {
+                    $('#btnRevertirAutomatica').show();
+                } else {
+                    $('#btnRevertirAutomatica').hide();
+                }
+
+                // Abrir modal
+                $('#modalEditarDistribucion').modal('show');
+            }
+
+            // Actualizar totales y balance en tiempo real
+            $(document).on('input', '.input-cupo-manual', function() {
+                actualizarTotales();
+            });
+
+            // Actualizar cuando cambia el disponible total
+            $(document).on('input', '#inputDisponibleTotal', function() {
+                redistribuirPorPorcentajes();
+            });
+
+            // Función para redistribuir canales manteniendo porcentajes
+            function redistribuirPorPorcentajes() {
+                const nuevoDisponibleTotal = parseFloat($('#inputDisponibleTotal').val()) || 0;
+
+                if (nuevoDisponibleTotal <= 0) {
+                    // Si es 0 o negativo, poner todo en 0
+                    $('.input-cupo-manual').each(function() {
+                        $(this).val(0);
+                    });
+                    actualizarTotales();
+                    return;
+                }
+
+                // Calcular total manual actual
+                let totalManualActual = 0;
+                $('.input-cupo-manual').each(function() {
+                    totalManualActual += parseFloat($(this).val()) || 0;
+                });
+
+                if (totalManualActual === 0) {
+                    // Si no hay distribución manual, no hacer nada
+                    actualizarTotales();
+                    return;
+                }
+
+                // Calcular y aplicar nuevos valores proporcionales
+                $('.input-cupo-manual').each(function() {
+                    const valorActual = parseFloat($(this).val()) || 0;
+                    const porcentaje = valorActual / totalManualActual;
+                    const nuevoValor = Math.round(nuevoDisponibleTotal * porcentaje);
+                    $(this).val(nuevoValor);
+                });
+
+                // Ajustar diferencia de redondeo
+                // Calcular la diferencia total después del redondeo
+                let totalDespuesRedondeo = 0;
+                $('.input-cupo-manual').each(function() {
+                    totalDespuesRedondeo += parseFloat($(this).val()) || 0;
+                });
+
+                const diferencia = nuevoDisponibleTotal - totalDespuesRedondeo;
+
+                // Si hay diferencia por redondeo, ajustar en el canal con mayor cupo
+                if (diferencia !== 0) {
+                    let maxCupo = 0;
+                    let $inputMaxCupo = null;
+
+                    $('.input-cupo-manual').each(function() {
+                        const cupo = parseFloat($(this).val()) || 0;
+                        if (cupo > maxCupo) {
+                            maxCupo = cupo;
+                            $inputMaxCupo = $(this);
+                        }
+                    });
+
+                    if ($inputMaxCupo) {
+                        const valorAjustado = maxCupo + diferencia;
+                        $inputMaxCupo.val(Math.max(0, Math.round(valorAjustado)));
+                    }
+                }
+
+                actualizarTotales();
+            }
+
+            function actualizarTotales() {
+                let totalAuto = 0;
+                let totalManual = 0;
+
+                $('.input-cupo-manual').each(function() {
+                    let auto = parseFloat($(this).data('auto')) || 0;
+                    let manual = parseFloat($(this).val()) || 0;
+
+                    totalAuto += auto;
+                    totalManual += manual;
+
+                    // Actualizar diferencia
+                    let dif = manual - auto;
+                    let colorDif = dif > 0 ? '#27ae60' : (dif < 0 ? '#e74c3c' : '#666');
+                    let difTexto = (dif > 0 ? '+' : '') + dif.toLocaleString('es-MX', {maximumFractionDigits: 0});
+
+                    $(this).closest('tr').find('.diferencia-cell')
+                        .text(difTexto)
+                        .css('color', colorDif);
+                });
+
+                // Actualizar footer
+                $('#totalAutomatico').text(totalAuto.toLocaleString('es-MX', {maximumFractionDigits: 0}));
+                $('#totalManual').text(totalManual.toLocaleString('es-MX', {maximumFractionDigits: 0}));
+
+                let difTotal = totalManual - totalAuto;
+                $('#totalDiferencia').text((difTotal > 0 ? '+' : '') + difTotal.toLocaleString('es-MX', {maximumFractionDigits: 0}));
+
+                // Validar balance (usar el valor editable)
+                let disponibleTotal = parseFloat($('#inputDisponibleTotal').val()) || 0;
+                let balance = disponibleTotal - totalManual;
+
+                if (Math.abs(balance) < 0.01) {
+                    // Balance correcto
+                    $('#alertBalance').removeClass('alert-danger alert-warning').addClass('alert-success').show();
+                    $('#textoBalance').html('<i class="bi bi-check-circle-fill"></i> El total manual coincide con el disponible (' + totalManual.toLocaleString('es-MX', {maximumFractionDigits: 0}) + ')');
+                    $('#btnGuardarManual').prop('disabled', false);
+                } else if (balance > 0) {
+                    // Falta asignar
+                    $('#alertBalance').removeClass('alert-success alert-danger').addClass('alert-warning').show();
+                    $('#textoBalance').html('<i class="bi bi-exclamation-triangle-fill"></i> Faltan ' + balance.toLocaleString('es-MX', {maximumFractionDigits: 0}) + ' unidades por asignar');
+                    $('#btnGuardarManual').prop('disabled', true);
+                } else {
+                    // Sobrepasó
+                    $('#alertBalance').removeClass('alert-success alert-warning').addClass('alert-danger').show();
+                    $('#textoBalance').html('<i class="bi bi-x-circle-fill"></i> Se sobrepasó por ' + Math.abs(balance).toLocaleString('es-MX', {maximumFractionDigits: 0}) + ' unidades');
+                    $('#btnGuardarManual').prop('disabled', true);
+                }
+            }
+
+            // Guardar cambios manuales
+            $('#btnGuardarManual').on('click', function() {
+                const $btn = $(this);
+
+                // Prevenir double-submit: deshabilitar botón inmediatamente
+                if ($btn.prop('disabled')) {
+                    return; // Ya está procesando, ignorar click
+                }
+
+                const sku = datosActualesEdicion.sku;
+                const mes = $('#selectMes').val();
+                const comentario = $('#comentarioDistribucion').val();
+
+                // Recopilar distribuciones
+                let distribuciones = [];
+                $('.input-cupo-manual').each(function() {
+                    let canal = $(this).data('canal');
+                    let cupo_manual = parseFloat($(this).val()) || 0;
+                    let cupo_automatico = parseFloat($(this).data('auto')) || 0;
+
+                    distribuciones.push({
+                        canal: canal,
+                        cupo_manual: cupo_manual,
+                        cupo_automatico: cupo_automatico
+                    });
+                });
+
+                console.log('Guardando distribución manual:', { sku, mes, distribuciones });
+
+                // Deshabilitar botón y mostrar estado de carga
+                $btn.prop('disabled', true);
+                const textoOriginal = $btn.html();
+                $btn.html('<i class="bi bi-hourglass-split"></i> Guardando...');
+
+                // Guardar
+                $.ajax({
+                    url: '/distribucion-inventario-guardar-manual',
+                    type: 'POST',
+                    data: {
+                        sku: sku,
+                        mes: mes,
+                        distribuciones: JSON.stringify(distribuciones),
+                        disponible_total_manual: parseFloat($('#inputDisponibleTotal').val()) || 0,
+                        disponible_total_automatico: datosActualesEdicion.disponible_total_automatico || 0,
+                        usuario: 'sistema',
+                        comentario: comentario
+                    },
+                    success: function(response) {
+                        if (response.success) {
+                            alert('Distribución manual guardada correctamente');
+                            $('#modalEditarDistribucion').modal('hide');
+                            // Recargar datos
+                            $('#btnActualizar').click();
+                        } else {
+                            alert('Error: ' + response.message);
+                        }
+                    },
+                    error: function(xhr) {
+                        alert('Error al guardar distribución manual');
+                    },
+                    complete: function() {
+                        // Re-habilitar botón y restaurar texto original (éxito o error)
+                        $btn.prop('disabled', false);
+                        $btn.html(textoOriginal);
+                    }
+                });
+            });
+
+            // Revertir a automática
+            $('#btnRevertirAutomatica').on('click', function() {
+                const $btn = $(this);
+
+                // Prevenir double-submit
+                if ($btn.prop('disabled')) {
+                    return;
+                }
+
+                if (!confirm('¿Estás seguro de revertir a la distribución automática? Se perderán los cambios manuales.')) {
+                    return;
+                }
+
+                const sku = datosActualesEdicion.sku;
+                const mes = $('#selectMes').val();
+
+                // Deshabilitar botón y mostrar estado de carga
+                $btn.prop('disabled', true);
+                const textoOriginal = $btn.html();
+                $btn.html('<i class="bi bi-hourglass-split"></i> Revirtiendo...');
+
+                $.ajax({
+                    url: '/distribucion-inventario-revertir-automatica',
+                    type: 'POST',
+                    data: { sku: sku, mes: mes },
+                    success: function(response) {
+                        if (response.success) {
+                            alert('Distribución revertida a automática');
+                            $('#modalEditarDistribucion').modal('hide');
+                            $('#btnActualizar').click();
+                        } else {
+                            alert('Error: ' + response.message);
+                        }
+                    },
+                    error: function(xhr) {
+                        alert('Error al revertir distribución');
+                    },
+                    complete: function() {
+                        // Re-habilitar botón
+                        $btn.prop('disabled', false);
+                        $btn.html(textoOriginal);
+                    }
+                });
+            });
+
+            // Abrir modal agregar canal
+            $('#btnAgregarCanal').on('click', function() {
+                $('#inputCantidadNuevoCanal').val(0);
+
+                // Cargar canales disponibles
+                $.ajax({
+                    url: '/distribucion-inventario-canales-disponibles',
+                    type: 'GET',
+                    success: function(response) {
+                        if (response.success) {
+                            // Obtener canales ya agregados
+                            let canalesAgregados = [];
+                            $('.input-cupo-manual').each(function() {
+                                canalesAgregados.push($(this).data('canal'));
+                            });
+
+                            // Filtrar canales disponibles (excluir los ya agregados)
+                            let canalesDisponibles = response.canales.filter(canal =>
+                                !canalesAgregados.includes(canal)
+                            );
+
+                            // Llenar el select
+                            $('#selectNuevoCanal').empty();
+                            $('#selectNuevoCanal').append('<option value="">-- Selecciona un canal --</option>');
+
+                            canalesDisponibles.forEach(function(canal) {
+                                $('#selectNuevoCanal').append(`<option value="${canal}">${canal}</option>`);
+                            });
+
+                            if (canalesDisponibles.length === 0) {
+                                alert('No hay más canales disponibles para agregar');
+                                return;
+                            }
+
+                            $('#modalAgregarCanal').modal('show');
+                        } else {
+                            alert('Error al cargar canales disponibles');
+                        }
+                    },
+                    error: function() {
+                        alert('Error al cargar canales disponibles');
+                    }
+                });
+            });
+
+            // Confirmar agregar canal
+            $('#btnConfirmarAgregarCanal').on('click', function() {
+                const nombreCanal = $('#selectNuevoCanal').val();
+                const cantidad = parseFloat($('#inputCantidadNuevoCanal').val()) || 0;
+
+                if (!nombreCanal) {
+                    alert('Debes seleccionar un canal');
+                    return;
+                }
+
+                // Verificar que no exista ya (doble verificación)
+                let existe = false;
+                $('.input-cupo-manual').each(function() {
+                    if ($(this).data('canal') === nombreCanal) {
+                        existe = true;
+                    }
+                });
+
+                if (existe) {
+                    alert('Este canal ya existe en la lista');
+                    return;
+                }
+
+                // Agregar fila a la tabla
+                $('#tbodyEditarCanales').append(`
+                    <tr>
+                        <td>
+                            ${nombreCanal}
+                            <button type="button" class="btn btn-sm btn-outline-danger btn-eliminar-canal ms-2" title="Eliminar canal">
+                                <i class="bi bi-trash"></i>
+                            </button>
+                        </td>
+                        <td class="text-end">0</td>
+                        <td>
+                            <input type="number"
+                                   class="form-control form-control-sm text-end input-cupo-manual"
+                                   data-canal="${nombreCanal}"
+                                   data-auto="0"
+                                   value="${cantidad.toFixed(0)}"
+                                   min="0"
+                                   step="1">
+                        </td>
+                        <td class="text-end diferencia-cell" style="color: #27ae60;">
+                            +${cantidad.toLocaleString('es-MX', {maximumFractionDigits: 0})}
+                        </td>
+                    </tr>
+                `);
+
+                // Cerrar modal y actualizar totales
+                $('#modalAgregarCanal').modal('hide');
+                actualizarTotales();
+            });
+
+            // Eliminar canal agregado manualmente
+            $(document).on('click', '.btn-eliminar-canal', function() {
+                if (confirm('¿Seguro que deseas eliminar este canal?')) {
+                    $(this).closest('tr').remove();
+                    actualizarTotales();
+                }
+            });
+
+            // ==================================================================
+            // FUNCIONALIDAD DE SNAPSHOT MENSUAL
+            // ==================================================================
+
+            // Abrir modal de snapshot
+            $('#btnCrearSnapshot').on('click', function() {
+                console.log('Botón Snapshot clickeado');
+                const mesActual = $('#selectMes').val();
+                console.log('Mes actual de la página:', mesActual);
+
+                // Pre-seleccionar el mes actual en el dropdown del modal
+                $('#snapshotSelectMes').val(mesActual);
+
+                // Abrir modal con loading
+                $('#snapshotEstadisticas').hide();
+                $('#snapshotExistente').hide();
+                $('#modalCrearSnapshot').modal('show');
+
+                // Obtener info real del snapshot desde el backend
+                $.ajax({
+                    url: '/distribucion-inventario-info-snapshot',
+                    type: 'POST',
+                    data: { mes: mesActual },
+                    success: function(response) {
+                        if (response.success) {
+                            console.log('Info snapshot:', response);
+
+                            // Mostrar estadísticas reales
+                            $('#snapshotTotalSkus').text(response.total_skus);
+                            $('#snapshotTotalRegistros').text(response.registros_totales_materializada);
+                            $('#snapshotTotalDisponible').text(response.total_disponible.toLocaleString('es-MX', {maximumFractionDigits: 0}));
+                            $('#snapshotTotalCanales').text($('#statCanalesActivos').text());
+
+                            // Mostrar info de modificaciones si existen
+                            if (response.tiene_modificaciones) {
+                                $('#snapshotExistente').html(`
+                                    <i class="bi bi-info-circle-fill me-2"></i>
+                                    <strong>Estado actual:</strong><br>
+                                    • Ya tienes <strong>${response.registros_manuales_existentes}</strong> modificaciones manuales guardadas<br>
+                                    • El snapshot agregará <strong>${response.registros_faltantes}</strong> registros automáticos faltantes<br>
+                                    • Tus modificaciones se preservarán
+                                `).removeClass('alert-warning').addClass('alert-info').show();
+                            } else {
+                                $('#snapshotExistente').hide();
+                            }
+
+                            $('#snapshotEstadisticas').show();
+                            $('#btnConfirmarSnapshot').prop('disabled', false);
+                        } else {
+                            alert('Error al obtener información del snapshot: ' + response.message);
+                        }
+                    },
+                    error: function(xhr) {
+                        alert('Error al obtener información del snapshot');
+                        $('#modalCrearSnapshot').modal('hide');
+                    }
+                });
+            });
+
+            // Confirmar y crear snapshot
+            $('#btnConfirmarSnapshot').on('click', function() {
+                // Usar el mes seleccionado del modal, no de la página principal
+                const mesSeleccionado = $('#snapshotSelectMes').val();
+
+                if (!confirm(`¿Estás seguro de crear el snapshot para ${mesSeleccionado}? Esta operación guardará todos los registros actuales.`)) {
+                    return;
+                }
+
+                console.log('Creando snapshot para:', mesSeleccionado);
+
+                // Deshabilitar botón
+                $('#btnConfirmarSnapshot').prop('disabled', true).html('<i class="bi bi-hourglass-split"></i> Creando...');
+
+                $.ajax({
+                    url: '/distribucion-inventario-crear-snapshot',
+                    type: 'POST',
+                    data: { mes: mesSeleccionado },
+                    success: function(response) {
+                        if (response.success) {
+                            let mensaje = `✅ ${response.message}\n\n📊 Estadísticas:\n`;
+                            mensaje += `- SKUs: ${response.estadisticas.total_skus}\n`;
+                            mensaje += `- Total Registros: ${response.estadisticas.total_registros}\n`;
+
+                            if (response.estadisticas.registros_existentes > 0) {
+                                mensaje += `  • Modificaciones manuales preservadas: ${response.estadisticas.registros_existentes}\n`;
+                                mensaje += `  • Registros automáticos agregados: ${response.estadisticas.registros_insertados}\n`;
+                            } else {
+                                mensaje += `  • Registros creados: ${response.estadisticas.registros_insertados}\n`;
+                            }
+
+                            mensaje += `- Total Disponible: ${response.estadisticas.total_disponible.toLocaleString('es-MX')}\n`;
+                            mensaje += `- Canales: ${response.estadisticas.canales.length}`;
+
+                            alert(mensaje);
+
+                            $('#modalCrearSnapshot').modal('hide');
+                            $('#btnActualizar').click();
+                        } else {
+                            alert('❌ ' + response.message);
+
+                            // Si ya existe snapshot, mostrar alerta
+                            if (response.estadisticas && response.estadisticas.total_registros > 0) {
+                                $('#snapshotExistenteTotal').text(response.estadisticas.total_registros);
+                                $('#snapshotExistente').show();
+                            }
+                        }
+
+                        // Rehabilitar botón
+                        $('#btnConfirmarSnapshot').prop('disabled', false).html('<i class="bi bi-check-circle"></i> Confirmar y Crear Snapshot');
+                    },
+                    error: function(xhr) {
+                        alert('❌ Error al crear snapshot. Por favor intenta de nuevo.');
+                        $('#btnConfirmarSnapshot').prop('disabled', false).html('<i class="bi bi-check-circle"></i> Confirmar y Crear Snapshot');
+                    }
+                });
+            });
+
+            console.log('JavaScript de Snapshot Mensual cargado correctamente');
+
+            // ==================================================================
+            // FUNCIONALIDAD DE AGREGAR SKU NUEVO
+            // ==================================================================
+
+            let canalesNuevoSku = [];  // Array para almacenar canales agregados
+            let skusDisponibles = [];  // Array para almacenar SKUs disponibles
+
+            // Abrir modal para agregar SKU
+            $('#btnAgregarSku').on('click', function() {
+                // Limpiar formulario
+                $('#inputNuevoSku').val('');
+                $('#inputNuevaDescripcion').val('');
+                $('#inputNuevoDisponibleTotal').val(0);
+                canalesNuevoSku = [];
+                actualizarTablaCanalesNuevoSku();
+
+                // Cargar SKUs disponibles
+                $('#inputNuevoSku').prop('disabled', true).attr('placeholder', 'Cargando SKUs...');
+
+                $.ajax({
+                    url: '/distribucion-inventario-skus-disponibles',
+                    type: 'GET',
+                    success: function(response) {
+                        if (response.success) {
+                            skusDisponibles = response.skus;
+
+                            // Llenar datalist con opciones de búsqueda por SKU y por descripción
+                            $('#datalistSkus').empty();
+
+                            response.skus.forEach(function(item) {
+                                // Opción 1: Buscar por SKU
+                                $('#datalistSkus').append(`<option value="${item.sku}">${item.sku} - ${item.descripcion}</option>`);
+
+                                // Opción 2: Buscar por descripción (valor = SKU, label = descripción)
+                                $('#datalistSkus').append(`<option value="${item.sku}" label="${item.descripcion}"></option>`);
+                            });
+
+                            $('#inputNuevoSku').prop('disabled', false).attr('placeholder', 'Escribe SKU o descripción...');
+                            console.log(`SKUs cargados: ${response.skus.length}`);
+                        } else {
+                            alert('Error al cargar SKUs: ' + response.message);
+                            $('#inputNuevoSku').prop('disabled', false).attr('placeholder', 'Error al cargar');
+                        }
+                    },
+                    error: function() {
+                        alert('Error al cargar la lista de SKUs');
+                        $('#inputNuevoSku').prop('disabled', false).attr('placeholder', 'Error al cargar');
+                    }
+                });
+
+                $('#modalAgregarSku').modal('show');
+            });
+
+            // Autocompletar descripción al escribir SKU
+            $('#inputNuevoSku').on('input change', function() {
+                const skuIngresado = $(this).val().trim().toUpperCase();
+
+                // Buscar el SKU en el array de SKUs disponibles
+                const skuEncontrado = skusDisponibles.find(function(item) {
+                    return item.sku.toUpperCase() === skuIngresado;
+                });
+
+                if (skuEncontrado) {
+                    $('#inputNuevaDescripcion').val(skuEncontrado.descripcion);
+                } else {
+                    $('#inputNuevaDescripcion').val('');
+                }
+            });
+
+            // Abrir modal para agregar canal al nuevo SKU
+            $('#btnAgregarCanalNuevoSku').on('click', function() {
+                $('#inputCupoNuevoSku').val(0);
+
+                // Cargar canales disponibles
+                $.ajax({
+                    url: '/distribucion-inventario-canales-disponibles',
+                    type: 'GET',
+                    success: function(response) {
+                        if (response.success) {
+                            // Filtrar canales ya agregados
+                            const canalesAgregados = canalesNuevoSku.map(c => c.canal);
+                            const canalesDisponibles = response.canales.filter(c => !canalesAgregados.includes(c));
+
+                            // Llenar select
+                            $('#selectCanalNuevoSku').empty();
+                            $('#selectCanalNuevoSku').append('<option value="">-- Selecciona un canal --</option>');
+                            canalesDisponibles.forEach(function(canal) {
+                                $('#selectCanalNuevoSku').append(`<option value="${canal}">${canal}</option>`);
+                            });
+
+                            if (canalesDisponibles.length === 0) {
+                                alert('No hay más canales disponibles para agregar');
+                                return;
+                            }
+
+                            $('#modalAgregarCanalNuevoSku').modal('show');
+                        } else {
+                            alert('Error al cargar canales disponibles');
+                        }
+                    },
+                    error: function() {
+                        alert('Error al cargar canales disponibles');
+                    }
+                });
+            });
+
+            // Confirmar agregar canal
+            $('#btnConfirmarCanalNuevoSku').on('click', function() {
+                const canal = $('#selectCanalNuevoSku').val();
+                const cupo = parseFloat($('#inputCupoNuevoSku').val()) || 0;
+
+                if (!canal) {
+                    alert('Debes seleccionar un canal');
+                    return;
+                }
+
+                if (cupo < 0) {
+                    alert('El cupo no puede ser negativo');
+                    return;
+                }
+
+                // Agregar al array
+                canalesNuevoSku.push({
+                    canal: canal,
+                    cupo: cupo
+                });
+
+                // Actualizar tabla
+                actualizarTablaCanalesNuevoSku();
+
+                // Cerrar modal
+                $('#modalAgregarCanalNuevoSku').modal('hide');
+            });
+
+            // Función para actualizar la tabla de canales del nuevo SKU
+            function actualizarTablaCanalesNuevoSku() {
+                const tbody = $('#tbodyCanalesNuevoSku');
+                tbody.empty();
+
+                if (canalesNuevoSku.length === 0) {
+                    tbody.append(`
+                        <tr>
+                            <td colspan="4" class="text-center text-muted">
+                                <i class="bi bi-inbox"></i> No hay canales agregados. Haz clic en "Agregar Canal"
+                            </td>
+                        </tr>
+                    `);
+                    $('#totalAsignadoNuevoSku').text('0');
+                    $('#totalPorcentajeNuevoSku').text('0%');
+                    $('#alertTotalNuevoSku').hide();
+                    return;
+                }
+
+                const disponibleTotal = parseFloat($('#inputNuevoDisponibleTotal').val()) || 0;
+                let sumaAsignado = 0;
+
+                canalesNuevoSku.forEach(function(item, index) {
+                    const porcentaje = disponibleTotal > 0 ? (item.cupo / disponibleTotal * 100).toFixed(1) : 0;
+                    sumaAsignado += item.cupo;
+
+                    tbody.append(`
+                        <tr>
+                            <td>${item.canal}</td>
+                            <td>
+                                <input type="number" class="form-control form-control-sm cupo-canal-nuevo"
+                                       data-index="${index}" value="${item.cupo}" min="0" step="1">
+                            </td>
+                            <td>${porcentaje}%</td>
+                            <td>
+                                <button class="btn btn-sm btn-danger btn-eliminar-canal-nuevo" data-index="${index}">
+                                    <i class="bi bi-trash"></i>
+                                </button>
+                            </td>
+                        </tr>
+                    `);
+                });
+
+                // Actualizar totales
+                $('#totalAsignadoNuevoSku').text(sumaAsignado.toLocaleString('es-MX', {maximumFractionDigits: 0}));
+
+                const porcentajeTotal = disponibleTotal > 0 ? (sumaAsignado / disponibleTotal * 100).toFixed(1) : 0;
+                $('#totalPorcentajeNuevoSku').text(porcentajeTotal + '%');
+
+                // Mostrar alerta si no coincide
+                if (Math.abs(sumaAsignado - disponibleTotal) > 0.1 && disponibleTotal > 0) {
+                    const diferencia = disponibleTotal - sumaAsignado;
+                    $('#mensajeTotalNuevoSku').text(`La suma de canales (${sumaAsignado}) no coincide con el disponible total (${disponibleTotal}). Diferencia: ${diferencia.toFixed(0)}`);
+                    $('#alertTotalNuevoSku').show();
+                } else {
+                    $('#alertTotalNuevoSku').hide();
+                }
+            }
+
+            // Event delegation para eliminar canal
+            $(document).on('click', '.btn-eliminar-canal-nuevo', function() {
+                const index = $(this).data('index');
+                canalesNuevoSku.splice(index, 1);
+                actualizarTablaCanalesNuevoSku();
+            });
+
+            // Event delegation para actualizar cupo
+            $(document).on('change', '.cupo-canal-nuevo', function() {
+                const index = $(this).data('index');
+                const nuevoCupo = parseFloat($(this).val()) || 0;
+                canalesNuevoSku[index].cupo = nuevoCupo;
+                actualizarTablaCanalesNuevoSku();
+            });
+
+            // Actualizar tabla cuando cambia el disponible total
+            $('#inputNuevoDisponibleTotal').on('change', function() {
+                actualizarTablaCanalesNuevoSku();
+            });
+
+            // Guardar nuevo SKU
+            $('#btnGuardarNuevoSku').on('click', function() {
+                const $btn = $(this);
+
+                // Prevenir double-submit
+                if ($btn.prop('disabled')) {
+                    return;
+                }
+
+                const sku = $('#inputNuevoSku').val().trim().toUpperCase();
+                const descripcion = $('#inputNuevaDescripcion').val().trim();
+                const disponibleTotal = parseFloat($('#inputNuevoDisponibleTotal').val()) || 0;
+                const mes = $('#selectMes').val();
+
+                // Validaciones
+                if (!sku) {
+                    alert('Debes escribir o seleccionar un SKU');
+                    return;
+                }
+
+                if (!descripcion) {
+                    alert('La descripción no se cargó correctamente. Verifica que el SKU exista en el sistema.');
+                    return;
+                }
+
+                if (disponibleTotal <= 0) {
+                    alert('El disponible total debe ser mayor a 0');
+                    return;
+                }
+
+                if (canalesNuevoSku.length === 0) {
+                    alert('Debes agregar al menos un canal');
+                    return;
+                }
+
+                // Validar que la suma coincida
+                const sumaCanales = canalesNuevoSku.reduce((sum, item) => sum + item.cupo, 0);
+                if (Math.abs(sumaCanales - disponibleTotal) > 0.1) {
+                    if (!confirm(`La suma de canales (${sumaCanales}) no coincide con el disponible total (${disponibleTotal}). ¿Deseas continuar?`)) {
+                        return;
+                    }
+                }
+
+                // Deshabilitar botón
+                $btn.prop('disabled', true);
+                const textoOriginal = $btn.html();
+                $btn.html('<i class="bi bi-hourglass-split"></i> Guardando...');
+
+                // Guardar
+                $.ajax({
+                    url: '/distribucion-inventario-agregar-sku',
+                    type: 'POST',
+                    data: {
+                        sku: sku,
+                        mes: mes,
+                        descripcion: descripcion,
+                        disponible_total: disponibleTotal,
+                        distribuciones: JSON.stringify(canalesNuevoSku)
+                    },
+                    success: function(response) {
+                        if (response.success) {
+                            alert('SKU agregado correctamente');
+                            $('#modalAgregarSku').modal('hide');
+                            $('#btnActualizar').click();
+                        } else {
+                            alert('Error: ' + response.message);
+                        }
+                    },
+                    error: function(xhr) {
+                        alert('Error al guardar el SKU nuevo');
+                    },
+                    complete: function() {
+                        $btn.prop('disabled', false);
+                        $btn.html(textoOriginal);
+                    }
+                });
+            });
+
+            console.log('JavaScript de Agregar SKU cargado correctamente');
+        });
+    </script>
+</body>
+</html>

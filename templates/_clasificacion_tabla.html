@@ -1,0 +1,80 @@
+{% for sku in clasificaciones %}
+<tr class="sku-detail-row" data-aos="fade-up" data-aos-delay="{{ loop.index0 * 15 + 1650 }}" 
+    style="transition: all 0.2s ease;"
+    onmouseenter="highlightSkuDetailRow(this, '{{ sku.color }}')" 
+    onmouseleave="resetSkuDetailRow(this)">
+    <td class="py-2 px-4">
+        <span class="text-muted fw-medium" style="font-size: 0.85rem;">{{ loop.index }}</span>
+    </td>
+    <td class="py-2 px-4">
+        <div class="d-flex flex-column">
+            <div class="d-flex align-items-center mb-1">
+                <code class="text-dark bg-light px-2 py-1 rounded me-2" style="font-size: 0.75rem;">
+                    {{ sku.sku }}
+                </code>
+            </div>
+            <div class="fw-medium" style="color: #2C2C2C; line-height: 1.3; font-size: 0.85rem;">
+                {{ sku.descripcion | truncate(40, True) }}
+            </div>
+        </div>
+    </td>
+    <td class="py-2 px-4 text-center">
+        <span class="badge bg-light text-dark px-2 py-1" style="font-size: 0.8rem; font-weight: 600;">
+            {{ "{:,}".format(sku.cantidad_mensual) }}
+        </span>
+    </td>
+    <td class="py-2 px-4 text-end">
+        <span class="fw-bold" style="color: #D4AF37; font-size: 0.9rem;">
+            ${{ "{:,.0f}".format(sku.monto_mensual) }}
+        </span>
+    </td>
+    <td class="py-2 px-4 text-center">
+        <span class="badge px-2 py-1" 
+              style="background-color: {{ sku.color }}; color: white; font-weight: 600; font-size: 0.75rem;">
+            {{ sku.clasificacion }}
+        </span>
+    </td>
+    <td class="py-2 px-4 text-center">
+        <div style="font-size: 0.7rem; line-height: 1.3;">
+            <div class="fw-bold" style="color: #2C2C2C;">${{ "%.2f"|format(sku.monto_mensual / sku.cantidad_mensual) }}</div>
+            <div class="fw-bold" style="color: #D4AF37; font-size: 0.65rem;">{{ "%.1f"|format(sku.porcentaje_ingreso_promedio) }}%</div>
+        </div>
+    </td>
+    <!-- Columnas de Cuartiles -->
+    <!-- MIN (precio mínimo real) -->
+    <td class="py-2 px-1 text-center" style="border-left: 1px solid #e9ecef;">
+        <div style="font-size: 0.7rem; line-height: 1.3;">
+            <div class="fw-bold" style="color: #dc3545;">${{ "%.2f"|format(sku.min_precio) }}</div>
+            <div class="fw-bold" style="color: #D4AF37; font-size: 0.65rem;">{{ "%.1f"|format(sku.min_porcentaje) }}%</div>
+        </div>
+    </td>
+    <!-- Q1 (25%) -->
+    <td class="py-2 px-1 text-center" style="border-left: 1px solid #e9ecef;">
+        <div style="font-size: 0.7rem; line-height: 1.3;">
+            <div class="fw-bold" style="color: #2C2C2C;">${{ "%.2f"|format(sku.q1_precio) }}</div>
+            <div class="fw-bold" style="color: #D4AF37; font-size: 0.65rem;">{{ "%.1f"|format(sku.q1_porcentaje) }}%</div>
+        </div>
+    </td>
+    <!-- Q2 (50%) -->
+    <td class="py-2 px-1 text-center" style="border-left: 1px solid #e9ecef;">
+        <div style="font-size: 0.7rem; line-height: 1.3;">
+            <div class="fw-bold" style="color: #2C2C2C;">${{ "%.2f"|format(sku.q2_precio) }}</div>
+            <div class="fw-bold" style="color: #D4AF37; font-size: 0.65rem;">{{ "%.1f"|format(sku.q2_porcentaje) }}%</div>
+        </div>
+    </td>
+    <!-- Q3 (75%) -->
+    <td class="py-2 px-1 text-center" style="border-left: 1px solid #e9ecef;">
+        <div style="font-size: 0.7rem; line-height: 1.3;">
+            <div class="fw-bold" style="color: #2C2C2C;">${{ "%.2f"|format(sku.q3_precio) }}</div>
+            <div class="fw-bold" style="color: #D4AF37; font-size: 0.65rem;">{{ "%.1f"|format(sku.q3_porcentaje) }}%</div>
+        </div>
+    </td>
+    <!-- MAX (precio máximo real) -->
+    <td class="py-2 px-1 text-center" style="border-left: 1px solid #e9ecef;">
+        <div style="font-size: 0.7rem; line-height: 1.3;">
+            <div class="fw-bold" style="color: #28a745;">${{ "%.2f"|format(sku.max_precio) }}</div>
+            <div class="fw-bold" style="color: #6c757d; font-size: 0.65rem;">{{ "%.1f"|format(sku.max_porcentaje) }}%</div>
+        </div>
+    </td>
+</tr>
+{% endfor %}

@@ -1,0 +1,1108 @@
+<!-- SECCIÓN: CLASIFICACIÓN DE SKUs -->
+<style>
+/* Estilos para tooltips - copiados exactamente de layout.html */
+.simple-tooltip {
+    position: relative;
+    display: inline-block;
+    z-index: 1;
+}
+
+.simple-tooltip .tooltip-icon {
+    background: linear-gradient(135deg, rgba(212, 175, 55, 0.15), rgba(212, 175, 55, 0.05));
+    color: #D4AF37;
+    border: 1.5px solid #D4AF37;
+    border-radius: 50%;
+    width: 16px;
+    height: 16px;
+    font-size: 10px;
+    font-weight: bold;
+    cursor: help;
+    margin-left: 4px;
+    vertical-align: super;
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+    transition: all 0.2s ease;
+}
+
+.simple-tooltip .tooltip-icon:hover {
+    background: linear-gradient(135deg, rgba(212, 175, 55, 0.25), rgba(212, 175, 55, 0.1));
+    transform: scale(1.1);
+}
+
+.simple-tooltip .tooltip-text {
+    visibility: hidden;
+    position: fixed;
+    z-index: 99999;
+    background-color: white;
+    color: #2C2C2C;
+    text-align: left;
+    border-radius: 6px;
+    border: 2px solid #D4AF37;
+    padding: 10px 14px;
+    font-size: 13px;
+    opacity: 0;
+    transition: opacity 0.3s;
+    white-space: normal;
+    width: 280px;
+    max-width: 280px;
+    line-height: 1.5;
+    box-shadow: 0 6px 20px rgba(212, 175, 55, 0.25);
+    pointer-events: none;
+}
+
+.simple-tooltip .tooltip-text::after {
+    content: "";
+    position: absolute;
+    top: 100%;
+    left: 50%;
+    margin-left: -5px;
+    border-width: 5px;
+    border-style: solid;
+    border-color: #D4AF37 transparent transparent transparent;
+}
+
+.simple-tooltip:hover .tooltip-text {
+    visibility: visible;
+    opacity: 1;
+}
+</style>
+{% if meses_disponibles %}
+<div class="row mb-4 mt-5" data-aos="fade-up" data-aos-delay="1100">
+    <div class="col-12">
+        <!-- Encabezado de la sección con filtro independiente -->
+        <div class="d-flex justify-content-between align-items-center mb-4">
+            <div>
+                <h3 class="mb-2" style="color: #2C2C2C; font-weight: 700;">
+                    <i class="bi bi-pie-chart-fill me-2" style="color: #D4AF37;"></i>
+                    Clasificación de SKUs por Desempeño
+                </h3>
+                <p class="text-muted mb-0">Análisis de rendimiento mensual de productos</p>
+            </div>
+            
+            <!-- FILTRO PRINCIPAL PARA CLASIFICACIÓN - SOLO MES -->
+            <div class="card" style="border: 1px solid rgba(212, 175, 55, 0.3); min-width: 300px;">
+                <div class="card-body p-3">
+                    <form method="POST" class="clasificacion-form mb-0" id="clasificacionForm">
+                        <!-- Mantener todos los filtros existentes como hidden -->
+                        <input type="hidden" name="preset_main" value="{{ selected_preset_main }}">
+                        <input type="hidden" name="preset_compare" value="{{ selected_preset_compare }}">
+                        <input type="hidden" name="main_range" value="{{ selected_main_range }}">
+                        <input type="hidden" name="compare_range" value="{{ selected_compare_range }}">
+                        
+                        <!-- Mantener filtros de channel y warehouse generales -->
+                        {% for channel in selected_channels %}
+                        <input type="hidden" name="channel" value="{{ channel }}">
+                        {% endfor %}
+                        {% for warehouse in selected_warehouses %}
+                        <input type="hidden" name="warehouse" value="{{ warehouse }}">
+                        {% endfor %}
+
+                        <!-- MANTENER EL VALOR ACTUAL DE CLASIFICACION_MES -->
+                        <input type="hidden" name="clasificacion_mes_anterior" value="{{ selected_clasificacion_mes }}">
+                        
+                        <div class="d-flex align-items-center gap-3">
+                            <!-- Filtro de Mes -->
+                            <div class="d-flex align-items-center gap-2">
+                                <label for="clasificacion_mes" class="form-label mb-0 fw-semibold" style="color: #2C2C2C; white-space: nowrap;">
+                                    <i class="bi bi-calendar-month me-1" style="color: #D4AF37;"></i>
+                                    Mes:
+                                </label>
+                                <select name="clasificacion_mes" id="clasificacion_mes" class="form-select form-select-sm" 
+                                        style="border: 2px solid rgba(212, 175, 55, 0.3); min-width: 140px;"
+                                        onchange="submitClasificacionFormMes()">
+                                    {% for mes in meses_disponibles %}
+                                    <option value="{{ mes.valor }}" 
+                                            {% if mes.valor == selected_clasificacion_mes %}selected{% endif %}>
+                                        {{ mes.fecha_completa }}
+                                    </option>
+                                    {% endfor %}
+                                </select>
+                            </div>
+                        </div>
+                    </form>
+                </div>
+            </div>
+        </div>
+
+        {% if clasificaciones %}
+        <!-- Contenedor que se actualizará vía AJAX -->
+        <div id="contenido-clasificacion">
+            <!-- Cards de resumen de clasificaciones -->
+            {% if resumen_clasificaciones %}
+            <div class="row g-3 mb-4" id="clasificacion-cards">
+                {% for resumen in resumen_clasificaciones %}
+                <div class="col-lg col-md-4 col-sm-6" data-aos="fade-up" data-aos-delay="{{ loop.index0 * 100 + 1200 }}">
+                    <div class="p-3 shadow-sm border rounded-3 bg-white position-relative" 
+                         style="height: 120px; display: flex; flex-direction: column; justify-content: center; align-items: center; 
+                                transition: all 0.3s ease; border: 2px solid {{ resumen.color }};"
+                         onmouseenter="animateClassificationCard(this)"
+                         onmouseleave="resetClassificationCard(this)">
+                        
+                        <!-- Efecto de fondo muy sutil con color de clasificación -->
+                        <div class="position-absolute top-0 start-0 w-100 h-100" 
+                             style="background: {{ resumen.color }}; opacity: 0.03;"></div>
+                        
+                        <div class="fw-semibold text-uppercase mb-1 position-relative" 
+                             style="font-size: 0.7rem; letter-spacing: 0.5px; transition: all 0.2s ease; color: #2C2C2C;">
+                            {{ resumen.clasificacion }}
+                            {% if resumen.clasificacion == "Estrella" %}
+                            <span class="simple-tooltip">
+                                <span class="tooltip-icon">?</span>
+                                <span class="tooltip-text">≥500 ventas/mes. SKUs de alto rendimiento, productos clave del negocio.</span>
+                            </span>
+                            {% endif %}
+                            {% if resumen.clasificacion == "Prometedores" %}
+                            <span class="simple-tooltip">
+                                <span class="tooltip-icon">?</span>
+                                <span class="tooltip-text">100-499 ventas/mes. Buen potencial, pueden ser productos estrella.</span>
+                            </span>
+                            {% endif %}
+                            {% if resumen.clasificacion == "Potenciales" %}
+                            <span class="simple-tooltip">
+                                <span class="tooltip-icon">?</span>
+                                <span class="tooltip-text">30-99 ventas/mes. Requieren análisis de precio y promoción.</span>
+                            </span>
+                            {% endif %}
+                            {% if resumen.clasificacion == "Revisión" %}
+                            <span class="simple-tooltip">
+                                <span class="tooltip-icon">?</span>
+                                <span class="tooltip-text">10-29 ventas/mes. Necesitan evaluación urgente o descontinuación.</span>
+                            </span>
+                            {% endif %}
+                            {% if resumen.clasificacion == "Remover" %}
+                            <span class="simple-tooltip">
+                                <span class="tooltip-icon">?</span>
+                                <span class="tooltip-text">Menos de 10 ventas/mes. Candidatos para descontinuar.</span>
+                            </span>
+                            {% endif %}
+                        </div>
+                        
+                        <div class="fw-bold position-relative" 
+                             style="font-size: 1.3rem; color: #2C2C2C; transition: all 0.2s ease;">
+                            <span class="animated-number" id="clasif-{{ loop.index0 }}" 
+                                  data-value="{{ resumen.cantidad_actual }}"
+                                  data-type="number">
+                                {{ resumen.cantidad_actual }}
+                            </span>
+                            <small style="font-size: 0.7rem; color: #2C2C2C;"> Ítems</small>
+                        </div>
+                        
+                        <div class="fw-medium position-relative text-center" 
+                             style="font-size: 0.8rem; transition: all 0.2s ease;">
+                            <span class="participation-indicator" style="color: #2C2C2C; font-weight: 700;">
+                                {{ resumen.diferencia }}
+                            </span>
+                            <small class="d-block" style="font-size: 0.65rem; margin-top: 2px; color: #2C2C2C;">
+                                del total de ventas
+                            </small>
+                        </div>
+                        
+                        <!-- Barra de progreso con color de clasificación -->
+                        <div class="position-absolute bottom-0 start-0 w-100" style="height: 3px; background: rgba(212, 175, 55, 0.1);">
+                            <div class="h-100 transition-all" 
+                                 style="background: {{ resumen.color }}; 
+                                        width: 0%; 
+                                        transition: width 1.5s ease {{ loop.index0 * 0.2 + 2 }}s;"></div>
+                        </div>
+                    </div>
+                </div>
+                {% endfor %}
+            </div>
+            {% endif %}
+
+            <!-- TARJETAS DE INDICADORES - COMPACTAS Y ARRIBA DEL RESUMEN -->
+            {% if resumen_clasificaciones %}
+            <div class="row g-2 mt-3 mb-3">
+                
+                <!-- PRIMERA TARJETA: 3 Indicadores de Productos -->
+                <div class="col-md-6">
+                    <div class="card" style="border: 1px solid rgba(212, 175, 55, 0.2); border-radius: 8px;">
+                        <div class="card-body p-2">
+                            <div class="row g-2">
+                                <!-- 1. Productos Catálogo x Mes -->
+                                <div class="col-12">
+                                    <div class="p-2 rounded text-center" style="background: rgba(108, 117, 125, 0.1); border-left: 3px solid #6c757d;">
+                                        <div style="font-size: 0.9rem; color: #6c757d; font-weight: 600;">
+                                            # Productos del catálogo 150
+                                            <span class="simple-tooltip">
+                                                <span class="tooltip-icon">?</span>
+                                                <span class="tooltip-text">Total SKUs registrados.</span>
+                                            </span>
+                                        </div>
+                                    </div>
+                                </div>
+                                <!-- 2. Productos Comerciales Activos -->
+                                <div class="col-12">
+                                    <div class="p-2 rounded text-center" style="background: rgba(40, 167, 69, 0.1); border-left: 3px solid #28a745;">
+                                        <div style="font-size: 0.9rem; color: #28a745; font-weight: 600;">
+                                            # Productos Comerciales Activos 125
+                                            <span class="simple-tooltip">
+                                                <span class="tooltip-icon">?</span>
+                                                <span class="tooltip-text">SKUs activos en la actualidad.</span>
+                                            </span>
+                                        </div>
+                                    </div>
+                                </div>
+                                <!-- 3. Productos Comerciales > 30 unidades -->
+                                <div class="col-12">
+                                    <div class="p-2 rounded text-center" style="background: rgba(212, 175, 55, 0.1); border-left: 3px solid #D4AF37;">
+                                        <div style="font-size: 0.9rem; color: #D4AF37; font-weight: 600;">
+                                            # Comerciales > 30 x Mes 45
+                                            <span class="simple-tooltip">
+                                                <span class="tooltip-icon">?</span>
+                                                <span class="tooltip-text">SKUs con más de 30 ventas en el mes.</span>
+                                            </span>
+                                        </div>
+                                    </div>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+
+                <!-- SEGUNDA TARJETA: Productos Comerciales Participativos -->
+                <div class="col-md-3">
+                    <div class="card" style="border: 1px solid rgba(40, 167, 69, 0.2); border-radius: 8px;">
+                        <div class="card-body p-2 text-center">
+                            <h6 class="mb-1" style="font-size: 0.8rem; color: #D4AF37; font-weight: 700;">
+                                <i class="bi bi-graph-up-arrow me-1"></i>Productos Participativos
+                            </h6>
+                            <div style="font-size: 0.65rem; color: #2C2C2C; margin-bottom: 8px;">
+                                % Productos Comerciales Participativos
+                                <span class="simple-tooltip">
+                                    <span class="tooltip-icon">?</span>
+                                    <span class="tooltip-text">Porcentaje de productos que participan activamente en las ventas (>30 unidades/mes).</span>
+                                </span>
+                            </div>
+                            <div class="fw-bold" style="font-size: 1.5rem; color: #2C2C2C;">36<span style="font-size: 1rem;">%</span></div>
+                            <small style="font-size: 0.65rem; color: #2C2C2C;">Productos participativos</small>
+                        </div>
+                    </div>
+                </div>
+
+                <!-- TERCERA TARJETA: % Representa de la Venta -->
+                <div class="col-md-3">
+                    <div class="card" style="border: 1px solid rgba(220, 53, 69, 0.2); border-radius: 8px;">
+                        <div class="card-body p-2 text-center">
+                            <h6 class="mb-1" style="font-size: 0.8rem; color: #D4AF37; font-weight: 700;">
+                                <i class="bi bi-percent me-1"></i>Representación de Ventas
+                            </h6>
+                            <div style="font-size: 0.65rem; color: #2C2C2C; margin-bottom: 8px;">
+                                % Representa de la Venta
+                                <span class="simple-tooltip">
+                                    <span class="tooltip-icon">?</span>
+                                    <span class="tooltip-text">Porcentaje que representan estos productos del total de ventas.</span>
+                                </span>
+                            </div>
+                            <div class="fw-bold" style="font-size: 1.5rem; color: #2C2C2C;">
+                                78.5<span style="font-size: 1rem;">%</span>
+                            </div>
+                            <small style="font-size: 0.65rem; color: #2C2C2C;">Del total de ventas</small>
+                        </div>
+                    </div>
+                </div>
+
+            </div>
+            {% endif %}
+
+            <!-- Tabla resumen por clasificación -->
+            {% if clasificaciones_agrupadas %}
+            <div class="card mb-4" style="border: 1px solid rgba(212, 175, 55, 0.2); border-radius: 12px; overflow: hidden;" data-aos="fade-up" data-aos-delay="1400">
+                <div class="card-header" style="background: linear-gradient(135deg, rgba(212, 175, 55, 0.1), rgba(212, 175, 55, 0.05)); border-bottom: 1px solid rgba(212, 175, 55, 0.2);">
+                    <h6 class="mb-0" style="color: #2C2C2C; font-weight: 700;">
+                        <i class="bi bi-bar-chart-fill me-2" style="color: #D4AF37;"></i>
+                        Resumen por Clasificación
+                    </h6>
+                    <small class="text-muted">Agrupación de SKUs por desempeño mensual</small>
+                </div>
+                <div class="card-body p-0">
+                    <div class="table-responsive">
+                        <table class="table table-hover mb-0">
+                            <thead style="background-color: #f8f9fa;">
+                                <tr>
+                                    <th class="border-0 py-3 px-4" style="color: #2C2C2C; font-weight: 600;">Clasificación</th>
+                                    <th class="border-0 py-3 px-4 text-center" style="color: #2C2C2C; font-weight: 600;">
+                                        <i class="bi bi-hash me-1" style="color: #D4AF37;"></i>Ítems
+                                    </th>
+                                    <th class="border-0 py-3 px-4 text-center" style="color: #2C2C2C; font-weight: 600;">
+                                        <i class="bi bi-box me-1" style="color: #D4AF37;"></i>Total Unidades
+                                    </th>
+                                    <th class="border-0 py-3 px-4 text-center" style="color: #2C2C2C; font-weight: 600;">Prom x Mes</th>
+                                    <th class="border-0 py-3 px-4 text-end" style="color: #2C2C2C; font-weight: 600;">
+                                        <i class="bi bi-currency-dollar me-1" style="color: #D4AF37;"></i>Monto Total
+                                    </th>
+                                    <th class="border-0 py-3 px-4 text-center" style="color: #2C2C2C; font-weight: 600;">Ticket Promedio</th>
+                                </tr>
+                            </thead>
+                            <tbody>
+                                {% for grupo in clasificaciones_agrupadas %}
+                                <tr class="clasificacion-row" data-aos="fade-up" data-aos-delay="{{ loop.index0 * 50 + 1450 }}" 
+                                    style="transition: all 0.2s ease;"
+                                    onmouseenter="highlightClasificacionRow(this, '{{ grupo.color }}')" 
+                                    onmouseleave="resetClasificacionRow(this)">
+                                    <td class="py-3 px-4">
+                                        <div class="d-flex align-items-center">
+                                            <div class="rounded-circle me-3" 
+                                                 style="width: 12px; height: 12px; background-color: {{ grupo.color }};"></div>
+                                            <span class="fw-semibold" style="color: #2C2C2C;">{{ grupo.clasificacion }}</span>
+                                        </div>
+                                    </td>
+                                    <td class="py-3 px-4 text-center">
+                                        <span class="badge bg-light text-dark px-3 py-2" style="font-size: 0.9rem; font-weight: 600;">
+                                            {{ grupo.cantidad_skus }}
+                                        </span>
+                                    </td>
+                                    <td class="py-3 px-4 text-center">
+                                        <span class="fw-medium" style="color: #2C2C2C;">
+                                            {{ "{:,}".format(grupo.total_unidades) }}
+                                        </span>
+                                    </td>
+                                    <td class="py-3 px-4 text-center">
+                                        <span class="text-muted" style="font-size: 0.9rem;">
+                                            {{ "{:,.0f}".format(grupo.total_unidades / grupo.cantidad_skus) }}
+                                        </span>
+                                    </td>
+                                    <td class="py-3 px-4 text-end">
+                                        <span class="fw-bold" style="color: #D4AF37; font-size: 1rem;">
+                                            ${{ "{:,.0f}".format(grupo.total_monto) }}
+                                        </span>
+                                    </td>
+                                    <td class="py-3 px-4 text-center">
+                                        <span class="fw-medium" style="color: #2C2C2C; font-size: 0.9rem;">
+                                            ${{ "{:,.0f}".format(grupo.total_monto / grupo.total_unidades) }}
+                                        </span>
+                                    </td>
+                                </tr>
+                                {% endfor %}
+                                <!-- Fila de totales -->
+                                <tr style="background-color: rgba(212, 175, 55, 0.05); border-top: 2px solid rgba(212, 175, 55, 0.3);">
+                                    <td class="py-3 px-4" style="border-top: 2px solid rgba(212, 175, 55, 0.3);">
+                                        <div class="d-flex align-items-center">
+                                            <div class="rounded-circle me-3" 
+                                                 style="width: 12px; height: 12px; background-color: #D4AF37;"></div>
+                                            <span class="fw-bold" style="color: #2C2C2C; font-size: 1rem;">TOTAL</span>
+                                        </div>
+                                    </td>
+                                    <td class="py-3 px-4 text-center" style="border-top: 2px solid rgba(212, 175, 55, 0.3);">
+                                        <span class="badge px-3 py-2 fw-bold" style="background-color: #D4AF37; color: white; font-size: 0.9rem;">
+                                            {{ clasificaciones_agrupadas | sum(attribute='cantidad_skus') }}
+                                        </span>
+                                    </td>
+                                    <td class="py-3 px-4 text-center" style="border-top: 2px solid rgba(212, 175, 55, 0.3);">
+                                        <span class="fw-bold" style="color: #2C2C2C; font-size: 1rem;">
+                                            {{ "{:,}".format(clasificaciones_agrupadas | sum(attribute='total_unidades')) }}
+                                        </span>
+                                    </td>
+                                    <td class="py-3 px-4 text-center" style="border-top: 2px solid rgba(212, 175, 55, 0.3);">
+                                        <span class="text-muted fw-medium" style="font-size: 0.85rem;">-</span>
+                                    </td>
+                                    <td class="py-3 px-4 text-end" style="border-top: 2px solid rgba(212, 175, 55, 0.3);">
+                                        <span class="fw-bold" style="color: #D4AF37; font-size: 1.1rem;">
+                                            ${{ "{:,.0f}".format(clasificaciones_agrupadas | sum(attribute='total_monto')) }}
+                                        </span>
+                                    </td>
+                                    <td class="py-3 px-4 text-center" style="border-top: 2px solid rgba(212, 175, 55, 0.3);">
+                                        <span class="fw-bold" style="color: #D4AF37; font-size: 1rem;">
+                                            ${{ "{:,.0f}".format((clasificaciones_agrupadas | sum(attribute='total_monto')) / (clasificaciones_agrupadas | sum(attribute='total_unidades'))) }}
+                                        </span>
+                                    </td>
+                                </tr>
+                            </tbody>
+                        </table>
+                    </div>
+                </div>
+            </div>
+            {% endif %}
+
+            <!-- Tabla detallada de todos los SKUs clasificados -->
+            <div class="card" id="tabla-detallada-skus" style="border: 1px solid rgba(212, 175, 55, 0.2); border-radius: 12px; overflow: hidden;" data-aos="fade-up" data-aos-delay="1600">
+                <div class="card-header" style="background: linear-gradient(135deg, rgba(212, 175, 55, 0.1), rgba(212, 175, 55, 0.05)); border-bottom: 1px solid rgba(212, 175, 55, 0.2);">
+                    <div class="d-flex justify-content-between align-items-center">
+                        <div>
+                            <h6 class="mb-0" style="color: #2C2C2C; font-weight: 700;">
+                                <i class="bi bi-list-stars me-2" style="color: #D4AF37;"></i>
+                                Clasificación Detallada de SKUs
+                            </h6>
+                            <small class="text-muted">Todos los SKUs ordenados por unidades vendidas con su clasificación</small>
+                        </div>
+                        
+                        <!-- FILTROS PARA ESTA TABLA -->
+                        <div class="d-flex align-items-center gap-3" style="min-width: 400px;">
+                            <!-- Filtro de Canal -->
+                            <div class="d-flex align-items-center gap-2">
+                                <label for="clasificacion_canal_tabla" class="form-label mb-0 fw-semibold" style="color: #2C2C2C; white-space: nowrap; font-size: 0.85rem;">
+                                    <i class="bi bi-broadcast me-1" style="color: #D4AF37;"></i>
+                                    Canal:
+                                </label>
+                                <select name="clasificacion_canal_tabla" id="clasificacion_canal_tabla" class="form-select form-select-sm" 
+                                        style="border: 2px solid rgba(212, 175, 55, 0.3); min-width: 120px; font-size: 0.85rem;"
+                                        onchange="submitClasificacionFormTabla()">
+                                    <option value="todos" {% if selected_clasificacion_canal == "todos" %}selected{% endif %}>
+                                        Todos
+                                    </option>
+                                    {% for canal in channels %}
+                                    <option value="{{ canal }}" 
+                                            {% if canal == selected_clasificacion_canal %}selected{% endif %}>
+                                        {{ canal }}
+                                    </option>
+                                    {% endfor %}
+                                </select>
+                            </div>
+                            
+                            <!-- Filtro de Búsqueda -->
+                            <div class="d-flex align-items-center gap-2">
+                                <label for="busqueda_sku_tabla" class="form-label mb-0 fw-semibold" style="color: #2C2C2C; white-space: nowrap; font-size: 0.85rem;">
+                                    <i class="bi bi-search me-1" style="color: #D4AF37;"></i>
+                                    Buscar:
+                                </label>
+                                <input type="text" id="busqueda_sku_tabla" class="form-control form-control-sm" 
+                                       placeholder="SKU o descripción..." 
+                                       style="border: 2px solid rgba(212, 175, 55, 0.3); min-width: 180px; font-size: 0.85rem;"
+                                       oninput="filtrarTablaSKUs()">
+                            </div>
+                        </div>
+                    </div>
+                </div>
+                <div class="card-body p-0">
+                    <div class="table-responsive" style="max-height: 500px;">
+                        <table class="table table-hover mb-0">
+                            <thead style="background-color: #f8f9fa; position: sticky; top: 0; z-index: 10;">
+                                <tr>
+                                    <th class="border-0 py-3 px-4" style="color: #2C2C2C; font-weight: 600; width: 3%;">#</th>
+                                    <th class="border-0 py-3 px-4" style="color: #2C2C2C; font-weight: 600; width: 20%;">Producto Comercial</th>
+                                    <th class="border-0 py-3 px-4 text-center" style="color: #2C2C2C; font-weight: 600; width: 7%;">
+                                        <i class="bi bi-box me-1" style="color: #D4AF37;"></i>Unidades
+                                    </th>
+                                    <th class="border-0 py-3 px-4 text-end" style="color: #2C2C2C; font-weight: 600; width: 7%;">
+                                        <i class="bi bi-currency-dollar me-1" style="color: #D4AF37;"></i>Monto
+                                    </th>
+                                    <th class="border-0 py-3 px-4 text-center" style="color: #2C2C2C; font-weight: 600; width: 7%;">Clasificación</th>
+                                    <th class="border-0 py-3 px-4 text-center" style="color: #2C2C2C; font-weight: 600; width: 8%;">
+                                        <i class="bi bi-receipt me-1" style="color: #D4AF37;"></i>Ticket Promedio
+                                    </th>
+                                    <!-- Columnas de Cuartiles -->
+                                    <th class="border-0 py-2 px-1 text-center" style="color: #2C2C2C; font-weight: 600; width: 8%;">
+                                        <div style="font-size: 0.75rem;">
+                                            <i class="bi bi-chevron-down me-1" style="color: #dc3545;"></i>MIN
+                                            <span class="simple-tooltip">
+                                                <span class="tooltip-icon">?</span>
+                                                <span class="tooltip-text">Precio mínimo registrado del producto. Representa el precio más bajo al que se ha vendido, posiblemente en promociones o liquidaciones.</span>
+                                            </span>
+                                        </div>
+                                    </th>
+                                    <th class="border-0 py-2 px-1 text-center" style="color: #2C2C2C; font-weight: 600; width: 8%;">
+                                        <div style="font-size: 0.75rem;">
+                                            <i class="bi bi-1-circle me-1" style="color: #6c757d;"></i>Q1 (25%)
+                                            <span class="simple-tooltip">
+                                                <span class="tooltip-icon">?</span>
+                                                <span class="tooltip-text">Primer cuartil: precio al que se vendió el 25% de las unidades más económicas. Representa ventas a precios bajos o promocionales con menor margen de ganancia.</span>
+                                            </span>
+                                        </div>
+                                    </th>
+                                    <th class="border-0 py-2 px-1 text-center" style="color: #2C2C2C; font-weight: 600; width: 8%;">
+                                        <div style="font-size: 0.75rem;">
+                                            <i class="bi bi-2-circle me-1" style="color: #17a2b8;"></i>Q2 (50%)
+                                            <span class="simple-tooltip">
+                                                <span class="tooltip-icon">?</span>
+                                                <span class="tooltip-text">Segundo cuartil (mediana): precio al que se vendió el 50% de las unidades. Representa el precio de venta más común con margen estándar.</span>
+                                            </span>
+                                        </div>
+                                    </th>
+                                    <th class="border-0 py-2 px-1 text-center" style="color: #2C2C2C; font-weight: 600; width: 8%;">
+                                        <div style="font-size: 0.75rem;">
+                                            <i class="bi bi-3-circle me-1" style="color: #28a745;"></i>Q3 (75%)
+                                            <span class="simple-tooltip">
+                                                <span class="tooltip-icon">?</span>
+                                                <span class="tooltip-text">Tercer cuartil: precio al que se vendió el 75% de las unidades. Representa ventas a precios elevados con buen margen de rentabilidad.</span>
+                                            </span>
+                                        </div>
+                                    </th>
+                                    <th class="border-0 py-2 px-1 text-center" style="color: #2C2C2C; font-weight: 600; width: 8%;">
+                                        <div style="font-size: 0.75rem;">
+                                            <i class="bi bi-chevron-up me-1" style="color: #28a745;"></i>MAX
+                                            <span class="simple-tooltip">
+                                                <span class="tooltip-icon">?</span>
+                                                <span class="tooltip-text">Precio máximo registrado del producto. Representa el precio más alto al que se ha vendido, indicando ventas premium con el mayor margen de ganancia.</span>
+                                            </span>
+                                        </div>
+                                    </th>
+                                </tr>
+                            </thead>
+                            <tbody>
+                                {% for sku in clasificaciones %}
+                                <tr class="sku-detail-row" data-aos="fade-up" data-aos-delay="{{ loop.index0 * 15 + 1650 }}" 
+                                    style="transition: all 0.2s ease;"
+                                    onmouseenter="highlightSkuDetailRow(this, '{{ sku.color }}')" 
+                                    onmouseleave="resetSkuDetailRow(this)">
+                                    <td class="py-2 px-4">
+                                        <span class="text-muted fw-medium" style="font-size: 0.85rem;">{{ loop.index }}</span>
+                                    </td>
+                                    <td class="py-2 px-4">
+                                        <div class="d-flex flex-column">
+                                            <div class="d-flex align-items-center mb-1">
+                                                <code class="text-dark bg-light px-2 py-1 rounded me-2" style="font-size: 0.75rem;">
+                                                    {{ sku.sku }}
+                                                </code>
+                                            </div>
+                                            <div class="fw-medium" style="color: #2C2C2C; line-height: 1.3; font-size: 0.85rem;">
+                                                {{ sku.descripcion | truncate(40, True) }}
+                                            </div>
+                                        </div>
+                                    </td>
+                                    <td class="py-2 px-4 text-center">
+                                        <span class="badge bg-light text-dark px-2 py-1" style="font-size: 0.8rem; font-weight: 600;">
+                                            {{ "{:,}".format(sku.cantidad_mensual) }}
+                                        </span>
+                                    </td>
+                                    <td class="py-2 px-4 text-end">
+                                        <span class="fw-bold" style="color: #D4AF37; font-size: 0.9rem;">
+                                            ${{ "{:,.0f}".format(sku.monto_mensual) }}
+                                        </span>
+                                    </td>
+                                    <td class="py-2 px-4 text-center">
+                                        <span class="badge px-2 py-1" 
+                                              style="background-color: {{ sku.color }}; color: white; font-weight: 600; font-size: 0.75rem;">
+                                            {{ sku.clasificacion }}
+                                        </span>
+                                    </td>
+                                    <td class="py-2 px-4 text-center">
+                                        <div style="font-size: 0.7rem; line-height: 1.3;">
+                                            <div class="fw-bold" style="color: #2C2C2C;">${{ "%.2f"|format(sku.monto_mensual / sku.cantidad_mensual) }}</div>
+                                            <div class="fw-bold" style="color: #D4AF37; font-size: 0.65rem;">{{ "%.1f"|format(sku.porcentaje_ingreso_promedio) }}%</div>
+                                        </div>
+                                    </td>
+                                    <!-- Columnas de Cuartiles -->
+                                    <!-- MIN (precio mínimo real) -->
+                                    <td class="py-2 px-1 text-center" style="border-left: 1px solid #e9ecef;">
+                                        <div style="font-size: 0.7rem; line-height: 1.3;">
+                                            <div class="fw-bold" style="color: #dc3545;">${{ "%.2f"|format(sku.min_precio) }}</div>
+                                            <div class="fw-bold" style="color: #D4AF37; font-size: 0.65rem;">{{ "%.1f"|format(sku.min_porcentaje) }}%</div>
+                                        </div>
+                                    </td>
+                                    <!-- Q1 (25%) -->
+                                    <td class="py-2 px-1 text-center" style="border-left: 1px solid #e9ecef;">
+                                        <div style="font-size: 0.7rem; line-height: 1.3;">
+                                            <div class="fw-bold" style="color: #2C2C2C;">${{ "%.2f"|format(sku.q1_precio) }}</div>
+                                            <div class="fw-bold" style="color: #D4AF37; font-size: 0.65rem;">{{ "%.1f"|format(sku.q1_porcentaje) }}%</div>
+                                        </div>
+                                    </td>
+                                    <!-- Q2 (50%) -->
+                                    <td class="py-2 px-1 text-center" style="border-left: 1px solid #e9ecef;">
+                                        <div style="font-size: 0.7rem; line-height: 1.3;">
+                                            <div class="fw-bold" style="color: #2C2C2C;">${{ "%.2f"|format(sku.q2_precio) }}</div>
+                                            <div class="fw-bold" style="color: #D4AF37; font-size: 0.65rem;">{{ "%.1f"|format(sku.q2_porcentaje) }}%</div>
+                                        </div>
+                                    </td>
+                                    <!-- Q3 (75%) -->
+                                    <td class="py-2 px-1 text-center" style="border-left: 1px solid #e9ecef;">
+                                        <div style="font-size: 0.7rem; line-height: 1.3;">
+                                            <div class="fw-bold" style="color: #2C2C2C;">${{ "%.2f"|format(sku.q3_precio) }}</div>
+                                            <div class="fw-bold" style="color: #D4AF37; font-size: 0.65rem;">{{ "%.1f"|format(sku.q3_porcentaje) }}%</div>
+                                        </div>
+                                    </td>
+                                    <!-- MAX (precio máximo real) -->
+                                    <td class="py-2 px-1 text-center" style="border-left: 1px solid #e9ecef;">
+                                        <div style="font-size: 0.7rem; line-height: 1.3;">
+                                            <div class="fw-bold" style="color: #28a745;">${{ "%.2f"|format(sku.max_precio) }}</div>
+                                            <div class="fw-bold" style="color: #6c757d; font-size: 0.65rem;">{{ "%.1f"|format(sku.max_porcentaje) }}%</div>
+                                        </div>
+                                    </td>
+                                </tr>
+                                {% endfor %}
+                            </tbody>
+                        </table>
+                    </div>
+                </div>
+            </div>
+
+        </div> <!-- Cerrar div contenido-clasificacion -->
+        {% else %}
+        <!-- Contenedor para mensaje de error -->
+        <div id="contenido-clasificacion">
+            <!-- Mensaje cuando no hay clasificaciones -->
+            <div class="alert alert-warning text-center" style="background: linear-gradient(135deg, rgba(255, 193, 7, 0.1), rgba(255, 193, 7, 0.05)); border: 1px solid rgba(255, 193, 7, 0.3);">
+                <i class="bi bi-exclamation-triangle me-2" style="color: #ffc107;"></i>
+                <strong>No hay datos de clasificación disponibles</strong>
+                <br>
+                <small class="text-muted">Selecciona un mes diferente o verifica que haya datos de ventas para el período seleccionado.</small>
+            </div>
+        </div> <!-- Cerrar div contenido-clasificacion del else -->
+        {% endif %}
+    </div>
+</div>
+
+<script>
+// JavaScript específico para clasificación de SKUs con filtros separados
+
+// Función para el filtro de MES (afecta toda la pestaña)
+function submitClasificacionFormMes() {
+    const selectMes = document.getElementById('clasificacion_mes');
+    const mesSeleccionado = selectMes.value;
+    
+    console.log('Actualizando clasificación para mes:', mesSeleccionado);
+    
+    // Mostrar spinner global con mensaje específico
+    if (typeof showGlobalLoading === 'function') {
+        showGlobalLoading('Calculando clasificación...', 'Analizando SKUs del mes seleccionado');
+    }
+    
+    // También mostrar indicador local en la sección
+    const contenidoClasificacion = document.getElementById('contenido-clasificacion');
+    if (contenidoClasificacion) {
+        contenidoClasificacion.innerHTML = `
+            <div class="text-center py-5">
+                <div class="spinner-border text-warning mb-3" role="status" style="color: #D4AF37 !important;">
+                    <span class="visually-hidden">Cargando...</span>
+                </div>
+                <p class="text-muted">Actualizando clasificaciones...</p>
+            </div>
+        `;
+    }
+    
+    // Obtener los filtros actuales de channel y warehouse
+    const form = document.querySelector('form'); // El formulario principal de la página
+    const formData = new FormData();
+    
+    // Agregar el mes seleccionado y mantener el canal actual
+    formData.append('clasificacion_mes', mesSeleccionado);
+    
+    // Obtener el canal actualmente seleccionado en el filtro de tabla
+    const selectCanal = document.getElementById('clasificacion_canal_tabla');
+    const canalActual = selectCanal ? selectCanal.value : 'todos';
+    formData.append('clasificacion_canal', canalActual);
+    
+    // Agregar filtros de channel y warehouse si existen
+    if (form) {
+        const channels = form.querySelectorAll('input[name="channel"]:checked');
+        const warehouses = form.querySelectorAll('input[name="warehouse"]:checked');
+        
+        channels.forEach(cb => formData.append('channel', cb.value));
+        warehouses.forEach(cb => formData.append('warehouse', cb.value));
+    }
+    
+    // Hacer petición AJAX
+    fetch('/clasificacion-ajax', {
+        method: 'POST',
+        body: formData
+    })
+    .then(response => response.json())
+    .then(data => {
+        if (data.success) {
+            // Actualizar solo el contenido de clasificación
+            if (contenidoClasificacion) {
+                contenidoClasificacion.innerHTML = data.html;
+                
+                // Forzar re-renderizado de tooltips
+                const tooltips = contenidoClasificacion.querySelectorAll('.simple-tooltip');
+                tooltips.forEach(tooltip => {
+                    // Forzar recalculo de estilos
+                    tooltip.style.position = 'relative';
+                    tooltip.offsetHeight; // Trigger reflow
+                });
+            }
+            
+            // Actualizar el valor del select de mes
+            selectMes.value = data.selected_mes;
+            
+            // Limpiar filtro de búsqueda cuando se actualiza el mes
+            const inputBusqueda = document.getElementById('busqueda_sku_tabla');
+            if (inputBusqueda) {
+                inputBusqueda.value = '';
+            }
+            
+            // Ocultar spinner global
+            if (typeof hideGlobalLoading === 'function') {
+                hideGlobalLoading();
+            }
+            
+            // Reinicializar animaciones
+            setTimeout(() => {
+                animateClassificationNumbers();
+                animateProgressBars();
+            }, 100);
+            
+            console.log('Clasificación actualizada exitosamente');
+        } else {
+            throw new Error(data.error || 'Error desconocido');
+        }
+    })
+    .catch(error => {
+        console.error('Error actualizando clasificación:', error);
+        
+        // Ocultar spinner global en caso de error
+        if (typeof hideGlobalLoading === 'function') {
+            hideGlobalLoading();
+        }
+        
+        if (contenidoClasificacion) {
+            contenidoClasificacion.innerHTML = `
+                <div class="alert alert-danger text-center">
+                    <i class="bi bi-exclamation-triangle me-2"></i>
+                    <strong>Error al actualizar</strong><br>
+                    <small>${error.message}</small>
+                </div>
+            `;
+        }
+    });
+}
+
+// Función para el filtro de CANAL (solo afecta la tabla detallada)
+function submitClasificacionFormTabla() {
+    const selectMes = document.getElementById('clasificacion_mes');
+    const selectCanal = document.getElementById('clasificacion_canal_tabla');
+    const mesSeleccionado = selectMes.value;
+    const canalSeleccionado = selectCanal.value;
+    
+    console.log('Filtrando tabla por canal:', canalSeleccionado, 'para mes:', mesSeleccionado);
+    
+    // Debug: verificar que el elemento existe y tiene el valor correcto
+    if (!selectCanal) {
+        console.error('No se encontró el select de canal con ID clasificacion_canal_tabla');
+        return;
+    }
+    
+    console.log('Select canal encontrado, valor actual:', selectCanal.value);
+    
+    // Para filtros de tabla específicos, solo mostrar spinner local (no global)
+    // porque es una acción rápida que solo afecta una parte de la página
+    
+    // Mostrar indicador de carga SOLO en el tbody de la tabla detallada de SKUs
+    const tablaDetallada = document.querySelector('#tabla-detallada-skus .table-responsive table tbody');
+    console.log('Tabla detallada encontrada:', tablaDetallada ? 'SÍ' : 'NO');
+    if (tablaDetallada) {
+        tablaDetallada.innerHTML = `
+            <tr>
+                <td colspan="12" class="text-center py-4">
+                    <div class="spinner-border text-warning mb-2" role="status" style="color: #D4AF37 !important;">
+                        <span class="visually-hidden">Cargando...</span>
+                    </div>
+                    <p class="text-muted mb-0">Filtrando tabla...</p>
+                </td>
+            </tr>
+        `;
+    }
+    
+    // Obtener los filtros actuales
+    const form = document.querySelector('form');
+    const formData = new FormData();
+    
+    // Agregar mes y canal seleccionados
+    formData.append('clasificacion_mes', mesSeleccionado);
+    formData.append('clasificacion_canal', canalSeleccionado);
+    formData.append('solo_tabla', 'true'); // Indicar que solo queremos actualizar la tabla
+    
+    // Agregar filtros de channel y warehouse si existen
+    if (form) {
+        const channels = form.querySelectorAll('input[name="channel"]:checked');
+        const warehouses = form.querySelectorAll('input[name="warehouse"]:checked');
+        
+        channels.forEach(cb => formData.append('channel', cb.value));
+        warehouses.forEach(cb => formData.append('warehouse', cb.value));
+    }
+    
+    // Hacer petición AJAX
+    fetch('/clasificacion-ajax', {
+        method: 'POST',
+        body: formData
+    })
+    .then(response => {
+        console.log('Respuesta HTTP status:', response.status);
+        if (!response.ok) {
+            throw new Error(`HTTP error! status: ${response.status}`);
+        }
+        return response.json();
+    })
+    .then(data => {
+        console.log('Respuesta recibida:', data);
+        if (data.success) {
+            // Actualizar SOLO el tbody de la tabla existente
+            if (tablaDetallada) {
+                if (data.tabla_html && data.tabla_html.trim()) {
+                    console.log('Actualizando tabla con HTML:', data.tabla_html.substring(0, 100) + '...');
+                    tablaDetallada.innerHTML = data.tabla_html;
+                } else {
+                    console.warn('No se recibió tabla_html válido en la respuesta');
+                    // Si no hay HTML, mostrar mensaje de sin datos
+                    tablaDetallada.innerHTML = `
+                        <tr>
+                            <td colspan="12" class="text-center py-4">
+                                <div class="alert alert-warning mb-0">
+                                    <i class="bi bi-exclamation-triangle me-2"></i>
+                                    <strong>No hay datos para mostrar</strong>
+                                </div>
+                            </td>
+                        </tr>
+                    `;
+                }
+                
+                // Reinicializar tooltips de cuartiles después de filtro
+                if (typeof setupQuartileTooltips === 'function') {
+                    setTimeout(() => {
+                        setupQuartileTooltips();
+                    }, 100);
+                }
+            } else {
+                console.error('No se encontró el elemento tablaDetallada');
+            }
+            
+            // Actualizar el valor seleccionado del filtro canal
+            selectCanal.value = data.selected_canal || canalSeleccionado;
+            
+            // Limpiar filtro de búsqueda cuando se actualiza la tabla
+            const inputBusqueda = document.getElementById('busqueda_sku_tabla');
+            if (inputBusqueda) {
+                inputBusqueda.value = '';
+            }
+            
+            // Ocultar loading global que se activó automáticamente
+            if (typeof hideGlobalLoading === 'function') {
+                hideGlobalLoading();
+            }
+            
+            console.log('Tabla filtrada exitosamente');
+        } else {
+            throw new Error(data.error || 'Error desconocido');
+        }
+    })
+    .catch(error => {
+        console.error('Error filtrando tabla:', error);
+        
+        // Ocultar loading global en caso de error
+        if (typeof hideGlobalLoading === 'function') {
+            hideGlobalLoading();
+        }
+        
+        if (tablaDetallada) {
+            tablaDetallada.innerHTML = `
+                <tr>
+                    <td colspan="12" class="text-center">
+                        <div class="alert alert-danger">
+                            <i class="bi bi-exclamation-triangle me-2"></i>
+                            <strong>Error al filtrar tabla</strong><br>
+                            <small>${error.message}</small>
+                        </div>
+                    </td>
+                </tr>
+            `;
+        }
+    });
+}
+
+// Función para animar las barras de progreso en el nuevo contenido
+function animateProgressBars() {
+    const progressBars = document.querySelectorAll('#clasificacion-cards .position-absolute.bottom-0 .h-100');
+    
+    progressBars.forEach((bar, index) => {
+        setTimeout(() => {
+            bar.style.width = '100%';
+        }, index * 50 + 100);
+    });
+}
+
+function animateClassificationCard(card) {
+    card.style.transform = 'translateY(-5px) scale(1.02)';
+    card.style.boxShadow = '0 8px 25px rgba(212, 175, 55, 0.2)';
+    card.style.borderColor = 'rgba(212, 175, 55, 0.5)';
+    
+    const title = card.querySelector('.text-muted');
+    const value = card.querySelector('.fw-bold');
+    const delta = card.querySelector('.fw-medium');
+    
+    if (title) title.style.transform = 'scale(1.05)';
+    if (value) value.style.transform = 'scale(1.08)';
+    if (delta) delta.style.transform = 'scale(1.05)';
+}
+
+function resetClassificationCard(card) {
+    card.style.transform = 'translateY(0) scale(1)';
+    card.style.boxShadow = '0 2px 6px rgba(0, 0, 0, 0.05)';
+    card.style.borderColor = 'rgba(212, 175, 55, 0.2)';
+    
+    const title = card.querySelector('.text-muted');
+    const value = card.querySelector('.fw-bold');
+    const delta = card.querySelector('.fw-medium');
+    
+    if (title) title.style.transform = 'scale(1)';
+    if (value) value.style.transform = 'scale(1)';
+    if (delta) delta.style.transform = 'scale(1)';
+}
+
+function highlightClasificacionRow(row, color) {
+    row.style.backgroundColor = color + '08';
+    row.style.transform = 'translateX(5px)';
+    row.style.boxShadow = '0 3px 10px ' + color + '25';
+}
+
+function resetClasificacionRow(row) {
+    row.style.backgroundColor = '';
+    row.style.transform = 'translateX(0)';
+    row.style.boxShadow = '';
+}
+
+function highlightSkuDetailRow(row, color) {
+    row.style.backgroundColor = color + '08';
+    row.style.transform = 'translateX(5px)';
+    row.style.boxShadow = '0 3px 10px ' + color + '25';
+}
+
+function resetSkuDetailRow(row) {
+    row.style.backgroundColor = '';
+    row.style.transform = 'translateX(0)';
+    row.style.boxShadow = '';
+}
+
+// Animar números de clasificación
+function animateClassificationNumbers() {
+    document.querySelectorAll('#clasif-0, #clasif-1, #clasif-2, #clasif-3, #clasif-4').forEach((element, index) => {
+        const value = element.getAttribute('data-value');
+        const type = element.getAttribute('data-type');
+        
+        if (value && !isNaN(value)) {
+            const numericValue = parseFloat(value);
+            
+            setTimeout(() => {
+                if (typeof window.animateNumber === 'function') {
+                    window.animateNumber(element.id, numericValue, 800, '', '');
+                }
+            }, index * 100 + 1500);
+        }
+    });
+}
+
+// Función para filtrar tabla de SKUs por búsqueda
+function filtrarTablaSKUs() {
+    const busqueda = document.getElementById('busqueda_sku_tabla').value.toLowerCase().trim();
+    const tabla = document.querySelector('#tabla-detallada-skus .table tbody');
+    
+    if (!tabla) {
+        console.warn('No se encontró la tabla de SKUs para filtrar');
+        return;
+    }
+    
+    const filas = tabla.querySelectorAll('tr.sku-detail-row');
+    let filasVisibles = 0;
+    
+    filas.forEach(fila => {
+        // Obtener SKU y descripción de la fila
+        const celdaSku = fila.querySelector('td:nth-child(2)');
+        if (!celdaSku) return;
+        
+        const codigoSku = celdaSku.querySelector('code');
+        const descripcionDiv = celdaSku.querySelector('.fw-medium');
+        
+        const sku = codigoSku ? codigoSku.textContent.toLowerCase().trim() : '';
+        const descripcion = descripcionDiv ? descripcionDiv.textContent.toLowerCase().trim() : '';
+        
+        // Verificar si la búsqueda coincide con SKU o descripción
+        const coincideSku = sku.includes(busqueda);
+        const coincideDescripcion = descripcion.includes(busqueda);
+        
+        if (busqueda === '' || coincideSku || coincideDescripcion) {
+            fila.style.display = '';
+            filasVisibles++;
+        } else {
+            fila.style.display = 'none';
+        }
+    });
+    
+    // Mostrar mensaje si no hay resultados
+    mostrarMensajeSinResultados(tabla, filasVisibles, busqueda);
+}
+
+// Función auxiliar para mostrar mensaje cuando no hay resultados de búsqueda
+function mostrarMensajeSinResultados(tabla, filasVisibles, busqueda) {
+    // Eliminar mensaje previo si existe
+    const mensajePrevio = tabla.querySelector('.mensaje-sin-resultados');
+    if (mensajePrevio) {
+        mensajePrevio.remove();
+    }
+    
+    // Si no hay filas visibles y hay búsqueda activa, mostrar mensaje
+    if (filasVisibles === 0 && busqueda.length > 0) {
+        const mensajeRow = document.createElement('tr');
+        mensajeRow.className = 'mensaje-sin-resultados';
+        mensajeRow.innerHTML = `
+            <td colspan="12" class="text-center py-4">
+                <div class="alert alert-warning mb-0">
+                    <i class="bi bi-search me-2" style="color: #D4AF37;"></i>
+                    <strong>No se encontraron resultados</strong><br>
+                    <small class="text-muted">No hay SKUs que coincidan con "<em>${busqueda}</em>"</small>
+                </div>
+            </td>
+        `;
+        tabla.appendChild(mensajeRow);
+    }
+}
+
+
+// Estilos adicionales para los filtros
+const style = document.createElement('style');
+style.textContent = `
+    #clasificacion_mes:focus {
+        border-color: #D4AF37 !important;
+        box-shadow: 0 0 0 0.2rem rgba(212, 175, 55, 0.25) !important;
+    }
+    
+    #clasificacion_mes {
+        transition: all 0.3s ease;
+    }
+    
+    #clasificacion_mes:hover {
+        border-color: rgba(212, 175, 55, 0.5);
+    }
+    
+    /* Estilos para el filtro de búsqueda */
+    #busqueda_sku_tabla:focus {
+        border-color: #D4AF37 !important;
+        box-shadow: 0 0 0 0.2rem rgba(212, 175, 55, 0.25) !important;
+        outline: none;
+    }
+    
+    #busqueda_sku_tabla {
+        transition: all 0.3s ease;
+    }
+    
+    #busqueda_sku_tabla:hover {
+        border-color: rgba(212, 175, 55, 0.5);
+    }
+    
+    #busqueda_sku_tabla::placeholder {
+        color: #6c757d;
+        opacity: 0.8;
+    }
+    
+    /* Animación para filas que aparecen/desaparecen en el filtrado */
+    .sku-detail-row {
+        transition: opacity 0.2s ease, transform 0.2s ease;
+    }
+    
+    .sku-detail-row[style*="display: none"] {
+        opacity: 0;
+        transform: translateX(-10px);
+    }
+`;
+document.head.appendChild(style);
+
+// Llamar a la animación cuando se cargue la sección
+document.addEventListener('DOMContentLoaded', function() {
+    setTimeout(() => {
+        animateClassificationNumbers();
+        setupTooltipPositioning();
+    }, 2000);
+});
+</script>
+{% else %}
+<!-- Mensaje cuando no hay meses disponibles -->
+<div class="row mb-4 mt-5" data-aos="fade-up" data-aos-delay="1100">
+    <div class="col-12">
+        <div class="text-center py-5">
+            <div class="mb-4">
+                <i class="bi bi-calendar-x" style="font-size: 4rem; color: #D4AF37; opacity: 0.6;"></i>
+            </div>
+            <h4 style="color: #2C2C2C; font-weight: 700;">No hay datos disponibles</h4>
+            <p class="text-muted mb-0">No se encontraron datos de ventas en los últimos 12 meses para realizar la clasificación.</p>
+        </div>
+    </div>
+</div>
+{% endif %}
